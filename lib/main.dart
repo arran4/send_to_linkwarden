@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:linkwarden_mobile/state/dark_mode_notifier.dart';
-import 'package:linkwarden_mobile/view/default.dart';
-import 'package:linkwarden_mobile/view/main.dart';
+import 'package:linkwarden_mobile/view/add_collection_view.dart';
+import 'package:linkwarden_mobile/view/add_user_instance_view.dart';
+import 'package:linkwarden_mobile/view/select_tags_view.dart';
+import 'package:linkwarden_mobile/view/template_view.dart';
+import 'package:linkwarden_mobile/view/add_link_view.dart';
 
 void main() {
   runApp(const LinkwardenMobileApp());
@@ -10,7 +13,14 @@ void main() {
 class LinkwardenMobileApp extends StatelessWidget {
   const LinkwardenMobileApp({super.key});
 
-  // This widget is the root of your application.
+
+  @override
+  StatelessElement createElement() {
+    loadDarkMode();
+    return super.createElement();
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<bool>(
@@ -27,7 +37,11 @@ class LinkwardenMobileApp extends StatelessWidget {
               useMaterial3: true,
             ),
             routes: {
-              "/": (BuildContext context) => const MainView(),
+              "/": (BuildContext context) => const AddLinkView(),
+              "link/new": (BuildContext context) => const AddLinkView(),
+              "tags/select": (BuildContext context) => const SelectTagsView(),
+              "collection/new": (BuildContext context) => const AddCollectionView(),
+              "userInstance/new": (BuildContext context) => const AddUserInstanceView(),
             },
           );
         });

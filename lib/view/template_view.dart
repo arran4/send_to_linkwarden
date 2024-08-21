@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
-class DefaultView extends StatefulWidget {
-  const DefaultView({super.key});
+class TemplateView extends StatefulWidget {
+  const TemplateView({super.key});
   @override
-  State<DefaultView> createState() => _DefaultViewState();
+  State<TemplateView> createState() => _TemplateViewState();
 }
 
-class _DefaultViewState extends State<DefaultView> {
+class _TemplateViewState extends State<TemplateView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -14,7 +14,7 @@ class _DefaultViewState extends State<DefaultView> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text("Linkwarden Mobile"),
       ),
-      body: Center(
+      body: SingleChildScrollView(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
