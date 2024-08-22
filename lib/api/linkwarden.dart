@@ -15,7 +15,7 @@ Future<List<Tag>?> getTags(String token, String baseUrl) async {
 
   final response = await http.get(url, headers: headers);
 
-  if (response.statusCode != 200) {
+  if (response.statusCode < 200 || response.statusCode > 299) {
     throw HttpException('Failed to load tags: ${response.statusCode}');
   }
 
@@ -43,7 +43,7 @@ Future<List<Collection>?> getCollections(String token, String baseUrl) async {
 
   final response = await http.get(url, headers: headers);
 
-  if (response.statusCode != 200) {
+  if (response.statusCode < 200 || response.statusCode > 299) {
     throw HttpException('Failed to load collections: ${response.statusCode}');
   }
 
@@ -101,7 +101,7 @@ Future<Link?> postLink(String token, String baseUrl, Link link) async {
     HttpHeaders.contentTypeHeader: 'application/json',
   };
 
-  final body = json.encode({
+  var data = {
     "name": link.name,
     "description": link.description,
     "url": link.url,
@@ -110,17 +110,19 @@ Future<Link?> postLink(String token, String baseUrl, Link link) async {
       "ownerId": link.collection?.ownerId,
       "name": link.collection?.name,
     } : null,
-    "tags": link.tags?.map((e) {
+    "tags": (link.tags??[]).map((e) {
       return {
         "id": e.id,
         "name": e.name,
         };
-    }),
-  });
+    }).toList(),
+  };
+
+  final body = json.encode(data);
 
   final response = await http.post(url, headers: headers, body: body);
 
-  if (response.statusCode != 201) {
+  if (response.statusCode < 200 || response.statusCode > 299) {
     throw HttpException('Failed to post link: ${response.statusCode}');
   }
 

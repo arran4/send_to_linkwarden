@@ -3,11 +3,13 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:linkwarden_mobile/api/linkwarden.dart';
 import 'package:linkwarden_mobile/core/individual_keyed_pub_sub_replay.dart';
 import 'package:linkwarden_mobile/model/collection.dart';
+import 'package:linkwarden_mobile/model/link.dart';
 import 'package:linkwarden_mobile/model/tag.dart';
 import 'package:linkwarden_mobile/model/user_instance.dart';
 import 'package:linkwarden_mobile/state/collections_replayer.dart';
 import 'package:linkwarden_mobile/state/dark_mode_notifier.dart';
 import 'package:linkwarden_mobile/state/default_user_instance.dart';
+import 'package:linkwarden_mobile/state/tags_replayer.dart';
 import 'package:linkwarden_mobile/state/user_instance_replayer.dart';
 import 'package:linkwarden_mobile/view/select_tags_view.dart';
 
@@ -27,6 +29,9 @@ class _AddLinkViewState extends State<AddLinkView> {
   bool selectedUserInstanceSet = false;
   Collection? selectedCollection;
   late IndividualKeyedPubSubReplayStream<String?, List<Collection>?> collectionsStream;
+  TextEditingController nameTextController = TextEditingController();
+  TextEditingController descriptionTextController = TextEditingController();
+  TextEditingController urlTextController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -79,20 +84,65 @@ class _AddLinkViewState extends State<AddLinkView> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16),
       child: ElevatedButton(
-        onPressed: () {
-          if (formState.currentState!.validate()) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Processing Data')),
-            );
-          } else {
+        onPressed: () async {
+          if (!formState.currentState!.validate()) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Validation errors')),
             );
+            return;
+          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Submitting Link')),
+          );
+          List<Tag>? allTags = await tagsReplayer.subscribe(initialKey: selectedUserInstance!.id).first;
+          Map<String, Tag> tagLookup = Map<String, Tag>.fromIterable(allTags??[],key: (element) => element.name??"Untitled",);
+          Link? result;
+          try {
+            result = await postLink(
+                selectedUserInstance!.apiToken!,
+                selectedUserInstance!.server!,
+                Link(
+                    name: nameTextController.text,
+                    description: descriptionTextController.text,
+                    url: urlTextController.text,
+                    collection: selectedCollection,
+                    tags: tags.map((tagName) {
+                      if (tagLookup.containsKey(tagName) &&
+                          tagLookup[tagName] != null) {
+                        return tagLookup[tagName]!;
+                      }
+                      return Tag(name: tagName);
+                    }).toList()));
+          } catch (e) {
+            if (!context.mounted) {
+              return;
+            }
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error submitting link ${e.toString()}')),
+            );
+            return;
+          }
+          _resetForm();
+          if (!context.mounted) {
+            return;
+          }
+          if (result != null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Link ${result.id} created')),
+            );
+            return;
           }
         },
         child: const Text('Submit'),
       ),
     );
+  }
+
+  void _resetForm() {
+    formState.currentState?.reset();
+    setState(() {
+      tags = [];
+    });
   }
 
   Widget _userAndInstanceSelection(BuildContext context) {
@@ -153,6 +203,9 @@ class _AddLinkViewState extends State<AddLinkView> {
                   validator: (value) {
                     if (value == null) {
                       return "Please select an instance";
+                    }
+                    if (!value.valid) {
+                      return "Instance details lack either a URL or a ApiToken";
                     }
                     return null;
                   },
@@ -386,6 +439,7 @@ class _AddLinkViewState extends State<AddLinkView> {
         }
         return null;
       },
+      controller: urlTextController,
     );
   }
 
@@ -393,7 +447,9 @@ class _AddLinkViewState extends State<AddLinkView> {
     return TextFormField(
       decoration: const InputDecoration(
           labelText: "Name",
-          helper: Text("Will be auto generated if left empty.")),
+          helper: Text("Will be auto generated if left empty."),
+      ),
+      controller: nameTextController,
     );
   }
 
@@ -402,6 +458,7 @@ class _AddLinkViewState extends State<AddLinkView> {
       decoration: const InputDecoration(
           labelText: "Description", helper: Text("Notes, thoughts, etc.")),
       maxLines: null,
+      controller: descriptionTextController,
     );
   }
 }
