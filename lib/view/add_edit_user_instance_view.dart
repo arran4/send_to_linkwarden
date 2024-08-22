@@ -43,8 +43,9 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               _instanceUrlInput(context),
-              _usernameEmailInput(context),
-              _passwordInput(context),
+              _apiTokenInput(context),
+              // _usernameEmailInput(context),
+              // _passwordInput(context),
               _actionButtons(context),
             ],
           ),
@@ -114,6 +115,24 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
       obscureText: true,
     );
   }
+  final TextEditingController apiTokenTextController = TextEditingController();
+  Widget _apiTokenInput(BuildContext context) {
+    return TextFormField(
+      controller: apiTokenTextController,
+      validator: (value) {
+        if (value == null || value == "") {
+          return "Please enter a value";
+        }
+        return null;
+      },
+      decoration: const InputDecoration(
+        labelText: "ApiToken",
+        helperText: "ApiToken for your Linkwarden account.",
+        hintText: "ApiToken",
+      ),
+      obscureText: true,
+    );
+  }
   Widget _actionButtons(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -145,5 +164,6 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
     usernameTextController.text = userInstance.user ?? "";
     urlTextController.text = userInstance.server ?? "";
     passwordTextController.text = userInstance.password ?? "";
+    apiTokenTextController.text = userInstance.apiToken ?? "";
   }
 }
