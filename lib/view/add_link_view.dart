@@ -86,6 +86,11 @@ class _AddLinkViewState extends State<AddLinkView> {
               key: ValueKey("User @ Server"),
               child: Text("User @ Server"),
             ),
+            DropdownMenuItem(
+              value: null,
+              key: ValueKey("New"),
+              child: Text("New"),
+            ),
           ],
           onChanged: (value) {},
         )),
@@ -101,7 +106,7 @@ class _AddLinkViewState extends State<AddLinkView> {
                 return;
               }
             },
-            icon: const Icon(Icons.add))
+            icon: const Icon(Icons.edit))
       ],
     );
   }
@@ -120,7 +125,7 @@ class _AddLinkViewState extends State<AddLinkView> {
           },
           items: const [
             DropdownMenuItem(
-              value: "Unorganized",
+              value: null,
               key: ValueKey("Unorganized"),
               child: Text("Unorganized"),
             ),
@@ -145,7 +150,7 @@ class _AddLinkViewState extends State<AddLinkView> {
 
   List<Widget> _tagsSelection(BuildContext context) {
     return [
-      Row(
+      const Row(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Text("Labels:"),
@@ -177,7 +182,7 @@ class _AddLinkViewState extends State<AddLinkView> {
                   tags = result;
                 });
               },
-              icon: const Icon(Icons.add))
+              icon: const Icon(Icons.edit))
         ],
       ),
     ];

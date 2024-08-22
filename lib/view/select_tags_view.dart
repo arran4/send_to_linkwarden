@@ -41,7 +41,7 @@ class _SelectTagsViewState extends State<SelectTagsView> {
         title: const Text("Select Tags - Linkwarden Mobile"),
         actions: [IconButton(onPressed: () {
           Navigator.pop(context, selectedTags.toList());
-        }, icon: Icon(Icons.check))],
+        }, icon: const Icon(Icons.check))],
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -61,7 +61,7 @@ class _SelectTagsViewState extends State<SelectTagsView> {
         labelText: "Tag Name",
         helperText: "Filter or add",
         hintText: "...",
-        suffix: IconButton(onPressed: () { add(searchAddTextController.text); }, icon: Icon(Icons.add)),
+        suffix: IconButton(onPressed: () { add(searchAddTextController.text); }, icon: const Icon(Icons.add)),
       ),
       controller: searchAddTextController,
       onSubmitted: (value) => add(value),

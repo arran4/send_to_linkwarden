@@ -10,7 +10,7 @@ class AddCollectionView extends StatefulWidget {
 
 class _AddCollectionViewState extends State<AddCollectionView> {
   GlobalKey<FormState> formState = GlobalKey<FormState>();
-  Color currentColor = Color(0xff008080);
+  Color currentColor = const Color(0xff008080);
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +38,7 @@ class _AddCollectionViewState extends State<AddCollectionView> {
 
   Widget _collectionNameInput(BuildContext context) {
     return TextFormField(
-      decoration: InputDecoration(
+      decoration: const InputDecoration(
         labelText: "Collection Name",
         hintText: "todo, reference, bookmarks, etc",
         helperText: "New collection name.",
@@ -64,7 +64,7 @@ class _AddCollectionViewState extends State<AddCollectionView> {
 
   List<Widget> _colourInput(BuildContext context) {
     return [
-      Row(
+      const Row(
         children: [
           Text(
               "Collection Color: "
@@ -79,7 +79,7 @@ class _AddCollectionViewState extends State<AddCollectionView> {
               color: currentColor,
               border: Border.all()
             ),
-            constraints: BoxConstraints(
+            constraints: const BoxConstraints(
               maxHeight: 28,
               maxWidth: 140,
             ),
@@ -115,7 +115,7 @@ class _AddCollectionViewState extends State<AddCollectionView> {
                 currentColor = result;
               });
             }
-          }, child: Text("Change")),
+          }, child: const Text("Change")),
         ],
       ),
     ];
@@ -125,7 +125,7 @@ class _AddCollectionViewState extends State<AddCollectionView> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        TextButton(onPressed: () {}, child: Text("Save")),
+        TextButton(onPressed: () {}, child: const Text("Save")),
       ],
     );
   }

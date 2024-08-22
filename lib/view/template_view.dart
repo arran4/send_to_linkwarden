@@ -14,7 +14,7 @@ class _TemplateViewState extends State<TemplateView> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text("Linkwarden Mobile"),
       ),
-      body: SingleChildScrollView(
+      body: const SingleChildScrollView(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[

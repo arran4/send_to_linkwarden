@@ -35,7 +35,7 @@ class _AddUserInstanceViewState extends State<AddUserInstanceView> {
 
   Widget _instanceUrlInput(BuildContext context) {
     return TextFormField(
-      decoration: InputDecoration(
+      decoration: const InputDecoration(
         labelText: "URL",
         hintText: "https://cloud.linkwarden.app",
         helperText: "The address of your Linkwarden instance.",
@@ -44,7 +44,7 @@ class _AddUserInstanceViewState extends State<AddUserInstanceView> {
   }
   Widget _usernameEmailInput(BuildContext context) {
     return TextFormField(
-      decoration: InputDecoration(
+      decoration: const InputDecoration(
         labelText: "Username/Email",
         hintText: "Username...",
         helperText: "Username for your Linkwarden Account.",
@@ -53,7 +53,7 @@ class _AddUserInstanceViewState extends State<AddUserInstanceView> {
   }
   Widget _passwordInput(BuildContext context) {
     return TextFormField(
-      decoration: InputDecoration(
+      decoration: const InputDecoration(
         labelText: "Password",
         helperText: "Password for your Linkwarden account.",
         hintText: "Password",
@@ -65,8 +65,8 @@ class _AddUserInstanceViewState extends State<AddUserInstanceView> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        TextButton(onPressed: () {}, child: Text("Reset")),
-        TextButton(onPressed: () {}, child: Text("Save")),
+        TextButton(onPressed: () {}, child: const Text("Reset")),
+        TextButton(onPressed: () {}, child: const Text("Save")),
       ],
     );
   }
