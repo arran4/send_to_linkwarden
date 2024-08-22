@@ -32,4 +32,8 @@ class UserInstance {
 
   @override
   int get hashCode => id.hashCode;
+
+  bool get valid {
+    return apiToken != null && server != null;
+  }
 }

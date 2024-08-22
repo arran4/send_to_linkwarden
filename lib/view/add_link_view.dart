@@ -351,8 +351,7 @@ class _AddLinkViewState extends State<AddLinkView> {
           ),
           IconButton(
               onPressed: () async {
-                List<Tag> allTags = [];
-                var result = await Navigator.pushNamed(context, "tags/select", arguments: SelectTagsViewArguments(selectedTags: tags, allTags: allTags));
+                var result = await Navigator.pushNamed(context, "tags/select", arguments: SelectTagsViewArguments(selectedTags: tags, userInstance: selectedUserInstance));
                 if (result == null) {
                   return;
                 }

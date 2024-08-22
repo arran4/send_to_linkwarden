@@ -1,13 +1,20 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:linkwarden_mobile/core/individual_keyed_pub_sub_replay.dart';
 import 'package:linkwarden_mobile/model/tag.dart';
+import 'package:linkwarden_mobile/model/user_instance.dart';
+import 'package:linkwarden_mobile/state/tags_replayer.dart';
 
 class SelectTagsViewArguments {
   final List<String>? selectedTags;
   final List<Tag>? allTags;
+  final UserInstance? userInstance;
 
   const SelectTagsViewArguments({
     this.selectedTags,
     this.allTags,
+    this.userInstance,
   });
 }
 
@@ -21,28 +28,76 @@ class SelectTagsView extends StatefulWidget {
 }
 
 class _SelectTagsViewState extends State<SelectTagsView> {
-  late List<Tag> allTags;
+  List<Tag>? allTags;
   late Set<String> selectedTags;
   final TextEditingController searchAddTextController = TextEditingController();
   late String filterText;
+  StreamSubscription<List<Tag>?>? tagSubscription;
+
+  FocusNode findOrAddFocusNode = FocusNode();
+
+  UserInstance? get userInstance {
+    return widget.arguments?.userInstance;
+  }
 
   @override
   void initState() {
     super.initState();
-    allTags = [...widget.arguments?.allTags??[]];
     selectedTags = Set.from(widget.arguments?.selectedTags??[]);
-    Map<String, Tag> hasTag = Map<String, Tag>.fromIterable(allTags,key: (element) => element.name??"Untitled",);
-    for (String tag in selectedTags) {
-      if (!hasTag.containsKey(tag)) {
-        allTags.add(Tag(name: tag));
-      }
-    }
     filterText = "";
     searchAddTextController.addListener(() {
       setState(() {
         filterText = searchAddTextController.text;
       });
     });
+
+    if (widget.arguments?.allTags != null) {
+      allTags = [...widget.arguments!.allTags!];
+      addNewTags();
+      sortTags();
+    } else if (userInstance?.valid == true) {
+      var tagStream = tagsReplayer.subscribe(initialKey: userInstance!.id);
+      tagSubscription = tagStream.listen((List<Tag>? event) {
+        setState(() {
+          allTags = [...event??[]];
+          addNewTags();
+          sortTags();
+        });
+      });
+    } else {
+      allTags = [];
+      addNewTags();
+      sortTags();
+    }
+  }
+
+  void sortTags() {
+    allTags?.sort((Tag a, Tag b) {
+      var containsA = selectedTags.contains(a.name);
+      var containsB = selectedTags.contains(b.name);
+      if (containsA && !containsB) {
+        return -1;
+      }
+      if (!containsA && containsB) {
+        return 1;
+      }
+      return (a.name??"").compareTo(b.name??"");
+    });
+  }
+
+  void addNewTags() {
+    Map<String, Tag> hasTag = Map<String, Tag>.fromIterable(allTags??[],key: (element) => element.name??"Untitled",);
+    for (String tag in selectedTags) {
+      if (!hasTag.containsKey(tag)) {
+        allTags?.add(Tag(name: tag));
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    tagSubscription?.cancel();
+    super.dispose();
   }
 
   @override
@@ -73,22 +128,36 @@ class _SelectTagsViewState extends State<SelectTagsView> {
         labelText: "Tag Name",
         helperText: "Filter or add",
         hintText: "...",
-        suffix: IconButton(onPressed: () { add(searchAddTextController.text); }, icon: const Icon(Icons.add)),
+        suffix: IconButton(onPressed: () {
+          add(searchAddTextController.text);
+          searchAddTextController.clear();
+          findOrAddFocusNode.requestFocus();
+        },
+            icon: const Icon(Icons.add),
+        ),
       ),
+      focusNode: findOrAddFocusNode,
       controller: searchAddTextController,
-      onSubmitted: (value) => add(value),
+      onSubmitted: (value) {
+        add(value);
+        searchAddTextController.clear();
+        findOrAddFocusNode.requestFocus();
+      },
     );
   }
 
   List<Tag> get filteredTags {
     if (filterText == "") {
-      return allTags;
+      return allTags??[];
     } else {
-      return allTags.where((element) => element.name?.contains(filterText)??false).toList();
+      return (allTags??[]).where((element) => element.name?.contains(filterText)??false).toList();
     }
   }
 
   Widget _listOfElements(BuildContext context) {
+    if (allTags == null) {
+      return const CircularProgressIndicator();
+    }
     return ListBody(
       children: [
         for (Tag tag in filteredTags)
@@ -107,6 +176,7 @@ class _SelectTagsViewState extends State<SelectTagsView> {
                     } else {
                       selectedTags.add(tagName);
                     }
+                    sortTags();
                   });
                 }),
             title: Text(tag.name??"Unnamed Tag"),
@@ -120,18 +190,25 @@ class _SelectTagsViewState extends State<SelectTagsView> {
     if (trimmed == "") {
       return;
     }
-    Tag? search = List<Tag?>.from(allTags).firstWhere((t) => t?.name?.contains(trimmed) ?? false, orElse: () => null);
+    Tag? search = List<Tag?>.from(allTags??[]).firstWhere((t) => t?.name?.contains(trimmed) ?? false, orElse: () => null);
     if (search != null) {
-      selectedTags.add(trimmed);
+      setState(() {
+        if (selectedTags.contains(trimmed)) {
+          selectedTags.remove(trimmed);
+        } else {
+          selectedTags.add(trimmed);
+        }
+        sortTags();
+      });
       return;
     }
     Tag tag = Tag(
       name: trimmed,
     );
     setState(() {
-      allTags.add(tag);
+      allTags?.add(tag);
       selectedTags.add(trimmed);
-      searchAddTextController.clear();
+      sortTags();
     });
   }
 }
