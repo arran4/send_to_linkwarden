@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:linkwarden_mobile/model/collection.dart';
+import 'package:linkwarden_mobile/model/tag.dart';
 import 'package:linkwarden_mobile/model/user_instance.dart';
 import 'package:linkwarden_mobile/state/dark_mode_notifier.dart';
 import 'package:linkwarden_mobile/view/select_tags_view.dart';
@@ -15,7 +16,7 @@ class AddLinkView extends StatefulWidget {
 
 class _AddLinkViewState extends State<AddLinkView> {
   GlobalKey<FormState> formState = GlobalKey<FormState>();
-  late List<String> tags;
+  late List<Tag> tags;
   UserInstance? selectedUserInstance;
   Collection? selectedCollection;
 
@@ -52,7 +53,7 @@ class _AddLinkViewState extends State<AddLinkView> {
   @override
   void initState() {
     super.initState();
-    tags = ["Tag 1", "Tag 2"];
+    tags = [Tag(name: "Tag 1"), Tag(name: "Tag 2")];
   }
 
   void _darkMode() async {
@@ -182,7 +183,7 @@ class _AddLinkViewState extends State<AddLinkView> {
           Container(
             child: Wrap(
               children: [
-                for (String tag in tags) Chip(label: Text(tag))
+                for (Tag tag in tags) Chip(label: Text(tag.name??"Unnamed"))
               ],
             ),
           ),
@@ -192,8 +193,8 @@ class _AddLinkViewState extends State<AddLinkView> {
                 if (result == null) {
                   return;
                 }
-                assert(result is List<String>);
-                if (result is! List<String>) {
+                assert(result is List<Tag>);
+                if (result is! List<Tag>) {
                   return;
                 }
                 setState(() {

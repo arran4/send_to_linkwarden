@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:linkwarden_mobile/model/tag.dart';
 
 class SelectTagsViewArguments {
-  final List<String>? selectedTags;
+  final List<Tag>? selectedTags;
 
   const SelectTagsViewArguments({
     this.selectedTags,
@@ -18,15 +19,15 @@ class SelectTagsView extends StatefulWidget {
 }
 
 class _SelectTagsViewState extends State<SelectTagsView> {
-  List<String> allTags = [
-    "Tag 1",
-    "Tag 2",
-    "Tag 3",
-    "Tag 4",
-    "Tag 5",
-    "Tag 6",
+  List<Tag> allTags = [
+    Tag(name: "Tag 1"),
+    Tag(name: "Tag 2"),
+    Tag(name: "Tag 3"),
+    Tag(name: "Tag 4"),
+    Tag(name: "Tag 5"),
+    Tag(name: "Tag 6"),
   ];
-  late Set<String> selectedTags;
+  late Set<Tag> selectedTags;
   final TextEditingController searchAddTextController = TextEditingController();
   late String filterText;
 
@@ -34,8 +35,8 @@ class _SelectTagsViewState extends State<SelectTagsView> {
   void initState() {
     super.initState();
     selectedTags = Set.from(widget.arguments?.selectedTags??[]);
-    Set<String> hasTag = Set.from(allTags);
-    for (String tag in selectedTags) {
+    Set<Tag> hasTag = Set.from(allTags);
+    for (Tag tag in selectedTags) {
       if (!hasTag.contains(tag)) {
         allTags.add(tag);
       }
@@ -83,18 +84,18 @@ class _SelectTagsViewState extends State<SelectTagsView> {
     );
   }
 
-  List<String> get filteredTags {
+  List<Tag> get filteredTags {
     if (filterText == "") {
       return allTags;
     } else {
-      return allTags.where((element) => element.contains(filterText)).toList();
+      return allTags.where((element) => element.name?.contains(filterText)??false).toList();
     }
   }
 
   Widget _listOfElements(BuildContext context) {
     return ListBody(
       children: [
-        for (String tag in filteredTags)
+        for (Tag tag in filteredTags)
           ListTile(
             key: ValueKey(tag),
             leading: Checkbox(
@@ -111,7 +112,7 @@ class _SelectTagsViewState extends State<SelectTagsView> {
                     }
                   });
                 }),
-            title: Text(tag),
+            title: Text(tag.name??"Unnamed Tag"),
           ),
       ],
     );
@@ -122,12 +123,17 @@ class _SelectTagsViewState extends State<SelectTagsView> {
     if (trimmed == "") {
       return;
     }
-    if (allTags.contains(trimmed)) {
+    Tag? search = List<Tag?>.from(allTags).firstWhere((t) => t?.name?.contains(trimmed) ?? false, orElse: () => null);
+    if (search != null) {
+      selectedTags.add(search);
       return;
     }
+    Tag tag = Tag(
+      name: trimmed,
+    );
     setState(() {
-      allTags.add(trimmed);
-      selectedTags.add(trimmed);
+      allTags.add(tag);
+      selectedTags.add(tag);
       searchAddTextController.clear();
     });
   }
