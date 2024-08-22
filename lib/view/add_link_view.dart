@@ -197,6 +197,8 @@ class _AddLinkViewState extends State<AddLinkView> {
                 if (result is! List<Tag>) {
                   return;
                 }
+                // Save new tags
+                // result.where((tag) => tag.id == null);
                 setState(() {
                   tags = result;
                 });
