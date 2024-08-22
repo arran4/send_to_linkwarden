@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:linkwarden_mobile/state/dark_mode_notifier.dart';
 import 'package:linkwarden_mobile/view/add_collection_view.dart';
-import 'package:linkwarden_mobile/view/add_user_instance_view.dart';
+import 'package:linkwarden_mobile/view/add_edit_user_instance_view.dart';
 import 'package:linkwarden_mobile/view/select_tags_view.dart';
 import 'package:linkwarden_mobile/view/template_view.dart';
 import 'package:linkwarden_mobile/view/add_link_view.dart';
@@ -39,9 +39,9 @@ class LinkwardenMobileApp extends StatelessWidget {
             routes: {
               "/": (BuildContext context) => const AddLinkView(),
               "link/new": (BuildContext context) => const AddLinkView(),
-              "tags/select": (BuildContext context) => const SelectTagsView(),
-              "collection/new": (BuildContext context) => const AddCollectionView(),
-              "userInstance/new": (BuildContext context) => const AddUserInstanceView(),
+              "tags/select": (BuildContext context) => SelectTagsView(arguments: ModalRoute.of(context)?.settings.arguments as SelectTagsViewArguments?),
+              "collection/new": (BuildContext context) => AddCollectionView(arguments: ModalRoute.of(context)?.settings.arguments as AddCollectionViewArguments?),
+              "userInstance/newEdit": (BuildContext context) => AddEditUserInstanceView(arguments: ModalRoute.of(context)?.settings.arguments as AddEditUserInstanceViewArguments?),
             },
           );
         });

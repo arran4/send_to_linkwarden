@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:linkwarden_mobile/model/collection.dart';
+
+class AddCollectionViewArguments {
+  const AddCollectionViewArguments();
+}
 
 class AddCollectionView extends StatefulWidget {
-  const AddCollectionView({super.key});
+  final AddCollectionViewArguments? arguments;
+
+  const AddCollectionView({super.key, this.arguments});
 
   @override
   State<AddCollectionView> createState() => _AddCollectionViewState();
@@ -36,28 +43,38 @@ class _AddCollectionViewState extends State<AddCollectionView> {
     );
   }
 
+  TextEditingController nameTextController = TextEditingController();
   Widget _collectionNameInput(BuildContext context) {
     return TextFormField(
+      controller: nameTextController,
       decoration: const InputDecoration(
         labelText: "Collection Name",
         hintText: "todo, reference, bookmarks, etc",
         helperText: "New collection name.",
       ),
       validator: (input) {
-        return "Not Valid";
+        if (input == null || input == "") {
+          return "Please enter a value";
+        }
+        return null;
       },
     );
   }
 
+  TextEditingController descriptionTextController = TextEditingController();
   Widget _descriptionInput(BuildContext context) {
     return TextFormField(
+      controller: descriptionTextController,
       decoration: const InputDecoration(
         labelText: "Description",
         hintText: "The purpose of this Collection...",
       ),
       maxLines: null,
       validator: (input) {
-        return "Not Valid";
+        if (input == null || input == "") {
+          return "Please enter a value";
+        }
+        return null;
       },
     );
   }
@@ -125,7 +142,22 @@ class _AddCollectionViewState extends State<AddCollectionView> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        TextButton(onPressed: () {}, child: const Text("Save")),
+        TextButton(onPressed: () {
+          if (formState.currentState!.validate()) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Processing Data')),
+            );
+            Navigator.pop(context, Collection()
+              ..name = nameTextController.text
+              ..description = descriptionTextController.text
+              ..color = currentColor.toHexString(includeHashSign: true, enableAlpha: false)
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Validation errors')),
+            );
+          }
+        }, child: const Text("Save")),
       ],
     );
   }

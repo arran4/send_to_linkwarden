@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:linkwarden_mobile/model/collection.dart';
+import 'package:linkwarden_mobile/model/user_instance.dart';
 import 'package:linkwarden_mobile/state/dark_mode_notifier.dart';
+import 'package:linkwarden_mobile/view/select_tags_view.dart';
+
+import 'add_edit_user_instance_view.dart';
 
 class AddLinkView extends StatefulWidget {
   const AddLinkView({super.key});
@@ -11,6 +16,8 @@ class AddLinkView extends StatefulWidget {
 class _AddLinkViewState extends State<AddLinkView> {
   GlobalKey<FormState> formState = GlobalKey<FormState>();
   late List<String> tags;
+  UserInstance? selectedUserInstance;
+  Collection? selectedCollection;
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +68,10 @@ class _AddLinkViewState extends State<AddLinkView> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Processing Data')),
             );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Validation errors')),
+            );
           }
         },
         child: const Text('Submit'),
@@ -78,15 +89,19 @@ class _AddLinkViewState extends State<AddLinkView> {
             labelText: 'Select User And Linkwarden Instance',
           ),
           validator: (value) {
-            return "Not valid";
+            if (value == null) {
+              return "Please select an instance";
+            }
+            return null;
           },
-          items: const [
+          value: selectedUserInstance,
+          items: [
             DropdownMenuItem(
-              value: "User @ Server",
-              key: ValueKey("User @ Server"),
-              child: Text("User @ Server"),
+              value: UserInstance(user: "User", server: "http://server/"),
+              key: const ValueKey("User @ Server"),
+              child: const Text("User @ Server"),
             ),
-            DropdownMenuItem(
+            const DropdownMenuItem(
               value: null,
               key: ValueKey("New"),
               child: Text("New"),
@@ -97,14 +112,17 @@ class _AddLinkViewState extends State<AddLinkView> {
         IconButton(
             onPressed: () async {
               var result =
-                  await Navigator.pushNamed(context, "userInstance/new");
+                  await Navigator.pushNamed(context, "userInstance/newEdit", arguments: AddEditUserInstanceViewArguments(userInstance: selectedUserInstance));
               if (result == null) {
                 return;
               }
-              assert(result is String);
-              if (result is! String) {
+              assert(result is UserInstance);
+              if (result is! UserInstance) {
                 return;
               }
+              // saveUserInstance
+              // make it default?
+              // selectedUserInstance = result;
             },
             icon: const Icon(Icons.edit))
       ],
@@ -120,9 +138,7 @@ class _AddLinkViewState extends State<AddLinkView> {
           decoration: const InputDecoration(
             labelText: 'Collection',
           ),
-          validator: (value) {
-            return "Not valid";
-          },
+          value: selectedCollection,
           items: const [
             DropdownMenuItem(
               value: null,
@@ -138,10 +154,12 @@ class _AddLinkViewState extends State<AddLinkView> {
               if (result == null) {
                 return;
               }
-              assert(result is String);
-              if (result is! String) {
+              assert(result is Collection);
+              if (result is! Collection) {
                 return;
               }
+              // saveCollectionToDataSource;
+              // selectedCollect = result;
             },
             icon: const Icon(Icons.add))
       ],
@@ -170,7 +188,7 @@ class _AddLinkViewState extends State<AddLinkView> {
           ),
           IconButton(
               onPressed: () async {
-                var result = await Navigator.pushNamed(context, "tags/select");
+                var result = await Navigator.pushNamed(context, "tags/select", arguments: SelectTagsViewArguments(selectedTags: tags));
                 if (result == null) {
                   return;
                 }
@@ -192,8 +210,18 @@ class _AddLinkViewState extends State<AddLinkView> {
     return TextFormField(
       decoration: const InputDecoration(
           labelText: "Link", helper: Text("e.g. http://example.com/")),
-      validator: (input) {
-        return "Not Valid";
+      validator: (value) {
+        if (value == null) {
+          return "Please enter a value";
+        }
+        Uri? url = Uri.tryParse(value);
+        if (url == null) {
+          return "Not valid";
+        }
+        if (!url.isScheme("https") && !url.isScheme("http")) {
+          return "Must be http or https";
+        }
+        return null;
       },
     );
   }
@@ -203,9 +231,6 @@ class _AddLinkViewState extends State<AddLinkView> {
       decoration: const InputDecoration(
           labelText: "Name",
           helper: Text("Will be auto generated if left empty.")),
-      validator: (input) {
-        return "Not Valid";
-      },
     );
   }
 
@@ -214,9 +239,6 @@ class _AddLinkViewState extends State<AddLinkView> {
       decoration: const InputDecoration(
           labelText: "Description", helper: Text("Notes, thoughts, etc.")),
       maxLines: null,
-      validator: (input) {
-        return "Not Valid";
-      },
     );
   }
 }

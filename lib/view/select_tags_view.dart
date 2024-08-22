@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+
+class SelectTagsViewArguments {
+  final List<String>? selectedTags;
+
+  const SelectTagsViewArguments({
+    this.selectedTags,
+  });
+}
 
 class SelectTagsView extends StatefulWidget {
-  const SelectTagsView({super.key});
+  final SelectTagsViewArguments? arguments;
+  
+  const SelectTagsView({super.key, this.arguments});
 
   @override
   State<SelectTagsView> createState() => _SelectTagsViewState();
@@ -24,7 +33,13 @@ class _SelectTagsViewState extends State<SelectTagsView> {
   @override
   void initState() {
     super.initState();
-    selectedTags = {"Tag 1", "Tag 3"};
+    selectedTags = Set.from(widget.arguments?.selectedTags??[]);
+    Set<String> hasTag = Set.from(allTags);
+    for (String tag in selectedTags) {
+      if (!hasTag.contains(tag)) {
+        allTags.add(tag);
+      }
+    }
     filterText = "";
     searchAddTextController.addListener(() {
       setState(() {
