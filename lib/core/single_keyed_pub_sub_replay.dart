@@ -1,13 +1,12 @@
 import 'dart:async';
-import 'dart:math';
 
-class KeyedPubSubReplay<K, T> {
+class SingleKeyedPubSubReplay<K, T> {
   final Map<K, T> _lastMessage = <K, T>{};
   K _currentKey;
   final List<StreamController<T>> _subscribers = [];
-  final void Function(KeyedPubSubReplay<K, T> queue, T currentKey)? _onNoLastMessage;
+  final void Function(SingleKeyedPubSubReplay<K, T> queue, T currentKey)? _onNoLastMessage;
 
-  KeyedPubSubReplay({required K currentKey, void Function(KeyedPubSubReplay<K, T> queue, T currentKey)? onNoLastMessage})
+  SingleKeyedPubSubReplay({required K currentKey, void Function(SingleKeyedPubSubReplay<K, T> queue, T currentKey)? onNoLastMessage})
       : _onNoLastMessage = onNoLastMessage, _currentKey = currentKey;
 
   get currentKey {
