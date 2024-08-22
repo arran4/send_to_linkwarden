@@ -22,7 +22,7 @@ class AddLinkView extends StatefulWidget {
 
 class _AddLinkViewState extends State<AddLinkView> {
   GlobalKey<FormState> formState = GlobalKey<FormState>();
-  late List<Tag> tags;
+  late List<String> tags;
   UserInstance? selectedUserInstance;
   bool selectedUserInstanceSet = false;
   Collection? selectedCollection;
@@ -346,21 +346,20 @@ class _AddLinkViewState extends State<AddLinkView> {
         children: [
           Wrap(
             children: [
-              for (Tag tag in tags) Chip(label: Text(tag.name??"Unnamed"))
+              for (String tag in tags) Chip(label: Text(tag))
             ],
           ),
           IconButton(
               onPressed: () async {
-                var result = await Navigator.pushNamed(context, "tags/select", arguments: SelectTagsViewArguments(selectedTags: tags));
+                List<Tag> allTags = [];
+                var result = await Navigator.pushNamed(context, "tags/select", arguments: SelectTagsViewArguments(selectedTags: tags, allTags: allTags));
                 if (result == null) {
                   return;
                 }
-                assert(result is List<Tag>);
-                if (result is! List<Tag>) {
+                assert(result is List<String>);
+                if (result is! List<String>) {
                   return;
                 }
-                // Save new tags
-                // result.where((tag) => tag.id == null);
                 setState(() {
                   tags = result;
                 });
