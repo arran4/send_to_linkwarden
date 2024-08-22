@@ -140,6 +140,9 @@ class _AddLinkViewState extends State<AddLinkView> {
 
   void _resetForm() {
     formState.currentState?.reset();
+    urlTextController.text = "";
+    nameTextController.text = "";
+    descriptionTextController.text = "";
     setState(() {
       tags = [];
     });
