@@ -1,14 +1,28 @@
+import 'package:json_annotation/json_annotation.dart';
+
+part 'tag.g.dart';
+
+@JsonSerializable()
 class TagCount {
-  int? links;
+  final int? links;
+
+  TagCount({this.links});
+
+  factory TagCount.fromJson(Map<String, dynamic> json) => _$TagCountFromJson(json);
+
+  Map<String, dynamic> toJson() => _$TagCountToJson(this);
 }
 
+@JsonSerializable()
 class Tag {
-  int? id;
-  String? name;
-  int? ownerId;
-  String? createdAt;
-  String? updatedAt;
-  TagCount? count;
+  final int? id;
+  final String? name;
+  final int? ownerId;
+  final String? createdAt;
+  final String? updatedAt;
+
+  @JsonKey(name: '_count')
+  final TagCount? count;
 
   Tag({
     this.id,
@@ -22,11 +36,14 @@ class Tag {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is Tag &&
-          runtimeType == other.runtimeType &&
-          ((id != null && other.id != null && id == other.id) ||
-          (name == other.name));
+          other is Tag &&
+              runtimeType == other.runtimeType &&
+              ((id != null && other.id != null && id == other.id) || (name == other.name));
 
   @override
   int get hashCode => id?.hashCode ?? name.hashCode;
+
+  factory Tag.fromJson(Map<String, dynamic> json) => _$TagFromJson(json);
+
+  Map<String, dynamic> toJson() => _$TagToJson(this);
 }
