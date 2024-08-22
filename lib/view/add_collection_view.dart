@@ -70,12 +70,6 @@ class _AddCollectionViewState extends State<AddCollectionView> {
         hintText: "The purpose of this Collection...",
       ),
       maxLines: null,
-      validator: (input) {
-        if (input == null || input == "") {
-          return "Please enter a value";
-        }
-        return null;
-      },
     );
   }
 
