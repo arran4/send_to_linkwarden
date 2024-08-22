@@ -3,6 +3,8 @@ import 'package:linkwarden_mobile/model/collection.dart';
 import 'package:linkwarden_mobile/model/tag.dart';
 import 'package:linkwarden_mobile/model/user_instance.dart';
 import 'package:linkwarden_mobile/state/dark_mode_notifier.dart';
+import 'package:linkwarden_mobile/state/default_user_instance.dart';
+import 'package:linkwarden_mobile/state/user_instance_replayer.dart';
 import 'package:linkwarden_mobile/view/select_tags_view.dart';
 
 import 'add_edit_user_instance_view.dart';
@@ -18,6 +20,7 @@ class _AddLinkViewState extends State<AddLinkView> {
   GlobalKey<FormState> formState = GlobalKey<FormState>();
   late List<Tag> tags;
   UserInstance? selectedUserInstance;
+  bool selectedUserInstanceSet = false;
   Collection? selectedCollection;
 
   @override
@@ -81,52 +84,109 @@ class _AddLinkViewState extends State<AddLinkView> {
   }
 
   Widget _userAndInstanceSelection(BuildContext context) {
-    return Flex(
-      direction: Axis.horizontal,
-      children: [
-        Flexible(
-            child: DropdownButtonFormField(
-          decoration: const InputDecoration(
-            labelText: 'Select User And Linkwarden Instance',
-          ),
-          validator: (value) {
-            if (value == null) {
-              return "Please select an instance";
+    return FutureBuilder(
+      future: loadDefaultUserInstance(),
+      builder: (context, defaultValueLoaded) {
+        if (defaultValueLoaded.hasError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text("Error loading default user instance: ${defaultValueLoaded.error}", style: const TextStyle(color: Colors.red)),
+              ],
+            ),
+          );
+        }
+        if (defaultValueLoaded.connectionState != ConnectionState.done) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        return StreamBuilder(
+          stream: userInstanceValueReplayer.subscribe(),
+          builder: (BuildContext context, AsyncSnapshot<List<UserInstance>> list) {
+            if (list.hasError) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text("Error loading user instances: ${list.error}", style: const TextStyle(color: Colors.red)),
+                  ],
+                ),
+              );
             }
-            return null;
-          },
-          value: selectedUserInstance,
-          items: [
-            DropdownMenuItem(
-              value: UserInstance(user: "User", server: "http://server/"),
-              key: const ValueKey("User @ Server"),
-              child: const Text("User @ Server"),
-            ),
-            const DropdownMenuItem(
-              value: null,
-              key: ValueKey("New"),
-              child: Text("New"),
-            ),
-          ],
-          onChanged: (value) {},
-        )),
-        IconButton(
-            onPressed: () async {
-              var result =
-                  await Navigator.pushNamed(context, "userInstance/newEdit", arguments: AddEditUserInstanceViewArguments(userInstance: selectedUserInstance));
-              if (result == null) {
-                return;
-              }
-              assert(result is UserInstance);
-              if (result is! UserInstance) {
-                return;
-              }
-              // saveUserInstance
-              // make it default?
-              // selectedUserInstance = result;
-            },
-            icon: const Icon(Icons.edit))
-      ],
+            if (list.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            // Should be a better way of doing this by combining the streams.
+            if (!selectedUserInstanceSet && defaultValueLoaded.requireData != null && selectedUserInstance == null) {
+              WidgetsBinding.instance.addPostFrameCallback((_) => setState(() {
+                selectedUserInstance = list.requireData.where((each) => each.id == defaultValueLoaded.requireData).firstOrNull;
+                selectedUserInstanceSet = true;
+              }));
+            }
+            if (!selectedUserInstanceSet && list.connectionState == ConnectionState.active) {
+              WidgetsBinding.instance.addPostFrameCallback((_) => setState(() {
+                selectedUserInstanceSet = true;
+              }));
+            }
+            return Flex(
+              direction: Axis.horizontal,
+              children: [
+                Flexible(
+                    child: DropdownButtonFormField(
+                  decoration: const InputDecoration(
+                    labelText: 'Select User And Linkwarden Instance',
+                  ),
+                  validator: (value) {
+                    if (value == null) {
+                      return "Please select an instance";
+                    }
+                    return null;
+                  },
+                  value: selectedUserInstance,
+                  items: [
+                    for (UserInstance ui in list.data??[])
+                      DropdownMenuItem(
+                        value: ui,
+                        key: ValueKey(ui.id),
+                        child: Text(ui.server??"Unknown URL"),
+                      ),
+                    const DropdownMenuItem(
+                      value: null,
+                      key: ValueKey("New"),
+                      child: Text("New"),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      selectedUserInstance = value;
+                    });
+                    setDefaultUserInstance(selectedUserInstance?.id);
+                  },
+                )),
+                IconButton(
+                    onPressed: () async {
+                      var result =
+                          await Navigator.pushNamed(context, "userInstance/newEdit", arguments: AddEditUserInstanceViewArguments(userInstance: selectedUserInstance));
+                      if (result == null) {
+                        return;
+                      }
+                      assert(result is UserInstance);
+                      if (result is! UserInstance) {
+                        return;
+                      }
+                      addUserInstances(result);
+                      // make it default?
+                      setState(() {
+                        selectedUserInstance = result;
+                      });
+                      setDefaultUserInstance(selectedUserInstance?.id);
+                    },
+                    icon: const Icon(Icons.edit))
+              ],
+            );
+          }
+        );
+      }
     );
   }
 
