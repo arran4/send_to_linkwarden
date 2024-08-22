@@ -202,7 +202,7 @@ class IndividualKeyedPubSubReplay<K, T> {
   final Map<K, List<StreamController<T>>> _subscribers = {};
   final void Function(IndividualKeyedPubSubReplay<K, T> queue, K currentKey)? _onNoLastMessage;
 
-  IndividualKeyedPubSubReplay({required K currentKey, void Function(IndividualKeyedPubSubReplay<K, T> queue, K currentKey)? onNoLastMessage})
+  IndividualKeyedPubSubReplay({void Function(IndividualKeyedPubSubReplay<K, T> queue, K currentKey)? onNoLastMessage})
       : _onNoLastMessage = onNoLastMessage;
 
   void _checkAndInitialize({ required K currentKey, StreamController<T>? singleTarget }) {
@@ -253,11 +253,11 @@ class IndividualKeyedPubSubReplay<K, T> {
     }
     removeSubscription(oldKey, controller);
     if (!_subscribers.containsKey(newKey)) {
-      _checkAndInitialize(currentKey: newKey);
       _subscribers[newKey] = [controller];
     } else {
       _subscribers[newKey]!.add(controller);
     }
+    _checkAndInitialize(currentKey: newKey, singleTarget: controller);
   }
 
   void removeSubscription(currentKey, StreamController<T> controller) {
