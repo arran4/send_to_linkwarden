@@ -14,5 +14,6 @@ final IndividualKeyedPubSubReplay<String?, List<Collection>?> collectionsReplaye
     queue.publish([], currentKey: currentKey);
     return;
   }
-  queue.publish(await getCollections(ui.apiToken??"", ui.server??""), currentKey: currentKey);
+  var collections = await getCollections(ui.apiToken??"", ui.server??"");
+  queue.publish(collections, currentKey: currentKey);
 });

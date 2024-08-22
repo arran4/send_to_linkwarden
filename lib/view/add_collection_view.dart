@@ -144,7 +144,7 @@ class _AddCollectionViewState extends State<AddCollectionView> {
             Navigator.pop(context, Collection()
               ..name = nameTextController.text
               ..description = descriptionTextController.text
-              ..color = currentColor.toHexString(includeHashSign: true, enableAlpha: false)
+              ..color = colorToHex(currentColor, includeHashSign: true, enableAlpha: false, toUpperCase: false)
             );
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
