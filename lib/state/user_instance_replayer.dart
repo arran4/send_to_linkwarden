@@ -23,10 +23,20 @@ void _saveUserInstances(List<UserInstance> userInstances) async {
   await storage.write(key: "UserInstancesV1", value: jsonEncode(userInstances));
 }
 
-void addUserInstances(UserInstance userInstances) async {
+Future<UserInstance?> getUserInstanceById(String? id) async {
+  var sub = userInstanceValueReplayer.subscribe();
+  return (await sub.first).firstWhere((e) => e.id == id);
+}
+
+void upsertUserInstance(UserInstance userInstances) async {
   var sub = userInstanceValueReplayer.subscribe();
   List<UserInstance> current = [...await sub.first];
-  current.add(userInstances);
+  int p = current.indexOf(userInstances);
+  if (p < 0) {
+    current.add(userInstances);
+  } else {
+    current[p] = userInstances;
+  }
   userInstanceValueReplayer.publish(current);
   _saveUserInstances(current);
 }

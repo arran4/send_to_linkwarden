@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:linkwarden_mobile/api/linkwarden.dart';
+import 'package:linkwarden_mobile/core/individual_keyed_pub_sub_replay.dart';
 import 'package:linkwarden_mobile/model/collection.dart';
 import 'package:linkwarden_mobile/model/tag.dart';
 import 'package:linkwarden_mobile/model/user_instance.dart';
+import 'package:linkwarden_mobile/state/collections_replayer.dart';
 import 'package:linkwarden_mobile/state/dark_mode_notifier.dart';
 import 'package:linkwarden_mobile/state/default_user_instance.dart';
 import 'package:linkwarden_mobile/state/user_instance_replayer.dart';
@@ -22,6 +26,7 @@ class _AddLinkViewState extends State<AddLinkView> {
   UserInstance? selectedUserInstance;
   bool selectedUserInstanceSet = false;
   Collection? selectedCollection;
+  late IndividualKeyedPubSubReplayStream<String?, List<Collection>?> collectionsStream;
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +61,14 @@ class _AddLinkViewState extends State<AddLinkView> {
   @override
   void initState() {
     super.initState();
-    tags = [Tag(name: "Tag 1"), Tag(name: "Tag 2")];
+    tags = [];
+    collectionsStream = collectionsReplayer.subscribe(initialKey: null);
+  }
+
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   void _darkMode() async {
@@ -117,11 +129,13 @@ class _AddLinkViewState extends State<AddLinkView> {
               return const Center(child: CircularProgressIndicator());
             }
             // Should be a better way of doing this by combining the streams.
-            if (!selectedUserInstanceSet && defaultValueLoaded.requireData != null && selectedUserInstance == null) {
-              WidgetsBinding.instance.addPostFrameCallback((_) => setState(() {
-                selectedUserInstance = list.requireData.where((each) => each.id == defaultValueLoaded.requireData).firstOrNull;
-                selectedUserInstanceSet = true;
-              }));
+            if (!selectedUserInstanceSet && defaultValueLoaded.data != null && selectedUserInstance == null) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                setState(() {
+                  selectedUserInstanceSet = true;
+                });
+                _selectNewUserInstance(list.requireData.where((each) => each.id == defaultValueLoaded.requireData).firstOrNull, makeDefault: false);
+              });
             }
             if (!selectedUserInstanceSet && list.connectionState == ConnectionState.active) {
               WidgetsBinding.instance.addPostFrameCallback((_) => setState(() {
@@ -157,10 +171,7 @@ class _AddLinkViewState extends State<AddLinkView> {
                     ),
                   ],
                   onChanged: (value) {
-                    setState(() {
-                      selectedUserInstance = value;
-                    });
-                    setDefaultUserInstance(selectedUserInstance?.id);
+                    _selectNewUserInstance(value, makeDefault: true);
                   },
                 )),
                 IconButton(
@@ -174,12 +185,9 @@ class _AddLinkViewState extends State<AddLinkView> {
                       if (result is! UserInstance) {
                         return;
                       }
-                      addUserInstances(result);
+                      upsertUserInstance(result);
                       // make it default?
-                      setState(() {
-                        selectedUserInstance = result;
-                      });
-                      setDefaultUserInstance(selectedUserInstance?.id);
+                      _selectNewUserInstance(result, makeDefault: true);
                     },
                     icon: const Icon(Icons.edit))
               ],
@@ -190,40 +198,136 @@ class _AddLinkViewState extends State<AddLinkView> {
     );
   }
 
+  void _selectNewUserInstance(UserInstance? result, { bool makeDefault = false }) {
+    setState(() {
+      selectedUserInstance = result;
+    });
+    collectionsStream.currentKey = selectedUserInstance?.id;
+    if (makeDefault) {
+      setDefaultUserInstance(selectedUserInstance?.id);
+    }
+  }
+
   Widget _collectionSelection(BuildContext context) {
-    return Flex(
-      direction: Axis.horizontal,
-      children: [
-        Flexible(
-            child: DropdownButtonFormField(
-          decoration: const InputDecoration(
-            labelText: 'Collection',
-          ),
-          value: selectedCollection,
-          items: const [
-            DropdownMenuItem(
-              value: null,
-              key: ValueKey("Unorganized"),
-              child: Text("Unorganized"),
+    return StreamBuilder(
+      stream: collectionsStream,
+      builder: (context, collections) {
+        if (collections.hasError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text("Error loading user instances: ${collections.error}",
+                    style: const TextStyle(color: Colors.red)),
+              ],
+            ),
+          );
+        }
+        if (collections.connectionState != ConnectionState.active ||
+            collections.data == null) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        return Flex(
+          direction: Axis.horizontal,
+          children: [
+            Flexible(
+                child: DropdownButtonFormField(
+                  decoration: const InputDecoration(
+                    labelText: 'Collection',
+                  ),
+                  value: selectedCollection,
+                  items: [
+                    for (Collection collection in collections.data ?? [])
+                      DropdownMenuItem(
+                        value: collection,
+                        key: ValueKey(collection.id ?? collection),
+                        child: Row(
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                  color: collection.color != null
+                                      ? colorFromHex(collection.color!)
+                                      : const Color(0xff008080),
+                                  border: Border.all()
+                              ),
+                              constraints: const BoxConstraints(
+                                maxHeight: 28,
+                                maxWidth: 28,
+                              ),
+                            ),
+                            Text(collection.name ?? "Unnamed Collection"),
+                          ],
+                        ),
+                      ),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      selectedCollection = value;
+                    });
+                  },
+                  validator: (value) {
+                    if (value == null) {
+                      return "Please select a category";
+                    }
+                    return null;
+                  },
+                )),
+            IconButton(
+                onPressed: () async {
+                  if (selectedUserInstance?.id != null) {
+                    collectionsReplayer.reset(selectedUserInstance!.id);
+                  }
+                },
+                icon: const Icon(Icons.refresh),
+            ),
+            IconButton(
+                onPressed: () async {
+                  if (selectedUserInstance?.apiToken == null || selectedUserInstance?.server == null) {
+                    return;
+                  }
+                  var result = await Navigator.pushNamed(
+                      context, "collection/new");
+                  if (result == null) {
+                    return;
+                  }
+                  assert(result is Collection);
+                  if (result is! Collection) {
+                    return;
+                  }
+                  if (selectedUserInstance?.apiToken == null || selectedUserInstance?.server == null) {
+                    if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Error creating collection')),
+                        );
+                      }
+                      return;
+                  }
+                  try {
+                    Collection? collection = await createCollection(
+                        selectedUserInstance!.apiToken!,
+                        selectedUserInstance!.server!, result);
+                    if (collection == null) {
+                      return;
+                    }
+                    collectionsReplayer.publish(
+                        [...collections.data ?? [], collection],
+                        currentKey: selectedUserInstance?.id);
+                    setState(() {
+                      selectedCollection = collection;
+                    });
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error creating collection: ${e.toString()}')),
+                      );
+                    }
+                  }
+                },
+                icon: const Icon(Icons.add),
             ),
           ],
-          onChanged: (value) {},
-        )),
-        IconButton(
-            onPressed: () async {
-              var result = await Navigator.pushNamed(context, "collection/new");
-              if (result == null) {
-                return;
-              }
-              assert(result is Collection);
-              if (result is! Collection) {
-                return;
-              }
-              // saveCollectionToDataSource;
-              // selectedCollect = result;
-            },
-            icon: const Icon(Icons.add))
-      ],
+        );
+      }
     );
   }
 
@@ -232,7 +336,7 @@ class _AddLinkViewState extends State<AddLinkView> {
       const Row(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          Text("Labels:"),
+          Text("Tags:"),
         ],
       ),
       Flex(
@@ -240,12 +344,10 @@ class _AddLinkViewState extends State<AddLinkView> {
         // crossAxisAlignment: CrossAxisAlignment.center,
         // mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            child: Wrap(
-              children: [
-                for (Tag tag in tags) Chip(label: Text(tag.name??"Unnamed"))
-              ],
-            ),
+          Wrap(
+            children: [
+              for (Tag tag in tags) Chip(label: Text(tag.name??"Unnamed"))
+            ],
           ),
           IconButton(
               onPressed: () async {

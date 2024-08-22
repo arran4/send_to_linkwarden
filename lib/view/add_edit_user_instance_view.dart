@@ -149,6 +149,7 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
               ..user = usernameTextController.text
               ..server = urlTextController.text
               ..password = passwordTextController.text
+              ..apiToken = apiTokenTextController.text
             );
           } else {
             ScaffoldMessenger.of(context).showSnackBar(

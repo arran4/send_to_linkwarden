@@ -33,4 +33,12 @@ class Collection {
   factory Collection.fromJson(Map<String, dynamic> json) => _$CollectionFromJson(json);
 
   Map<String, dynamic> toJson() => _$CollectionToJson(this);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Collection && runtimeType == other.runtimeType && id == other.id;
+
+  @override
+  int get hashCode => id.hashCode;
 }

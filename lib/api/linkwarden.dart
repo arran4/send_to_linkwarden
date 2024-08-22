@@ -79,7 +79,7 @@ Future<Collection?> createCollection(String token, String baseUrl, Collection co
 
   final response = await http.post(url, headers: headers, body: body);
 
-  if (response.statusCode != 201) {
+  if (response.statusCode < 200 || response.statusCode > 299) {
     throw HttpException('Failed to create collection: ${response.statusCode}');
   }
 
