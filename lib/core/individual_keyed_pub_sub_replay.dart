@@ -4,18 +4,23 @@ class IndividualKeyedPubSubReplayStream<K, T> implements Stream<T> {
   final Stream<T> _realStream;
   K _currentKey;
   final IndividualKeyedPubSubReplay<K, T> _parent;
-
-  IndividualKeyedPubSubReplayStream(this._realStream, K currentKey, this._parent) : _currentKey = currentKey;
+  final StreamController<T> _controller;
+  
+  IndividualKeyedPubSubReplayStream(this._realStream, K currentKey, this._parent, this._controller) : _currentKey = currentKey;
 
   K get currentKey {
     return _currentKey;
   }
 
   set currentKey(K newValue) {
-    _parent.moveSubscription(_currentKey, newValue);
+    _parent.moveSubscription(_currentKey, newValue, _controller);
     _currentKey = newValue;
   }
 
+
+  void removeSelf() {
+    _parent.removeSubscription(_currentKey, _controller);
+  }
 
   @override
   Future<bool> any(bool Function(T element) test) {
@@ -232,14 +237,32 @@ class IndividualKeyedPubSubReplay<K, T> {
     };
     if (!_subscribers.containsKey(initialKey)) {
       _subscribers[initialKey] = [controller];
+    } else {
+      _subscribers[initialKey]!.add(controller);
     }
-    _subscribers[initialKey]!.add(controller);
-    IndividualKeyedPubSubReplayStream<K, T> stream = IndividualKeyedPubSubReplayStream<K, T>(controller.stream, initialKey, this);
+    IndividualKeyedPubSubReplayStream<K, T> stream = IndividualKeyedPubSubReplayStream<K, T>(controller.stream, initialKey, this, controller);
     controller.onCancel = () {
-      _subscribers.remove(controller);
+      stream.removeSelf();
     };
     return stream;
   }
 
-  void moveSubscription(K currentKey, K newValue, ) {}
+  void moveSubscription(K oldKey, K newKey, StreamController<T> controller) {
+    if (oldKey == newKey) {
+      return;
+    }
+    removeSubscription(oldKey, controller);
+    if (!_subscribers.containsKey(newKey)) {
+      _checkAndInitialize(currentKey: newKey);
+      _subscribers[newKey] = [controller];
+    } else {
+      _subscribers[newKey]!.add(controller);
+    }
+  }
+
+  void removeSubscription(currentKey, StreamController<T> controller) {
+    if (_subscribers.containsKey(currentKey)) {
+      _subscribers[currentKey]!.remove(controller);
+    }
+  }
 }
