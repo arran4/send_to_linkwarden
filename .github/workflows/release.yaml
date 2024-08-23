@@ -218,8 +218,8 @@ jobs:
 
       - name: Package Macos App
         run: |
-          python3 -m pip install setuptools
-          npm install -g appdmg
+          python3 -m pip install --break-system-packages setuptools
+          npm install --break-system-packages -g appdmg
           mkdir -p build/${{ env.BUILD_VERSION }}
           appdmg appdmg.json build/linkwarden_mobile-macos-universal.dmg
 
