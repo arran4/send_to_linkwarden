@@ -60,10 +60,10 @@ installed_size: 6604
 # replaces:
 #   - spotify
 
-postinstall_scripts:
-  - echo `Installed my awesome app`
-postuninstall_scripts:
-  - echo `Surprised Pickachu face`
+#postinstall_scripts:
+#  - echo `Installed my awesome app`
+#postuninstall_scripts:
+#  - echo `Surprised Pickachu face`
 
 # application icon path relative to project url
 icon: assets/logo.png
