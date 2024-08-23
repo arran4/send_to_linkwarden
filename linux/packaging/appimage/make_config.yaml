@@ -16,9 +16,9 @@ generic_name: Linkwarden Mobile
 metainfo: linux/packaging/linkwardenmobile.appdata.xml
 
 categories:
-  - Link
+  - Network
+  - WebBrowser
   - Archiving
-  - Bookmarking
 
 startup_notify: true
 
@@ -31,4 +31,4 @@ startup_notify: true
 #
 # include:
 #   - libcurl.so.4
-include: []
+#include: []
