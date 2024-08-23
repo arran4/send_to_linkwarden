@@ -146,7 +146,7 @@ jobs:
       - name: Update version number
         run: |
           curl -sS https://webi.sh/yq | sh
-          yq -i '.version |= "${SEMANTIC_VERSION}+"' pubspec.yaml
+          yq -i ".version |= \"${SEMANTIC_VERSION}+\"" pubspec.yaml
           yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
 
       - name: Build Apk
