@@ -53,11 +53,14 @@ jobs:
           dart pub global activate flutter_distributor
           make innoinstall
           flutter_distributor package --platform=windows --targets=exe --skip-clean
-          mv dist/**/linkwarden_mobile-*-windows-setup.exe dist/linkwarden_mobile-windows-x86_64-setup.exe
+          find dist/ -type f -name 'linkwarden_mobile-*'
+          mv -v dist/**/linkwarden_mobile-*-windows-setup.exe dist/linkwarden_mobile-windows-x86_64-setup.exe
           flutter_distributor package --platform=windows --targets=msix --skip-clean
-          mv dist/**/linkwarden_mobile-*-windows.msix dist/linkwarden_mobile-windows-x86_64-setup.msix
+          find dist/ -type f -name 'linkwarden_mobile-*'
+          mv -v dist/**/linkwarden_mobile-*-windows.msix dist/linkwarden_mobile-windows-x86_64-setup.msix
           flutter_distributor package --platform=windows --targets=zip --skip-clean
-          mv dist/**/linkwarden_mobile-*-windows.zip dist/linkwarden_mobile-windows-x86_64.zip
+          find dist/ -type f -name 'linkwarden_mobile-*'
+          mv -v dist/**/linkwarden_mobile-*-windows.zip dist/linkwarden_mobile-windows-x86_64.zip
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
@@ -85,7 +88,7 @@ jobs:
         run: |
           wget -O appimagetool "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
           chmod +x appimagetool
-          mv appimagetool /usr/local/bin/
+          mv -v appimagetool /usr/local/bin/
 
       - name: Set up semantic version environment var
         run: |
@@ -111,11 +114,12 @@ jobs:
 
       - name: Move Files to dist
         run: |
-          mv dist/**/linkwarden_mobile-*-linux.deb dist/linkwarden_mobile-linux-x86_64.deb
-          mv dist/**/linkwarden_mobile-*-linux.rpm dist/linkwarden_mobile-linux-x86_64.rpm
-          mv dist/**/linkwarden_mobile-*-linux.AppImage dist/linkwarden_mobile-linux-x86_64.AppImage
-          mv dist/**/linkwarden_mobile-*-linux.pkg dist/linkwarden_mobile-linux-x86_64.pkg
-          mv dist/**/linkwarden_mobile-*-linux.zip dist/linkwarden_mobile-linux-x86_64.zip
+          find dist/ -type f -name 'linkwarden_mobile-*'
+          mv -v dist/**/linkwarden_mobile-*-linux.deb dist/linkwarden_mobile-linux-x86_64.deb
+          mv -v dist/**/linkwarden_mobile-*-linux.rpm dist/linkwarden_mobile-linux-x86_64.rpm
+          mv -v dist/**/linkwarden_mobile-*-linux.AppImage dist/linkwarden_mobile-linux-x86_64.AppImage
+          mv -v dist/**/linkwarden_mobile-*-linux.pacman dist/linkwarden_mobile-linux-x86_64.pacman
+          mv -v dist/**/linkwarden_mobile-*-linux.zip dist/linkwarden_mobile-linux-x86_64.zip
 
       - uses: actions/upload-artifact@v3
         with:
@@ -155,8 +159,9 @@ jobs:
           flutter pub get
           flutter build apk
           flutter build appbundle
-          mv build/app/outputs/apk/release/app-release.apk build/linkwarden_mobile-android-all-arch.apk
-          mv build/app/outputs/bundle/release/app-release.aab build/linkwarden_mobile-playstore-all-arch.aab
+          find dist/ -type f -name 'app-release-*'
+          mv -v build/app/outputs/apk/release/app-release.apk build/linkwarden_mobile-android-all-arch.apk
+          mv -v build/app/outputs/bundle/release/app-release.aab build/linkwarden_mobile-playstore-all-arch.aab
 
       - uses: actions/upload-artifact@v3
         with:
