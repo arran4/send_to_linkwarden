@@ -1,0 +1,10 @@
+# script_template: "custom-inno-setup-script.iss"
+app_id: c23a30a2-e9de-44f5-8abb-5bb416160ed1
+publisher_name: Arran Ubels
+publisher_url: https://github.com/arran4/linkwarden_mobile
+display_name: Linkwarden Mobile
+create_desktop_icon: true
+launch_at_startup: true
+# install_dir_name: "D:\\LINKWARDEN-MOBILE"
+locales:
+  - en
