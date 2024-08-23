@@ -15,8 +15,17 @@ import 'package:linkwarden_mobile/view/select_tags_view.dart';
 
 import 'add_edit_user_instance_view.dart';
 
+class AddLinkViewArguments {
+  final String? link;
+  final String? name;
+  final String? description;
+
+  AddLinkViewArguments({this.link, this.name, this.description});
+}
+
 class AddLinkView extends StatefulWidget {
-  const AddLinkView({super.key});
+  final AddLinkViewArguments? arguments;
+  const AddLinkView({super.key, this.arguments });
 
   @override
   State<AddLinkView> createState() => _AddLinkViewState();
@@ -31,7 +40,7 @@ class _AddLinkViewState extends State<AddLinkView> {
   late IndividualKeyedPubSubReplayStream<String?, List<Collection>?> collectionsStream;
   TextEditingController nameTextController = TextEditingController();
   TextEditingController descriptionTextController = TextEditingController();
-  TextEditingController urlTextController = TextEditingController();
+  TextEditingController linkTextController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -68,8 +77,16 @@ class _AddLinkViewState extends State<AddLinkView> {
     super.initState();
     tags = [];
     collectionsStream = collectionsReplayer.subscribe(initialKey: null);
+    if (widget.arguments?.link != null) {
+      linkTextController.text = widget.arguments!.link!;
+    }
+    if (widget.arguments?.name != null) {
+      nameTextController.text = widget.arguments!.name!;
+    }
+    if (widget.arguments?.description != null) {
+      descriptionTextController.text = widget.arguments!.description!;
+    }
   }
-
 
   @override
   void dispose() {
@@ -104,7 +121,7 @@ class _AddLinkViewState extends State<AddLinkView> {
                 Link(
                     name: nameTextController.text,
                     description: descriptionTextController.text,
-                    url: urlTextController.text,
+                    url: linkTextController.text,
                     collection: selectedCollection,
                     tags: tags.map((tagName) {
                       if (tagLookup.containsKey(tagName) &&
@@ -126,12 +143,16 @@ class _AddLinkViewState extends State<AddLinkView> {
           if (!context.mounted) {
             return;
           }
-          if (result != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Link ${result.id} created')),
-            );
+          if (result == null) {
             return;
           }
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Link ${result.id} created')),
+          );
+          if (widget.arguments != null) {
+            Navigator.pop(context, result);
+          }
+          return;
         },
         child: const Text('Submit'),
       ),
@@ -140,7 +161,7 @@ class _AddLinkViewState extends State<AddLinkView> {
 
   void _resetForm() {
     formState.currentState?.reset();
-    urlTextController.text = "";
+    linkTextController.text = "";
     nameTextController.text = "";
     descriptionTextController.text = "";
     setState(() {
@@ -442,7 +463,7 @@ class _AddLinkViewState extends State<AddLinkView> {
         }
         return null;
       },
-      controller: urlTextController,
+      controller: linkTextController,
     );
   }
 
