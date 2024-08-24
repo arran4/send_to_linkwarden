@@ -35,7 +35,7 @@ jobs:
           yq -i ".version |= \"${SEMANTIC_VERSION}+\"" pubspec.yaml
           yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
 
-      - name: Build Windows Executables
+      - name: Release On Windows
         run: |
           flutter upgrade
           flutter pub get
@@ -86,7 +86,7 @@ jobs:
           yq -i ".version |= \"${SEMANTIC_VERSION}+\"" pubspec.yaml
           yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
 
-      - name: Build Linux Packages
+      - name: Release On Linux
         run: |
           flutter upgrade
           flutter pub get
