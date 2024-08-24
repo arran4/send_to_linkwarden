@@ -113,7 +113,7 @@ jobs:
             --github-repo-owner "${GITHUB_REPOSITORY_OWNER}" \
             --github-repo-name "${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}"
           flutter_distributor publish \
-            --path "dist/${FLUTTER_VERSION}/linkwarden_mobile-${FLUTTER_VERSION}-linux.appimage" \
+            --path "dist/${FLUTTER_VERSION}/linkwarden_mobile-${FLUTTER_VERSION}-linux.AppImage" \
             --targets github \
             --github-repo-owner "${GITHUB_REPOSITORY_OWNER}" \
             --github-repo-name "${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}"
