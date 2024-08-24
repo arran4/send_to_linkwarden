@@ -215,8 +215,7 @@ jobs:
           flutter upgrade
           flutter pub get
           flutter config --enable-macos-desktop
-#          flutter_distributor package --platform macos --targets dmg,pkg TODO
-          flutter_distributor package --platform macos --targets dmg
+          flutter_distributor package --platform macos --targets dmg # ,pkg TODO
 
       - name: Publish Mac OS X Packages
         run: |
@@ -225,11 +224,11 @@ jobs:
             --targets github \
             --github-repo-owner "${GITHUB_REPOSITORY_OWNER}" \
             --github-repo-name "${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}"
-#          flutter_distributor publish \
-#            --path "dist/${FLUTTER_VERSION}/linkwarden_mobile-${FLUTTER_VERSION}-macos.pkg" \
-#            --targets github \
-#            --github-repo-owner "${GITHUB_REPOSITORY_OWNER}" \
-#            --github-repo-name "${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}"
+          #flutter_distributor publish \
+          #  --path "dist/${FLUTTER_VERSION}/linkwarden_mobile-${FLUTTER_VERSION}-macos.pkg" \
+          #  --targets github \
+          #  --github-repo-owner "${GITHUB_REPOSITORY_OWNER}" \
+          #  --github-repo-name "${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}"
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
