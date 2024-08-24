@@ -69,6 +69,15 @@ releases:
           args:
             repo-owner: arran4
             repo-name: linkwarden_mobile
+      - name: web-direct
+        package:
+          platform: web
+          target: direct
+        publish:
+          target: github
+          args:
+            repo-owner: arran4
+            repo-name: linkwarden_mobile
   - name: onwindows
     jobs:
       - name: windows-exe
@@ -98,7 +107,7 @@ releases:
           args:
             repo-owner: arran4
             repo-name: linkwarden_mobile
-  - name: TODO
+  - name: onmac
     jobs:
       - name: ios-ipa
         package:
@@ -106,51 +115,6 @@ releases:
           target: ipa
           build_args:
             export-method: ad-hoc
-        publish:
-          target: github
-          args:
-            repo-owner: arran4
-            repo-name: linkwarden_mobile
-      - name: linux-appimage
-        package:
-          platform: linux
-          target: appimage
-        publish:
-          target: github
-          args:
-            repo-owner: arran4
-            repo-name: linkwarden_mobile
-      - name: linux-deb
-        package:
-          platform: linux
-          target: deb
-        publish:
-          target: github
-          args:
-            repo-owner: arran4
-            repo-name: linkwarden_mobile
-      - name: linux-rpm
-        package:
-          platform: linux
-          target: rpm
-        publish:
-          target: github
-          args:
-            repo-owner: arran4
-            repo-name: linkwarden_mobile
-      - name: linux-pacman
-        package:
-          platform: linux
-          target: pacman
-        publish:
-          target: github
-          args:
-            repo-owner: arran4
-            repo-name: linkwarden_mobile
-      - name: linux-zip
-        package:
-          platform: linux
-          target: zip
         publish:
           target: github
           args:
@@ -173,42 +137,6 @@ releases:
         package:
           platform: macos
           target: zip
-        publish:
-          target: github
-          args:
-            repo-owner: arran4
-            repo-name: linkwarden_mobile
-      - name: windows-exe
-        package:
-          platform: windows
-          target: exe
-        publish:
-          target: github
-          args:
-            repo-owner: arran4
-            repo-name: linkwarden_mobile
-      - name: windows-msix
-        package:
-          platform: windows
-          target: msix
-        publish:
-          target: github
-          args:
-            repo-owner: arran4
-            repo-name: linkwarden_mobile
-      - name: windows-zip
-        package:
-          platform: windows
-          target: zip
-        publish:
-          target: github
-          args:
-            repo-owner: arran4
-            repo-name: linkwarden_mobile
-      - name: web-direct
-        package:
-          platform: web
-          target: direct
         publish:
           target: github
           args:
