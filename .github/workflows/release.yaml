@@ -130,13 +130,9 @@ jobs:
       - linux
       - macos
     steps:
-      - name: Release
-        uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
+      - uses: actions/checkout@v3
+      - name: No longer draft
+        run: |
+          gh release edit "$(echo ${GITHUB_REF#refs/tags/v})" --draft=false
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-        with:
-          generate_release_notes: true
-          make_latest: true
-          draft: false
-          prerelease: false
