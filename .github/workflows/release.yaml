@@ -133,6 +133,6 @@ jobs:
       - uses: actions/checkout@v3
       - name: No longer draft
         run: |
-          gh release edit "$(echo ${GITHUB_REF#refs/tags/v})" --draft=false
+          gh release edit "$(echo ${GITHUB_REF#refs/tags/})" --draft=false
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
