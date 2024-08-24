@@ -47,7 +47,36 @@ releases:
           args:
             repo-owner: $GITHUB_REPOSITORY_OWNER
             repo-name: $GITHUB_REPOSITORY_NAME
-  - name: other
+  - name: onwindows
+    jobs:
+      - name: windows-exe
+        package:
+          platform: windows
+          target: exe
+        publish:
+          target: github
+          args:
+            repo-owner: $GITHUB_REPOSITORY_OWNER
+            repo-name: $GITHUB_REPOSITORY_NAME
+      - name: windows-msix
+        package:
+          platform: windows
+          target: msix
+        publish:
+          target: github
+          args:
+            repo-owner: $GITHUB_REPOSITORY_OWNER
+            repo-name: $GITHUB_REPOSITORY_NAME
+      - name: windows-zip
+        package:
+          platform: windows
+          target: zip
+        publish:
+          target: github
+          args:
+            repo-owner: $GITHUB_REPOSITORY_OWNER
+            repo-name: $GITHUB_REPOSITORY_NAME
+  - name: TODO
     jobs:
       - name: android-aab
         package:

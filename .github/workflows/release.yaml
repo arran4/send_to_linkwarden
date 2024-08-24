@@ -41,20 +41,7 @@ jobs:
           flutter pub get
           flutter config --enable-windows-desktop
           dart pub global activate flutter_distributor
-          flutter_distributor package --platform=windows --targets=exe,msix,zip --skip-clean
-
-      - name: Publish Windows Executables
-        run: |
-          flutter_distributor publish \
-            --path "dist/${FLUTTER_VERSION}/linkwarden_mobile-${FLUTTER_VERSION}-windows.zip" \
-            --targets github \
-            --github-repo-owner "${GITHUB_REPOSITORY_OWNER}" \
-            --github-repo-name "${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}"
-          flutter_distributor publish \
-            --path "dist/${FLUTTER_VERSION}/linkwarden_mobile-${FLUTTER_VERSION}-windows-setup.exe" \
-            --targets github \
-            --github-repo-owner "${GITHUB_REPOSITORY_OWNER}" \
-            --github-repo-name "${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}"
+          flutter_distributor release --name onwindows
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
