@@ -44,7 +44,6 @@ jobs:
           flutter_distributor package --platform=windows --targets=exe,msix,zip --skip-clean
 
       - name: Publish Windows Executables
-        shell: bash
         run: |
           flutter_distributor publish \
             --path "dist/${FLUTTER_VERSION}/linkwarden_mobile-${FLUTTER_VERSION}-windows.zip" \
