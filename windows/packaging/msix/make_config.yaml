@@ -6,5 +6,5 @@ protocol_activation: "http,https"
 capabilities: "internetClient"
 # store: true
 publisher: "CN=Ubels Software Development, O=Ubels Software Development, C=AU"
-#install_certificate: "true"
+install_certificate: "true"
 sign_msix: "false"
