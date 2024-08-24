@@ -10,7 +10,7 @@ releases:
           target: github
           args:
             repo-owner: arran4
-            repo-name: bitwarden_mobile
+            repo-name: linkwarden_mobile
       - name: linux-deb
         package:
           platform: linux
@@ -19,7 +19,7 @@ releases:
           target: github
           args:
             repo-owner: arran4
-            repo-name: bitwarden_mobile
+            repo-name: linkwarden_mobile
       - name: linux-rpm
         package:
           platform: linux
@@ -28,7 +28,7 @@ releases:
           target: github
           args:
             repo-owner: arran4
-            repo-name: bitwarden_mobile
+            repo-name: linkwarden_mobile
       - name: linux-pacman
         package:
           platform: linux
@@ -37,7 +37,7 @@ releases:
           target: github
           args:
             repo-owner: arran4
-            repo-name: bitwarden_mobile
+            repo-name: linkwarden_mobile
       - name: linux-zip
         package:
           platform: linux
@@ -46,7 +46,7 @@ releases:
           target: github
           args:
             repo-owner: arran4
-            repo-name: bitwarden_mobile
+            repo-name: linkwarden_mobile
   - name: onwindows
     jobs:
       - name: windows-exe
@@ -57,7 +57,7 @@ releases:
           target: github
           args:
             repo-owner: arran4
-            repo-name: bitwarden_mobile
+            repo-name: linkwarden_mobile
       - name: windows-msix
         package:
           platform: windows
@@ -66,7 +66,7 @@ releases:
           target: github
           args:
             repo-owner: arran4
-            repo-name: bitwarden_mobile
+            repo-name: linkwarden_mobile
       - name: windows-zip
         package:
           platform: windows
@@ -75,7 +75,7 @@ releases:
           target: github
           args:
             repo-owner: arran4
-            repo-name: bitwarden_mobile
+            repo-name: linkwarden_mobile
   - name: TODO
     jobs:
       - name: android-aab
@@ -88,7 +88,7 @@ releases:
           target: github
           args:
             repo-owner: arran4
-            repo-name: bitwarden_mobile
+            repo-name: linkwarden_mobile
       - name: android-apk
         package:
           platform: android
@@ -99,7 +99,7 @@ releases:
           target: github
           args:
             repo-owner: arran4
-            repo-name: bitwarden_mobile
+            repo-name: linkwarden_mobile
       - name: ios-ipa
         package:
           platform: ios
@@ -110,7 +110,7 @@ releases:
           target: github
           args:
             repo-owner: arran4
-            repo-name: bitwarden_mobile
+            repo-name: linkwarden_mobile
       - name: linux-appimage
         package:
           platform: linux
@@ -119,7 +119,7 @@ releases:
           target: github
           args:
             repo-owner: arran4
-            repo-name: bitwarden_mobile
+            repo-name: linkwarden_mobile
       - name: linux-deb
         package:
           platform: linux
@@ -128,7 +128,7 @@ releases:
           target: github
           args:
             repo-owner: arran4
-            repo-name: bitwarden_mobile
+            repo-name: linkwarden_mobile
       - name: linux-rpm
         package:
           platform: linux
@@ -137,7 +137,7 @@ releases:
           target: github
           args:
             repo-owner: arran4
-            repo-name: bitwarden_mobile
+            repo-name: linkwarden_mobile
       - name: linux-pacman
         package:
           platform: linux
@@ -146,7 +146,7 @@ releases:
           target: github
           args:
             repo-owner: arran4
-            repo-name: bitwarden_mobile
+            repo-name: linkwarden_mobile
       - name: linux-zip
         package:
           platform: linux
@@ -155,7 +155,7 @@ releases:
           target: github
           args:
             repo-owner: arran4
-            repo-name: bitwarden_mobile
+            repo-name: linkwarden_mobile
       - name: macos-dmg
         package:
           platform: macos
@@ -168,7 +168,7 @@ releases:
           target: github
           args:
             repo-owner: arran4
-            repo-name: bitwarden_mobile
+            repo-name: linkwarden_mobile
       - name: macos-zip
         package:
           platform: macos
@@ -177,7 +177,7 @@ releases:
           target: github
           args:
             repo-owner: arran4
-            repo-name: bitwarden_mobile
+            repo-name: linkwarden_mobile
       - name: windows-exe
         package:
           platform: windows
@@ -186,7 +186,7 @@ releases:
           target: github
           args:
             repo-owner: arran4
-            repo-name: bitwarden_mobile
+            repo-name: linkwarden_mobile
       - name: windows-msix
         package:
           platform: windows
@@ -195,7 +195,7 @@ releases:
           target: github
           args:
             repo-owner: arran4
-            repo-name: bitwarden_mobile
+            repo-name: linkwarden_mobile
       - name: windows-zip
         package:
           platform: windows
@@ -204,7 +204,7 @@ releases:
           target: github
           args:
             repo-owner: arran4
-            repo-name: bitwarden_mobile
+            repo-name: linkwarden_mobile
       - name: web-direct
         package:
           platform: web
@@ -213,4 +213,4 @@ releases:
           target: github
           args:
             repo-owner: arran4
-            repo-name: bitwarden_mobile
+            repo-name: linkwarden_mobile
