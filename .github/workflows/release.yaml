@@ -35,6 +35,7 @@ jobs:
           yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
 
       - name: Build Windows Executables
+        shell: bash
         run: |
           flutter upgrade
           flutter pub get
