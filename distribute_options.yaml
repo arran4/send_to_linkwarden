@@ -47,6 +47,28 @@ releases:
           args:
             repo-owner: arran4
             repo-name: linkwarden_mobile
+      - name: android-aab
+        package:
+          platform: android
+          target: aab
+          build_args:
+            target-platform: android-arm,android-arm64
+        publish:
+          target: github
+          args:
+            repo-owner: arran4
+            repo-name: linkwarden_mobile
+      - name: android-apk
+        package:
+          platform: android
+          target: apk
+          build_args:
+            target-platform: android-arm,android-arm64
+        publish:
+          target: github
+          args:
+            repo-owner: arran4
+            repo-name: linkwarden_mobile
   - name: onwindows
     jobs:
       - name: windows-exe
@@ -78,28 +100,6 @@ releases:
             repo-name: linkwarden_mobile
   - name: TODO
     jobs:
-      - name: android-aab
-        package:
-          platform: android
-          target: aab
-          build_args:
-            target-platform: android-arm,android-arm64
-        publish:
-          target: github
-          args:
-            repo-owner: arran4
-            repo-name: linkwarden_mobile
-      - name: android-apk
-        package:
-          platform: android
-          target: apk
-          build_args:
-            target-platform: android-arm,android-arm64
-        publish:
-          target: github
-          args:
-            repo-owner: arran4
-            repo-name: linkwarden_mobile
       - name: ios-ipa
         package:
           platform: ios
