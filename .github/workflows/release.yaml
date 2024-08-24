@@ -4,22 +4,10 @@ on:
       - v*
 
 permissions:
-#  actions: read|write|none
-#  checks: read|write|none
   contents: write
-#  deployments: read|write|none
-#  id-token: read|write|none
-#  issues: read|write|none
-#  discussions: read|write|none
-#  packages: read|write|none
-#  pages: read|write|none
-#  pull-requests: read|write|none
-#  repository-projects: read|write|none
-#  security-events: read|write|none
-#  statuses: read|write|none
 
 env:
-  FLUTTER_VERSION: '3.19.5'
+  FLUTTER_VERSION: '3.24.1'
 
 jobs:
   windows:
@@ -36,6 +24,7 @@ jobs:
         run: |
           TAG_NAME=$(echo ${GITHUB_REF#refs/tags/v})
           echo "SEMANTIC_VERSION=$TAG_NAME" >> $GITHUB_ENV
+          echo "FLUTTER_VERSION=${TAG_NAME}+${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
         shell: bash
 
       - name: Update version number
@@ -45,22 +34,29 @@ jobs:
           yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
         shell: bash
 
-      - name: Build Windows Executable
+      - name: Build Windows Executables
         run: |
           flutter upgrade
           flutter pub get
           flutter config --enable-windows-desktop
           dart pub global activate flutter_distributor
           make innoinstall
-          flutter_distributor package --platform=windows --targets=exe --skip-clean
-          find dist/ -type f -name 'linkwarden_mobile-*'
-          mv -v dist/**/linkwarden_mobile-*-windows-setup.exe dist/linkwarden_mobile-windows-x86_64-setup.exe
-          flutter_distributor package --platform=windows --targets=msix --skip-clean
-          find dist/ -type f -name 'linkwarden_mobile-*'
-          mv -v dist/**/linkwarden_mobile-*-windows.msix dist/linkwarden_mobile-windows-x86_64-setup.msix
-          flutter_distributor package --platform=windows --targets=zip --skip-clean
-          find dist/ -type f -name 'linkwarden_mobile-*'
-          mv -v dist/**/linkwarden_mobile-*-windows.zip dist/linkwarden_mobile-windows-x86_64.zip
+          flutter_distributor package --platform=windows --targets=exe,msix,zip --skip-clean
+
+      - name: Publish Windows Executables
+        run: |
+          flutter_distributor publish \
+            --path "dist/${FLUTTER_VERSION}/linkwarden_mobile-${FLUTTER_VERSION}-windows.zip" \
+            --targets github \
+            --github-repo-owner "${GITHUB_REPOSITORY_OWNER}" \
+            --github-repo-name "${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}"
+          flutter_distributor publish \
+            --path "dist/${FLUTTER_VERSION}/linkwarden_mobile-${FLUTTER_VERSION}-windows-setup.exe" \
+            --targets github \
+            --github-repo-owner "${GITHUB_REPOSITORY_OWNER}" \
+            --github-repo-name "${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}"
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v3
@@ -94,6 +90,7 @@ jobs:
         run: |
           TAG_NAME=$(echo ${GITHUB_REF#refs/tags/v})
           echo "SEMANTIC_VERSION=$TAG_NAME" >> $GITHUB_ENV
+          echo "FLUTTER_VERSION=${TAG_NAME}+${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
 
       - name: Update version number
         run: |
@@ -106,26 +103,37 @@ jobs:
           flutter upgrade
           flutter pub get
           dart pub global activate flutter_distributor
-          flutter_distributor package --platform=linux --targets=deb
-          flutter_distributor package --platform=linux --targets=appimage
-          flutter_distributor package --platform=linux --targets=rpm
-          flutter_distributor package --platform=linux --targets=pacman
-          flutter_distributor package --platform=linux --targets=zip
+          flutter_distributor package --platform=linux --targets=deb,appimage,rpm,pacman,zip
 
-      - name: Move Files to dist
+      - name: Publish Linux Packages
         run: |
-          find dist/ -type f -name 'linkwarden_mobile-*'
-          mv -v dist/**/linkwarden_mobile-*-linux.deb dist/linkwarden_mobile-linux-x86_64.deb
-          mv -v dist/**/linkwarden_mobile-*-linux.rpm dist/linkwarden_mobile-linux-x86_64.rpm
-          mv -v dist/**/linkwarden_mobile-*-linux.AppImage dist/linkwarden_mobile-linux-x86_64.AppImage
-          mv -v dist/**/linkwarden_mobile-*-linux.pacman dist/linkwarden_mobile-linux-x86_64.pacman
-          mv -v dist/**/linkwarden_mobile-*-linux.zip dist/linkwarden_mobile-linux-x86_64.zip
-
-      - uses: actions/upload-artifact@v3
-        with:
-          name: linkwarden_mobile-Release-Binaries
-          path: dist/
-          retention-days: 1
+          flutter_distributor publish \
+            --path "dist/${FLUTTER_VERSION}/linkwarden_mobile-${FLUTTER_VERSION}-linux.deb" \
+            --targets github \
+            --github-repo-owner "${GITHUB_REPOSITORY_OWNER}" \
+            --github-repo-name "${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}"
+          flutter_distributor publish \
+            --path "dist/${FLUTTER_VERSION}/linkwarden_mobile-${FLUTTER_VERSION}-linux.appimage" \
+            --targets github \
+            --github-repo-owner "${GITHUB_REPOSITORY_OWNER}" \
+            --github-repo-name "${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}"
+          flutter_distributor publish \
+            --path "dist/${FLUTTER_VERSION}/linkwarden_mobile-${FLUTTER_VERSION}-linux.rpm" \
+            --targets github \
+            --github-repo-owner "${GITHUB_REPOSITORY_OWNER}" \
+            --github-repo-name "${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}"
+          flutter_distributor publish \
+            --path "dist/${FLUTTER_VERSION}/linkwarden_mobile-${FLUTTER_VERSION}-linux.pacman" \
+            --targets github \
+            --github-repo-owner "${GITHUB_REPOSITORY_OWNER}" \
+            --github-repo-name "${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}"
+          flutter_distributor publish \
+            --path "dist/${FLUTTER_VERSION}/linkwarden_mobile-${FLUTTER_VERSION}-linux.zip" \
+            --targets github \
+            --github-repo-owner "${GITHUB_REPOSITORY_OWNER}" \
+            --github-repo-name "${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}"
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
   android:
     runs-on: ubuntu-latest
@@ -146,6 +154,7 @@ jobs:
         run: |
           TAG_NAME=$(echo ${GITHUB_REF#refs/tags/v})
           echo "SEMANTIC_VERSION=$TAG_NAME" >> $GITHUB_ENV
+          echo "FLUTTER_VERSION=${TAG_NAME}+${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
 
       - name: Update version number
         run: |
@@ -157,19 +166,22 @@ jobs:
         run: |
           flutter upgrade
           flutter pub get
-          flutter build apk
-          flutter build appbundle
-          find dist/ -type f -name 'app-release-*'
-          mv -v build/app/outputs/apk/release/app-release.apk build/linkwarden_mobile-android-all-arch.apk
-          mv -v build/app/outputs/bundle/release/app-release.aab build/linkwarden_mobile-playstore-all-arch.aab
+          flutter_distributor package --platform android --targets apk,aab
 
-      - uses: actions/upload-artifact@v3
-        with:
-          name: linkwarden_mobile-Release-Binaries
-          path: |
-            build/linkwarden_mobile-android-all-arch.apk
-            build/linkwarden_mobile-playstore-all-arch.aab
-          retention-days: 1
+      - name: Publish Android Packages
+        run: |
+          flutter_distributor publish \
+            --path "dist/${FLUTTER_VERSION}/linkwarden_mobile-${FLUTTER_VERSION}-android.apk" \
+            --targets github \
+            --github-repo-owner "${GITHUB_REPOSITORY_OWNER}" \
+            --github-repo-name "${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}"
+          flutter_distributor publish \
+            --path "dist/${FLUTTER_VERSION}/linkwarden_mobile-${FLUTTER_VERSION}-android.aab" \
+            --targets github \
+            --github-repo-owner "${GITHUB_REPOSITORY_OWNER}" \
+            --github-repo-name "${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}"
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
   macos:
     runs-on: macos-latest
@@ -181,31 +193,16 @@ jobs:
           cache: true
           flutter-version: ${{ env.FLUTTER_VERSION  }}
 
-     # - name: Install Apple Certificate
-     #   uses: apple-actions/import-codesign-certs@v1
-     #   with:
-     #     p12-file-base64: ${{ secrets.BUILD_CERTIFICATE_BASE64 }}
-     #     p12-password: ${{ secrets.P12_PASSWORD }}
-     #     keychain-password: ${{ secrets.KEYCHAIN_PASSWORD }}
-#
-      #- name: Install the provisioning profile
-      #  env:
-      #    BUILD_PROVISION_PROFILE_BASE64: ${{ secrets.BUILD_PROVISION_PROFILE_BASE64 }}
-      #  run: |
-      #    # create variables
-      #    PP_PATH=$RUNNER_TEMP/build_pp.provisionprofile
-#
-      #    # import certificate and provisioning profile from secrets
-      #    echo -n "$BUILD_PROVISION_PROFILE_BASE64" | base64 --decode -o $PP_PATH
-#
-      #    # apply provisioning profile
-      #    mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-      #    cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
+      - name: Dependencies
+        run: |
+          python3 -m pip install --break-system-packages setuptools
+          npm install --break-system-packages -g appdmg      
 
       - name: Set up semantic version environment var
         run: |
           TAG_NAME=$(echo ${GITHUB_REF#refs/tags/v})
           echo "SEMANTIC_VERSION=$TAG_NAME" >> $GITHUB_ENV
+          echo "FLUTTER_VERSION=${TAG_NAME}+${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
 
       - name: Update version number
         run: |
@@ -218,67 +215,21 @@ jobs:
           flutter upgrade
           flutter pub get
           flutter config --enable-macos-desktop
-          flutter build macos
-          du -sh build/macos/Build/Products/Release/*
+#          flutter_distributor package --platform macos --targets dmg,pkg TODO
+          flutter_distributor package --platform macos --targets dmg
 
-      - name: Package Macos App
+      - name: Publish Mac OS X Packages
         run: |
-          python3 -m pip install --break-system-packages setuptools
-          npm install --break-system-packages -g appdmg
-          mkdir -p build/${{ env.BUILD_VERSION }}
-          appdmg appdmg.json build/linkwarden_mobile-macos-universal.dmg
+          flutter_distributor publish \
+            --path "dist/${FLUTTER_VERSION}/linkwarden_mobile-${FLUTTER_VERSION}-macos.dmg" \
+            --targets github \
+            --github-repo-owner "${GITHUB_REPOSITORY_OWNER}" \
+            --github-repo-name "${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}"
+#          flutter_distributor publish \
+#            --path "dist/${FLUTTER_VERSION}/linkwarden_mobile-${FLUTTER_VERSION}-macos.pkg" \
+#            --targets github \
+#            --github-repo-owner "${GITHUB_REPOSITORY_OWNER}" \
+#            --github-repo-name "${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}"
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
-#      - name: Clean up keychain and provisioning profile
-#        if: ${{ always() }}
-#        run: |
-#          security delete-keychain $RUNNER_TEMP/app-signing.keychain-db
-#          rm ~/Library/MobileDevice/Provisioning\ Profiles/build_pp.provisionprofile
-
-      - uses: actions/upload-artifact@v3
-        with:
-          name: linkwarden_mobile-Release-Binaries
-          path: |
-            build/linkwarden_mobile-macos-universal.dmg
-          retention-days: 1
-
-  upload:
-    runs-on: ubuntu-latest
-    if: ${{ always() }}
-    needs:
-      - windows
-      - linux
-      - android
-      - macos
-    steps:
-      - uses: actions/download-artifact@v3
-        with:
-          name: linkwarden_mobile-Release-Binaries
-          path: ./linkwarden_mobile-Release-Binaries
-
-      - name: Install dependencies
-        run: sudo apt-get install tree -y
-
-      - name: Generate Checksums
-        run: |
-          tree .
-          md5sum linkwarden_mobile-Release-Binaries/* >> RELEASE.md5sum
-          sha256sum linkwarden_mobile-Release-Binaries/* >> RELEASE.sha256sum
-          sed -i 's|linkwarden_mobile-Release-Binaries/||' RELEASE.sha256sum RELEASE.md5sum
-
-      - uses: actions/upload-artifact@v3
-        with:
-          name: linkwarden_mobile-Release-Binaries
-          path: |
-            RELEASE.md5sum
-            RELEASE.sha256sum
-          retention-days: 1
-
-      - name: Upload Release Binaries (stable)
-        uses: ncipollo/release-action@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          omitBodyDuringUpdate: true
-          omitNameDuringUpdate: true
-          omitPrereleaseDuringUpdate: true
-          allowUpdates: true
-          artifacts: linkwarden_mobile-Release-Binaries/*,RELEASE.sha256sum,RELEASE.md5sum
