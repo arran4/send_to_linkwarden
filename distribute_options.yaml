@@ -1,157 +1,140 @@
 output: dist/
-variables:
-#  FLUTTER_ROOT: ~/fvm/versions/3.16.5
-# PGYER_API_KEY: your api key
 releases:
-  - name: dev-profile
+  - name: prod
     jobs:
       - name: android-aab
         package:
           platform: android
           target: aab
           build_args:
-            profile: true
             target-platform: android-arm,android-arm64
+        publish:
+          target: github
+          args:
+            repo-owner: $GITHUB_REPOSITORY_OWNER
+            repo-name: $GITHUB_REPOSITORY_NAME
       - name: android-apk
         package:
           platform: android
           target: apk
           build_args:
-            profile: true
             target-platform: android-arm,android-arm64
+        publish:
+          target: github
+          args:
+            repo-owner: $GITHUB_REPOSITORY_OWNER
+            repo-name: $GITHUB_REPOSITORY_NAME
       - name: ios-ipa
         package:
           platform: ios
           target: ipa
           build_args:
-            profile: true
             export-method: ad-hoc
+        publish:
+          target: github
+          args:
+            repo-owner: $GITHUB_REPOSITORY_OWNER
+            repo-name: $GITHUB_REPOSITORY_NAME
       - name: linux-appimage
         package:
           platform: linux
           target: appimage
-          build_args:
-            profile: true
+        publish:
+          target: github
+          args:
+            repo-owner: $GITHUB_REPOSITORY_OWNER
+            repo-name: $GITHUB_REPOSITORY_NAME
       - name: linux-deb
         package:
           platform: linux
           target: deb
-          build_args:
-            profile: true
+        publish:
+          target: github
+          args:
+            repo-owner: $GITHUB_REPOSITORY_OWNER
+            repo-name: $GITHUB_REPOSITORY_NAME
       - name: linux-rpm
         package:
           platform: linux
           target: rpm
-          build_args:
-            profile: true
+        publish:
+          target: github
+          args:
+            repo-owner: $GITHUB_REPOSITORY_OWNER
+            repo-name: $GITHUB_REPOSITORY_NAME
       - name: linux-pacman
         package:
           platform: linux
           target: pacman
-          build_args:
-            profile: true
+        publish:
+          target: github
+          args:
+            repo-owner: $GITHUB_REPOSITORY_OWNER
+            repo-name: $GITHUB_REPOSITORY_NAME
       - name: linux-zip
         package:
           platform: linux
           target: zip
-          build_args:
-            profile: true
+        publish:
+          target: github
+          args:
+            repo-owner: $GITHUB_REPOSITORY_OWNER
+            repo-name: $GITHUB_REPOSITORY_NAME
       - name: macos-dmg
         package:
           platform: macos
           target: dmg
-          build_args:
-            profile: true
+#      - name: macos-pkg
+#        package:
+#          platform: macos
+#          target: pkg
+        publish:
+          target: github
+          args:
+            repo-owner: $GITHUB_REPOSITORY_OWNER
+            repo-name: $GITHUB_REPOSITORY_NAME
       - name: macos-zip
         package:
           platform: macos
           target: zip
-          build_args:
-            profile: true
+        publish:
+          target: github
+          args:
+            repo-owner: $GITHUB_REPOSITORY_OWNER
+            repo-name: $GITHUB_REPOSITORY_NAME
       - name: windows-exe
         package:
           platform: windows
           target: exe
-          build_args:
-            profile: true
-      # msix does not support profile mode yet
-      # - name: windows-msix
-      #   package:
-      #     platform: windows
-      #     target: msix
-      #     build_args:
-      #       profile: true
-      - name: windows-zip
-        package:
-          platform: windows
-          target: zip
-          build_args:
-            profile: true
-  - name: dev-release
-    jobs:
-      - name: android-aab
-        variables:
-          FLUTTER_ROOT: ~/fvm/versions/3.10.3
-        package:
-          platform: android
-          target: aab
-          build_args:
-            target-platform: android-arm,android-arm64
-      - name: android-apk
-        package:
-          platform: android
-          target: apk
-          build_args:
-            target-platform: android-arm,android-arm64
-      - name: ios-ipa
-        package:
-          platform: ios
-          target: ipa
-          build_args:
-            export-method: ad-hoc
-      - name: linux-appimage
-        package:
-          platform: linux
-          target: appimage
-      - name: linux-deb
-        package:
-          platform: linux
-          target: deb
-      - name: linux-rpm
-        package:
-          platform: linux
-          target: rpm
-      - name: linux-zip
-        package:
-          platform: linux
-          target: zip
-      - name: macos-dmg
-        package:
-          platform: macos
-          target: dmg
-          build_args:
-            dart-define-from-file: env.json
-      - name: macos-pkg
-        package:
-          platform: macos
-          target: pkg
-      - name: macos-zip
-        package:
-          platform: macos
-          target: zip
-      - name: windows-exe
-        package:
-          platform: windows
-          target: exe
+        publish:
+          target: github
+          args:
+            repo-owner: $GITHUB_REPOSITORY_OWNER
+            repo-name: $GITHUB_REPOSITORY_NAME
       - name: windows-msix
         package:
           platform: windows
           target: msix
+        publish:
+          target: github
+          args:
+            repo-owner: $GITHUB_REPOSITORY_OWNER
+            repo-name: $GITHUB_REPOSITORY_NAME
       - name: windows-zip
         package:
           platform: windows
           target: zip
+        publish:
+          target: github
+          args:
+            repo-owner: $GITHUB_REPOSITORY_OWNER
+            repo-name: $GITHUB_REPOSITORY_NAME
       - name: web-direct
         package:
           platform: web
           target: direct
+        publish:
+          target: github
+          args:
+            repo-owner: $GITHUB_REPOSITORY_OWNER
+            repo-name: $GITHUB_REPOSITORY_NAME

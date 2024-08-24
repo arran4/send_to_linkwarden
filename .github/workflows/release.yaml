@@ -20,12 +20,13 @@ jobs:
           cache: true
           flutter-version: ${{ env.FLUTTER_VERSION  }}
 
-      - name: Set up semantic version environment var
+      - name: Set up environment vars
         shell: bash
         run: |
           TAG_NAME=$(echo ${GITHUB_REF#refs/tags/v})
           echo "SEMANTIC_VERSION=$TAG_NAME" >> $GITHUB_ENV
           echo "FLUTTER_VERSION=${TAG_NAME}+${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
+          echo "GITHUB_REPOSITORY_NAME=${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}" >> $GITHUB_ENV
 
       - name: Update version number
         shell: bash
@@ -87,11 +88,12 @@ jobs:
           chmod +x appimagetool
           mv -v appimagetool /usr/local/bin/
 
-      - name: Set up semantic version environment var
+      - name: Set up environment vars
         run: |
           TAG_NAME=$(echo ${GITHUB_REF#refs/tags/v})
           echo "SEMANTIC_VERSION=$TAG_NAME" >> $GITHUB_ENV
           echo "FLUTTER_VERSION=${TAG_NAME}+${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
+          echo "GITHUB_REPOSITORY_NAME=${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}" >> $GITHUB_ENV
 
       - name: Update version number
         run: |
@@ -104,35 +106,7 @@ jobs:
           flutter upgrade
           flutter pub get
           dart pub global activate flutter_distributor
-          flutter_distributor package --platform=linux --targets=deb,appimage,rpm,pacman,zip
-
-      - name: Publish Linux Packages
-        run: |
-          flutter_distributor publish \
-            --path "dist/${FLUTTER_VERSION}/linkwarden_mobile-${FLUTTER_VERSION}-linux.deb" \
-            --targets github \
-            --github-repo-owner "${GITHUB_REPOSITORY_OWNER}" \
-            --github-repo-name "${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}"
-          flutter_distributor publish \
-            --path "dist/${FLUTTER_VERSION}/linkwarden_mobile-${FLUTTER_VERSION}-linux.AppImage" \
-            --targets github \
-            --github-repo-owner "${GITHUB_REPOSITORY_OWNER}" \
-            --github-repo-name "${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}"
-          flutter_distributor publish \
-            --path "dist/${FLUTTER_VERSION}/linkwarden_mobile-${FLUTTER_VERSION}-linux.rpm" \
-            --targets github \
-            --github-repo-owner "${GITHUB_REPOSITORY_OWNER}" \
-            --github-repo-name "${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}"
-          flutter_distributor publish \
-            --path "dist/${FLUTTER_VERSION}/linkwarden_mobile-${FLUTTER_VERSION}-linux.pacman" \
-            --targets github \
-            --github-repo-owner "${GITHUB_REPOSITORY_OWNER}" \
-            --github-repo-name "${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}"
-          flutter_distributor publish \
-            --path "dist/${FLUTTER_VERSION}/linkwarden_mobile-${FLUTTER_VERSION}-linux.zip" \
-            --targets github \
-            --github-repo-owner "${GITHUB_REPOSITORY_OWNER}" \
-            --github-repo-name "${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}"
+          flutter_distributor release --platform=linux --name release
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
@@ -151,11 +125,12 @@ jobs:
           sudo apt-get update -y
           sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev make python3-pip python3-setuptools patchelf desktop-file-utils libgdk-pixbuf2.0-dev fakeroot strace fuse xmlstarlet libsecret-1-dev libjsoncpp-dev
 
-      - name: Set up semantic version environment var
+      - name: Set up environment vars
         run: |
           TAG_NAME=$(echo ${GITHUB_REF#refs/tags/v})
           echo "SEMANTIC_VERSION=$TAG_NAME" >> $GITHUB_ENV
           echo "FLUTTER_VERSION=${TAG_NAME}+${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
+          echo "GITHUB_REPOSITORY_NAME=${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}" >> $GITHUB_ENV
 
       - name: Update version number
         run: |
@@ -200,11 +175,12 @@ jobs:
           python3 -m pip install --break-system-packages setuptools
           npm install --break-system-packages -g appdmg      
 
-      - name: Set up semantic version environment var
+      - name: Set version environment vars
         run: |
           TAG_NAME=$(echo ${GITHUB_REF#refs/tags/v})
           echo "SEMANTIC_VERSION=$TAG_NAME" >> $GITHUB_ENV
           echo "FLUTTER_VERSION=${TAG_NAME}+${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
+          echo "GITHUB_REPOSITORY_NAME=${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}" >> $GITHUB_ENV
 
       - name: Update version number
         run: |
