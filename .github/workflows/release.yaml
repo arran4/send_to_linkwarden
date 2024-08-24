@@ -41,7 +41,6 @@ jobs:
           flutter pub get
           flutter config --enable-windows-desktop
           dart pub global activate flutter_distributor
-          make innoinstall
           flutter_distributor package --platform=windows --targets=exe,msix,zip --skip-clean
 
       - name: Publish Windows Executables
