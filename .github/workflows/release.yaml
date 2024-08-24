@@ -119,7 +119,7 @@ jobs:
           flutter pub get
           flutter config --enable-macos-desktop
           dart pub global activate flutter_distributor
-          flutter_distributor release --name onlinux
+          flutter_distributor release --name onmac
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 

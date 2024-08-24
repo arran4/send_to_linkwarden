@@ -2,15 +2,16 @@ output: dist/
 releases:
   - name: onlinux
     jobs:
-      - name: linux-appimage
-        package:
-          platform: linux
-          target: appimage
-        publish:
-          target: github
-          args:
-            repo-owner: arran4
-            repo-name: linkwarden_mobile
+# Broken pending: https://github.com/leanflutter/flutter_distributor/pull/221
+#      - name: linux-appimage
+#        package:
+#          platform: linux
+#          target: appimage
+#        publish:
+#          target: github
+#          args:
+#            repo-owner: arran4
+#            repo-name: linkwarden_mobile
       - name: linux-deb
         package:
           platform: linux
