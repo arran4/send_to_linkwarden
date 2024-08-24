@@ -13,7 +13,7 @@ jobs:
   windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dart-lang/setup-dart@v1
       - uses: subosito/flutter-action@v2
         with:
@@ -47,7 +47,7 @@ jobs:
   linux:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dart-lang/setup-dart@v1
       - uses: subosito/flutter-action@v2
         with:
@@ -89,7 +89,7 @@ jobs:
   macos:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dart-lang/setup-dart@v1
       - uses: subosito/flutter-action@v2
         with:
@@ -130,7 +130,7 @@ jobs:
       - linux
       - macos
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: No longer draft
         run: |
           gh release edit "$(echo ${GITHUB_REF#refs/tags/})" --draft=false
