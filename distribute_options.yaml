@@ -1,7 +1,4 @@
 output: dist/
-variables:
-  GITHUB_REPOSITORY_OWNER=${env.GITHUB_REPOSITORY_OWNER}
-  GITHUB_REPOSITORY_NAME=${env.GITHUB_REPOSITORY_NAME}
 releases:
   - name: onlinux
     jobs:
@@ -12,8 +9,8 @@ releases:
         publish:
           target: github
           args:
-            repo-owner: ${GITHUB_REPOSITORY_OWNER}
-            repo-name: ${GITHUB_REPOSITORY_NAME}
+            repo-owner: arran4
+            repo-name: bitwarden_mobile
       - name: linux-deb
         package:
           platform: linux
@@ -21,8 +18,8 @@ releases:
         publish:
           target: github
           args:
-            repo-owner: ${GITHUB_REPOSITORY_OWNER}
-            repo-name: ${GITHUB_REPOSITORY_NAME}
+            repo-owner: arran4
+            repo-name: bitwarden_mobile
       - name: linux-rpm
         package:
           platform: linux
@@ -30,8 +27,8 @@ releases:
         publish:
           target: github
           args:
-            repo-owner: ${GITHUB_REPOSITORY_OWNER}
-            repo-name: ${GITHUB_REPOSITORY_NAME}
+            repo-owner: arran4
+            repo-name: bitwarden_mobile
       - name: linux-pacman
         package:
           platform: linux
@@ -39,8 +36,8 @@ releases:
         publish:
           target: github
           args:
-            repo-owner: ${GITHUB_REPOSITORY_OWNER}
-            repo-name: ${GITHUB_REPOSITORY_NAME}
+            repo-owner: arran4
+            repo-name: bitwarden_mobile
       - name: linux-zip
         package:
           platform: linux
@@ -48,8 +45,8 @@ releases:
         publish:
           target: github
           args:
-            repo-owner: ${GITHUB_REPOSITORY_OWNER}
-            repo-name: ${GITHUB_REPOSITORY_NAME}
+            repo-owner: arran4
+            repo-name: bitwarden_mobile
   - name: onwindows
     jobs:
       - name: windows-exe
@@ -59,8 +56,8 @@ releases:
         publish:
           target: github
           args:
-            repo-owner: ${GITHUB_REPOSITORY_OWNER}
-            repo-name: ${GITHUB_REPOSITORY_NAME}
+            repo-owner: arran4
+            repo-name: bitwarden_mobile
       - name: windows-msix
         package:
           platform: windows
@@ -68,8 +65,8 @@ releases:
         publish:
           target: github
           args:
-            repo-owner: ${GITHUB_REPOSITORY_OWNER}
-            repo-name: ${GITHUB_REPOSITORY_NAME}
+            repo-owner: arran4
+            repo-name: bitwarden_mobile
       - name: windows-zip
         package:
           platform: windows
@@ -77,8 +74,8 @@ releases:
         publish:
           target: github
           args:
-            repo-owner: ${GITHUB_REPOSITORY_OWNER}
-            repo-name: ${GITHUB_REPOSITORY_NAME}
+            repo-owner: arran4
+            repo-name: bitwarden_mobile
   - name: TODO
     jobs:
       - name: android-aab
@@ -90,8 +87,8 @@ releases:
         publish:
           target: github
           args:
-            repo-owner: ${GITHUB_REPOSITORY_OWNER}
-            repo-name: ${GITHUB_REPOSITORY_NAME}
+            repo-owner: arran4
+            repo-name: bitwarden_mobile
       - name: android-apk
         package:
           platform: android
@@ -101,8 +98,8 @@ releases:
         publish:
           target: github
           args:
-            repo-owner: ${GITHUB_REPOSITORY_OWNER}
-            repo-name: ${GITHUB_REPOSITORY_NAME}
+            repo-owner: arran4
+            repo-name: bitwarden_mobile
       - name: ios-ipa
         package:
           platform: ios
@@ -112,8 +109,8 @@ releases:
         publish:
           target: github
           args:
-            repo-owner: ${GITHUB_REPOSITORY_OWNER}
-            repo-name: ${GITHUB_REPOSITORY_NAME}
+            repo-owner: arran4
+            repo-name: bitwarden_mobile
       - name: linux-appimage
         package:
           platform: linux
@@ -121,8 +118,8 @@ releases:
         publish:
           target: github
           args:
-            repo-owner: ${GITHUB_REPOSITORY_OWNER}
-            repo-name: ${GITHUB_REPOSITORY_NAME}
+            repo-owner: arran4
+            repo-name: bitwarden_mobile
       - name: linux-deb
         package:
           platform: linux
@@ -130,8 +127,8 @@ releases:
         publish:
           target: github
           args:
-            repo-owner: ${GITHUB_REPOSITORY_OWNER}
-            repo-name: ${GITHUB_REPOSITORY_NAME}
+            repo-owner: arran4
+            repo-name: bitwarden_mobile
       - name: linux-rpm
         package:
           platform: linux
@@ -139,8 +136,8 @@ releases:
         publish:
           target: github
           args:
-            repo-owner: ${GITHUB_REPOSITORY_OWNER}
-            repo-name: ${GITHUB_REPOSITORY_NAME}
+            repo-owner: arran4
+            repo-name: bitwarden_mobile
       - name: linux-pacman
         package:
           platform: linux
@@ -148,8 +145,8 @@ releases:
         publish:
           target: github
           args:
-            repo-owner: ${GITHUB_REPOSITORY_OWNER}
-            repo-name: ${GITHUB_REPOSITORY_NAME}
+            repo-owner: arran4
+            repo-name: bitwarden_mobile
       - name: linux-zip
         package:
           platform: linux
@@ -157,8 +154,8 @@ releases:
         publish:
           target: github
           args:
-            repo-owner: ${GITHUB_REPOSITORY_OWNER}
-            repo-name: ${GITHUB_REPOSITORY_NAME}
+            repo-owner: arran4
+            repo-name: bitwarden_mobile
       - name: macos-dmg
         package:
           platform: macos
@@ -170,8 +167,8 @@ releases:
         publish:
           target: github
           args:
-            repo-owner: ${GITHUB_REPOSITORY_OWNER}
-            repo-name: ${GITHUB_REPOSITORY_NAME}
+            repo-owner: arran4
+            repo-name: bitwarden_mobile
       - name: macos-zip
         package:
           platform: macos
@@ -179,8 +176,8 @@ releases:
         publish:
           target: github
           args:
-            repo-owner: ${GITHUB_REPOSITORY_OWNER}
-            repo-name: ${GITHUB_REPOSITORY_NAME}
+            repo-owner: arran4
+            repo-name: bitwarden_mobile
       - name: windows-exe
         package:
           platform: windows
@@ -188,8 +185,8 @@ releases:
         publish:
           target: github
           args:
-            repo-owner: ${GITHUB_REPOSITORY_OWNER}
-            repo-name: ${GITHUB_REPOSITORY_NAME}
+            repo-owner: arran4
+            repo-name: bitwarden_mobile
       - name: windows-msix
         package:
           platform: windows
@@ -197,8 +194,8 @@ releases:
         publish:
           target: github
           args:
-            repo-owner: ${GITHUB_REPOSITORY_OWNER}
-            repo-name: ${GITHUB_REPOSITORY_NAME}
+            repo-owner: arran4
+            repo-name: bitwarden_mobile
       - name: windows-zip
         package:
           platform: windows
@@ -206,8 +203,8 @@ releases:
         publish:
           target: github
           args:
-            repo-owner: ${GITHUB_REPOSITORY_OWNER}
-            repo-name: ${GITHUB_REPOSITORY_NAME}
+            repo-owner: arran4
+            repo-name: bitwarden_mobile
       - name: web-direct
         package:
           platform: web
@@ -215,5 +212,5 @@ releases:
         publish:
           target: github
           args:
-            repo-owner: ${GITHUB_REPOSITORY_OWNER}
-            repo-name: ${GITHUB_REPOSITORY_NAME}
+            repo-owner: arran4
+            repo-name: bitwarden_mobile

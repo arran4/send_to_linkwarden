@@ -37,7 +37,6 @@ jobs:
 
       - name: Release On Windows
         run: |
-          flutter upgrade
           flutter pub get
           flutter config --enable-windows-desktop
           dart pub global activate flutter_distributor
@@ -88,7 +87,6 @@ jobs:
 
       - name: Release On Linux
         run: |
-          flutter upgrade
           flutter pub get
           dart pub global activate flutter_distributor
           flutter_distributor release --name onlinux
@@ -125,7 +123,6 @@ jobs:
 
       - name: Build Apk
         run: |
-          flutter upgrade
           flutter pub get
           dart pub global activate flutter_distributor
           flutter_distributor package --platform android --targets apk,aab
@@ -175,7 +172,6 @@ jobs:
 
       - name: Build Macos App
         run: |
-          flutter upgrade
           flutter pub get
           flutter config --enable-macos-desktop
           dart pub global activate flutter_distributor
