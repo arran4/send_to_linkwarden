@@ -21,18 +21,18 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION  }}
 
       - name: Set up semantic version environment var
+        shell: bash
         run: |
           TAG_NAME=$(echo ${GITHUB_REF#refs/tags/v})
           echo "SEMANTIC_VERSION=$TAG_NAME" >> $GITHUB_ENV
           echo "FLUTTER_VERSION=${TAG_NAME}+${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
-        shell: bash
 
       - name: Update version number
+        shell: bash
         run: |
           choco install sed make yq -y
           yq -i ".version |= \"${SEMANTIC_VERSION}+\"" pubspec.yaml
           yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
-        shell: bash
 
       - name: Build Windows Executables
         run: |
@@ -44,6 +44,7 @@ jobs:
           flutter_distributor package --platform=windows --targets=exe,msix,zip --skip-clean
 
       - name: Publish Windows Executables
+        shell: bash
         run: |
           flutter_distributor publish \
             --path "dist/${FLUTTER_VERSION}/linkwarden_mobile-${FLUTTER_VERSION}-windows.zip" \
@@ -166,6 +167,7 @@ jobs:
         run: |
           flutter upgrade
           flutter pub get
+          dart pub global activate flutter_distributor
           flutter_distributor package --platform android --targets apk,aab
 
       - name: Publish Android Packages
@@ -215,6 +217,7 @@ jobs:
           flutter upgrade
           flutter pub get
           flutter config --enable-macos-desktop
+          dart pub global activate flutter_distributor
           flutter_distributor package --platform macos --targets dmg # ,pkg TODO
 
       - name: Publish Mac OS X Packages
