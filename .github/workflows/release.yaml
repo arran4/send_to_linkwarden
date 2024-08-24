@@ -105,7 +105,7 @@ jobs:
           flutter upgrade
           flutter pub get
           dart pub global activate flutter_distributor
-          flutter_distributor release --platform=linux --name release
+          flutter_distributor release --platform=linux --name onlinux
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
