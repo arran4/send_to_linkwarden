@@ -90,6 +90,7 @@ releases:
           args:
             repo-owner: arran4
             repo-name: linkwarden_mobile
+# Disabled for packaging reasons atm.
 #      - name: windows-msix
 #        package:
 #          platform: windows
@@ -121,14 +122,20 @@ releases:
           args:
             repo-owner: arran4
             repo-name: linkwarden_mobile
-      - name: macos-dmg
-        package:
-          platform: macos
-          target: dmg
-#      - name: macos-pkg
+# Disabled for packaging reasons atm.
+#      - name: macos-dmg
 #        package:
 #          platform: macos
-#          target: pkg
+#          target: dmg
+#        publish:
+#          target: github
+#          args:
+#            repo-owner: arran4
+#            repo-name: linkwarden_mobile
+      - name: macos-pkg
+        package:
+          platform: macos
+          target: pkg
         publish:
           target: github
           args:
