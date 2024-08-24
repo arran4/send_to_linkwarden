@@ -1,3 +1,9 @@
 display_name: Linkwarden Mobile
 msix_version: 1.0.0.0
 # logo_path: C:\path\to\logo.png
+# logo_path: assets\icon.png
+protocol_activation: "http,https"
+capabilities: "internetClient"
+# store: true
+publisher: "CN=Ubels Software Development, O=Ubels Software Development, C=AU"
+install_certificate: "true"

@@ -90,16 +90,15 @@ releases:
           args:
             repo-owner: arran4
             repo-name: linkwarden_mobile
-# Disabled for packaging reasons atm.
-#      - name: windows-msix
-#        package:
-#          platform: windows
-#          target: msix
-#        publish:
-#          target: github
-#          args:
-#            repo-owner: arran4
-#            repo-name: linkwarden_mobile
+      - name: windows-msix
+        package:
+          platform: windows
+          target: msix
+        publish:
+          target: github
+          args:
+            repo-owner: arran4
+            repo-name: linkwarden_mobile
       - name: windows-zip
         package:
           platform: windows
