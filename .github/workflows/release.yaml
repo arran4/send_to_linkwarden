@@ -95,7 +95,7 @@ jobs:
 
       - name: Unsecret
         run: |
-          echo "${SECRET_FILE}" | base64 -d | tar -j --list | rm -f
+          echo "${SECRET_FILE}" | base64 -d | tar -j --list | xargs rm -f
         env:
           SECRET_FILE: "${{ secrets.SECRET_FILE }}"
 
