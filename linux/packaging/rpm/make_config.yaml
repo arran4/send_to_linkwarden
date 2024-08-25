@@ -5,18 +5,18 @@ vendor: Arran Ubels
 packager: Arran Ubels
 packagerEmail: arran4@gmail.com
 license: GPLv3
-url: https://github.com/arran4/linkwarden_mobile
+url: https://github.com/arran4/send_to_linkwarden
 
-display_name: Linkwarden Mobile
+display_name: Send To Linkwarden
 
 keywords:
   - Link
   - Archiving
   - Bookmarking
 
-generic_name: Linkwarden Mobile
+generic_name: Send To Linkwarden
 
-metainfo: linux/packaging/linkwardenmobile.appdata.xml
+metainfo: linux/packaging/sendToLinkwarden.appdata.xml
 
 categories:
   - Network

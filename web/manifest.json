@@ -1,6 +1,6 @@
 {
-    "name": "linkwarden_mobile",
-    "short_name": "linkwarden_mobile",
+    "name": "send_to_linkwarden",
+    "short_name": "send_to_linkwarden",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#hexcode",

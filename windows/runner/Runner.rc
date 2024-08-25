@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "app.linkwarden.mobile" "\0"
-            VALUE "FileDescription", "linkwarden_mobile" "\0"
+            VALUE "FileDescription", "send_to_linkwarden" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "linkwarden_mobile" "\0"
+            VALUE "InternalName", "send_to_linkwarden" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2024 app.linkwarden.mobile. All rights reserved." "\0"
-            VALUE "OriginalFilename", "linkwarden_mobile.exe" "\0"
-            VALUE "ProductName", "linkwarden_mobile" "\0"
+            VALUE "OriginalFilename", "send_to_linkwarden.exe" "\0"
+            VALUE "ProductName", "send_to_linkwarden" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

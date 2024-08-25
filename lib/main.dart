@@ -1,25 +1,25 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:linkwarden_mobile/state/dark_mode_notifier.dart';
-import 'package:linkwarden_mobile/view/add_collection_view.dart';
-import 'package:linkwarden_mobile/view/add_edit_user_instance_view.dart';
-import 'package:linkwarden_mobile/view/select_tags_view.dart';
-import 'package:linkwarden_mobile/view/add_link_view.dart';
+import 'package:send_to_linkwarden/state/dark_mode_notifier.dart';
+import 'package:send_to_linkwarden/view/add_collection_view.dart';
+import 'package:send_to_linkwarden/view/add_edit_user_instance_view.dart';
+import 'package:send_to_linkwarden/view/select_tags_view.dart';
+import 'package:send_to_linkwarden/view/add_link_view.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
 
 void main() {
-  runApp(const LinkwardenMobileApp());
+  runApp(const SendToLinkwardenApp());
 }
 
-class LinkwardenMobileApp extends StatefulWidget {
-  const LinkwardenMobileApp({super.key});
+class SendToLinkwardenApp extends StatefulWidget {
+  const SendToLinkwardenApp({super.key});
 
   @override
-  State<LinkwardenMobileApp> createState() => _LinkwardenMobileAppState();
+  State<SendToLinkwardenApp> createState() => _SendToLinkwardenAppState();
 }
 
-class _LinkwardenMobileAppState extends State<LinkwardenMobileApp> {
+class _SendToLinkwardenAppState extends State<SendToLinkwardenApp> {
   late StreamSubscription _intentSub;
   GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -71,7 +71,7 @@ class _LinkwardenMobileAppState extends State<LinkwardenMobileApp> {
         valueListenable: darkModeNotifier,
         builder: (BuildContext context, bool isDark, Widget? child) {
           return MaterialApp(
-            title: 'Linkwarden Mobile',
+            title: 'Send To Linkwarden',
             themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
             theme: ThemeData(
               colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),

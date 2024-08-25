@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:linkwarden_mobile/model/tag.dart';
-import 'package:linkwarden_mobile/model/collection.dart';
-import 'package:linkwarden_mobile/model/link.dart';
+import 'package:send_to_linkwarden/model/tag.dart';
+import 'package:send_to_linkwarden/model/collection.dart';
+import 'package:send_to_linkwarden/model/link.dart';
 
 Future<List<Tag>?> getTags(String token, String baseUrl) async {
   final url = Uri.parse('$baseUrl/api/v1/tags');

@@ -1,6 +1,6 @@
 # the name used to display in the OS. Specifically desktop
 # entry name
-display_name: Linkwarden Mobile
+display_name: Send To Linkwarden
 
 # package name for debian/apt repository
 # the name should be all lowercase with -+.
@@ -8,7 +8,7 @@ package_name: linkwarden-mobile
 
 maintainer:
   name: Arran Ubels
-  email: linkwardenmobile@arran4.com
+  email: sendToLinkwarden@arran4.com
 
 #co_authors:
 #  - name: ___
@@ -94,7 +94,7 @@ generic_name: Bookmark Management
 # supported_mime_type:
 #   - audio/mpeg
 
-metainfo: linux/packaging/linkwardenmobile.appdata.xml
+metainfo: linux/packaging/sendToLinkwarden.appdata.xml
 
 # shown when right clicked the desktop entry icons
 # actions:

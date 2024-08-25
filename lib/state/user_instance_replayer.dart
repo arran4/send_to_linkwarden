@@ -1,8 +1,8 @@
 import 'dart:convert';
 
-import 'package:linkwarden_mobile/core/pub_sub_replay.dart';
-import 'package:linkwarden_mobile/integrations/secure_storage.dart';
-import 'package:linkwarden_mobile/model/user_instance.dart';
+import 'package:send_to_linkwarden/core/pub_sub_replay.dart';
+import 'package:send_to_linkwarden/integrations/secure_storage.dart';
+import 'package:send_to_linkwarden/model/user_instance.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 PubSubReplay<List<UserInstance>> userInstanceValueReplayer = PubSubReplay(onNoLastMessage: loadUserInstances);

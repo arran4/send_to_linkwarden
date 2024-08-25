@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:linkwarden_mobile/core/individual_keyed_pub_sub_replay.dart';
-import 'package:linkwarden_mobile/model/tag.dart';
-import 'package:linkwarden_mobile/model/user_instance.dart';
-import 'package:linkwarden_mobile/state/tags_replayer.dart';
+import 'package:send_to_linkwarden/core/individual_keyed_pub_sub_replay.dart';
+import 'package:send_to_linkwarden/model/tag.dart';
+import 'package:send_to_linkwarden/model/user_instance.dart';
+import 'package:send_to_linkwarden/state/tags_replayer.dart';
 
 class SelectTagsViewArguments {
   final List<String>? selectedTags;
@@ -105,7 +105,7 @@ class _SelectTagsViewState extends State<SelectTagsView> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Text("Select Tags - Linkwarden Mobile"),
+        title: const Text("Select Tags - Send To Linkwarden"),
         actions: [IconButton(onPressed: () {
           Navigator.pop(context, selectedTags.toList());
         }, icon: const Icon(Icons.check))],

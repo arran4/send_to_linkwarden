@@ -1,4 +1,4 @@
-display_name: Linkwarden Mobile
+display_name: Send To Linkwarden
 
 icon: assets/logo.png
 
@@ -7,13 +7,13 @@ keywords:
   - Archiving
   - Bookmarking
 
-generic_name: Linkwarden Mobile
+generic_name: Send To Linkwarden
 
 # supported mime types that can be opened using this application
 # supported_mime_type:
 #   - audio/mpeg
 
-metainfo: linux/packaging/linkwardenmobile.appdata.xml
+metainfo: linux/packaging/sendToLinkwarden.appdata.xml
 
 categories:
   - Network

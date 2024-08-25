@@ -1,4 +1,4 @@
-package app.linkwarden.mobile.linkwarden_mobile
+package app.linkwarden.mobile.send_to_linkwarden
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -1,4 +1,4 @@
-title: linkwarden_mobile
+title: send_to_linkwarden
 contents:
   - x: 448
     y: 344
@@ -7,4 +7,4 @@ contents:
   - x: 192
     y: 344
     type: file
-    path: linkwarden_mobile.app
+    path: send_to_linkwarden.app

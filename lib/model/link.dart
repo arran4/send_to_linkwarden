@@ -1,6 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
-import 'package:linkwarden_mobile/model/collection.dart';
-import 'package:linkwarden_mobile/model/tag.dart';
+import 'package:send_to_linkwarden/model/collection.dart';
+import 'package:send_to_linkwarden/model/tag.dart';
 
 part 'link.g.dart';
 

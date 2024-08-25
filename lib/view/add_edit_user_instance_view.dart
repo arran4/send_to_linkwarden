@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:linkwarden_mobile/model/user_instance.dart';
+import 'package:send_to_linkwarden/model/user_instance.dart';
 
 class AddEditUserInstanceViewArguments {
   final UserInstance? userInstance;
@@ -34,7 +34,7 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Text("Instance configuration - Linkwarden Mobile"),
+        title: const Text("Instance configuration - Send To Linkwarden"),
       ),
       body: SingleChildScrollView(
         child: Form(

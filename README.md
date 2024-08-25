@@ -1,4 +1,4 @@
-# linkwarden_mobile
+# send_to_linkwarden
 
 Mobile client for Linkwarden
 

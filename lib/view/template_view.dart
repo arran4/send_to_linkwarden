@@ -12,7 +12,7 @@ class _TemplateViewState extends State<TemplateView> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Text("Linkwarden Mobile"),
+        title: const Text("Send To Linkwarden"),
       ),
       body: const SingleChildScrollView(
         child: Column(

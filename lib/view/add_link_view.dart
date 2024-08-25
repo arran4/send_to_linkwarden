@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
-import 'package:linkwarden_mobile/api/linkwarden.dart';
-import 'package:linkwarden_mobile/core/individual_keyed_pub_sub_replay.dart';
-import 'package:linkwarden_mobile/model/collection.dart';
-import 'package:linkwarden_mobile/model/link.dart';
-import 'package:linkwarden_mobile/model/tag.dart';
-import 'package:linkwarden_mobile/model/user_instance.dart';
-import 'package:linkwarden_mobile/state/collections_replayer.dart';
-import 'package:linkwarden_mobile/state/dark_mode_notifier.dart';
-import 'package:linkwarden_mobile/state/default_user_instance.dart';
-import 'package:linkwarden_mobile/state/tags_replayer.dart';
-import 'package:linkwarden_mobile/state/user_instance_replayer.dart';
-import 'package:linkwarden_mobile/view/select_tags_view.dart';
+import 'package:send_to_linkwarden/api/linkwarden.dart';
+import 'package:send_to_linkwarden/core/individual_keyed_pub_sub_replay.dart';
+import 'package:send_to_linkwarden/model/collection.dart';
+import 'package:send_to_linkwarden/model/link.dart';
+import 'package:send_to_linkwarden/model/tag.dart';
+import 'package:send_to_linkwarden/model/user_instance.dart';
+import 'package:send_to_linkwarden/state/collections_replayer.dart';
+import 'package:send_to_linkwarden/state/dark_mode_notifier.dart';
+import 'package:send_to_linkwarden/state/default_user_instance.dart';
+import 'package:send_to_linkwarden/state/tags_replayer.dart';
+import 'package:send_to_linkwarden/state/user_instance_replayer.dart';
+import 'package:send_to_linkwarden/view/select_tags_view.dart';
 
 import 'add_edit_user_instance_view.dart';
 
@@ -47,7 +47,7 @@ class _AddLinkViewState extends State<AddLinkView> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Text("Add Bookmark - Linkwarden Mobile"),
+        title: const Text("Add Bookmark - Send To Linkwarden"),
         actions: [
           IconButton(onPressed: _darkMode, icon: const Icon(Icons.dark_mode)),
         ],

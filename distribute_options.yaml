@@ -1,5 +1,16 @@
 output: dist/
 releases:
+  - name: test
+    jobs:
+      - name: web-direct
+        package:
+          platform: web
+          target: zip
+        publish:
+          target: github
+          args:
+            repo-owner: arran4
+            repo-name: send_to_linkwarden
   - name: onlinux
     jobs:
 # Broken pending: https://github.com/leanflutter/flutter_distributor/pull/221
@@ -11,7 +22,7 @@ releases:
 #          target: github
 #          args:
 #            repo-owner: arran4
-#            repo-name: linkwarden_mobile
+#            repo-name: send_to_linkwarden
       - name: linux-deb
         package:
           platform: linux
@@ -20,7 +31,7 @@ releases:
           target: github
           args:
             repo-owner: arran4
-            repo-name: linkwarden_mobile
+            repo-name: send_to_linkwarden
       - name: linux-rpm
         package:
           platform: linux
@@ -29,7 +40,7 @@ releases:
           target: github
           args:
             repo-owner: arran4
-            repo-name: linkwarden_mobile
+            repo-name: send_to_linkwarden
       - name: linux-pacman
         package:
           platform: linux
@@ -38,7 +49,7 @@ releases:
           target: github
           args:
             repo-owner: arran4
-            repo-name: linkwarden_mobile
+            repo-name: send_to_linkwarden
       - name: linux-zip
         package:
           platform: linux
@@ -47,7 +58,7 @@ releases:
           target: github
           args:
             repo-owner: arran4
-            repo-name: linkwarden_mobile
+            repo-name: send_to_linkwarden
       - name: android-aab
         package:
           platform: android
@@ -58,7 +69,7 @@ releases:
           target: github
           args:
             repo-owner: arran4
-            repo-name: linkwarden_mobile
+            repo-name: send_to_linkwarden
       - name: android-apk
         package:
           platform: android
@@ -69,16 +80,16 @@ releases:
           target: github
           args:
             repo-owner: arran4
-            repo-name: linkwarden_mobile
+            repo-name: send_to_linkwarden
       - name: web-direct
         package:
           platform: web
-          target: direct
+          target: zip
         publish:
           target: github
           args:
             repo-owner: arran4
-            repo-name: linkwarden_mobile
+            repo-name: send_to_linkwarden
   - name: onwindows
     jobs:
       - name: windows-exe
@@ -89,7 +100,7 @@ releases:
           target: github
           args:
             repo-owner: arran4
-            repo-name: linkwarden_mobile
+            repo-name: send_to_linkwarden
       - name: windows-msix
         package:
           platform: windows
@@ -98,7 +109,7 @@ releases:
           target: github
           args:
             repo-owner: arran4
-            repo-name: linkwarden_mobile
+            repo-name: send_to_linkwarden
       - name: windows-zip
         package:
           platform: windows
@@ -107,7 +118,7 @@ releases:
           target: github
           args:
             repo-owner: arran4
-            repo-name: linkwarden_mobile
+            repo-name: send_to_linkwarden
   - name: onmac
     jobs:
 # Disabled for packaging reasons atm.
@@ -121,7 +132,7 @@ releases:
 #          target: github
 #          args:
 #            repo-owner: arran4
-#            repo-name: linkwarden_mobile
+#            repo-name: send_to_linkwarden
       - name: macos-dmg
         package:
           platform: macos
@@ -130,7 +141,7 @@ releases:
           target: github
           args:
             repo-owner: arran4
-            repo-name: linkwarden_mobile
+            repo-name: send_to_linkwarden
 # Disabled for packaging reasons atm.
 #      - name: macos-pkg
 #        package:
@@ -140,7 +151,7 @@ releases:
 #          target: github
 #          args:
 #            repo-owner: arran4
-#            repo-name: linkwarden_mobile
+#            repo-name: send_to_linkwarden
       - name: macos-zip
         package:
           platform: macos
@@ -149,4 +160,4 @@ releases:
           target: github
           args:
             repo-owner: arran4
-            repo-name: linkwarden_mobile
+            repo-name: send_to_linkwarden

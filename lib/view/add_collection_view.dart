@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
-import 'package:linkwarden_mobile/model/collection.dart';
+import 'package:send_to_linkwarden/model/collection.dart';
 
 class AddCollectionViewArguments {
   const AddCollectionViewArguments();
@@ -24,7 +24,7 @@ class _AddCollectionViewState extends State<AddCollectionView> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Text("New Collection - Linkwarden Mobile"),
+        title: const Text("New Collection - Send To Linkwarden"),
       ),
       body: SingleChildScrollView(
         child: Form(

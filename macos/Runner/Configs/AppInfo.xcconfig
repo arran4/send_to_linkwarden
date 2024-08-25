@@ -5,10 +5,10 @@
 // 'flutter create' template.
 
 // The application's name. By default this is also the title of the Flutter window.
-PRODUCT_NAME = linkwarden_mobile
+PRODUCT_NAME = send_to_linkwarden
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = app.linkwarden.mobile.linkwardenMobile
+PRODUCT_BUNDLE_IDENTIFIER = app.linkwarden.mobile.sendToLinkwarden
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2024 app.linkwarden.mobile. All rights reserved.

@@ -1,29 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-    <id>linkwarden_mobile</id>
+    <id>send_to_linkwarden</id>
     <metadata_license>CC0-1.0</metadata_license>
     <project_license>AGPL</project_license>
-    <name>Linkwarden Mobile</name>
+    <name>Send To Linkwarden</name>
     <summary>An extension allowing quick addition of new links to Linkwarden</summary>
     <description>
         <p>This is an application that provides a quick means of adding a link to Linkwarden without having to use a webbrowser</p>
     </description>
-    <launchable type="desktop-id">linkwarden_mobile.desktop</launchable>
-    <url type="homepage">https://github.com/arran4/linkwarden_mobile/</url>
+    <launchable type="desktop-id">send_to_linkwarden.desktop</launchable>
+    <url type="homepage">https://github.com/arran4/send_to_linkwarden/</url>
     <screenshots>
         <screenshot type="default">
-            <image>https://github.com/arran4/linkwarden_mobile/assets/Screenshot_20240823_155131.png</image>
+            <image>https://github.com/arran4/send_to_linkwarden/assets/Screenshot_20240823_155131.png</image>
         </screenshot>
     </screenshots>
     <releases>
         <release version="1.0.0" date="2024-08-23"/>
     </releases>
     <provides>
-        <id>linkwarden_mobile.desktop</id>
+        <id>send_to_linkwarden.desktop</id>
     </provides>
     <content_rating type="oars-1.0" />
     <developer id="io.github.lijy91">
         <name>Arran Ubels</name>
     </developer>
-    <update_contact>linkwardenmobile@arran4.com</update_contact>
+    <update_contact>sendToLinkwarden@arran4.com</update_contact>
 </component>
