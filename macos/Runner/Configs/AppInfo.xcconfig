@@ -8,7 +8,7 @@
 PRODUCT_NAME = send_to_linkwarden
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = app.linkwarden.mobile.sendToLinkwarden
+PRODUCT_BUNDLE_IDENTIFIER = com.arran4.send_to_linkwarden.sendToLinkwarden
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2024 app.linkwarden.mobile. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2024 com.arran4.send_to_linkwarden. All rights reserved.

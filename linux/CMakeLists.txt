@@ -7,7 +7,7 @@ project(runner LANGUAGES CXX)
 set(BINARY_NAME "send_to_linkwarden")
 # The unique GTK application identifier for this application. See:
 # https://wiki.gnome.org/HowDoI/ChooseApplicationID
-set(APPLICATION_ID "app.linkwarden.mobile.send_to_linkwarden")
+set(APPLICATION_ID "com.arran4.send_to_linkwarden.send_to_linkwarden")
 
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.
