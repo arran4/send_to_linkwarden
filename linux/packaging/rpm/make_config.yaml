@@ -16,7 +16,7 @@ keywords:
 
 generic_name: Send To Linkwarden
 
-metainfo: linux/packaging/sendToLinkwarden.appdata.xml
+metainfo: linux/packaging/sendtolinkwarden.appdata.xml
 
 categories:
   - Network

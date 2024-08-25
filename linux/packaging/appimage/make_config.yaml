@@ -13,7 +13,7 @@ generic_name: Send To Linkwarden
 # supported_mime_type:
 #   - audio/mpeg
 
-metainfo: linux/packaging/sendToLinkwarden.appdata.xml
+metainfo: linux/packaging/sendtolinkwarden.appdata.xml
 
 categories:
   - Network

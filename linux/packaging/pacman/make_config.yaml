@@ -80,7 +80,7 @@ generic_name: Bookmark Management
 # supported_mime_type:
 #   - audio/mpeg
 
-metainfo: linux/packaging/sendToLinkwarden.appdata.xml
+metainfo: linux/packaging/sendtolinkwarden.appdata.xml
 
 # shown when right clicked the desktop entry icons
 # actions:
