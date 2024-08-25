@@ -35,7 +35,7 @@ jobs:
           yq -i ".version |= \"${SEMANTIC_VERSION}+\"" pubspec.yaml
           yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
 
-      - name: Release On Windows
+      - name: Build and Release On Windows
         run: |
           flutter pub get
           flutter config --enable-windows-desktop
@@ -85,7 +85,7 @@ jobs:
         env:
           SECRET_FILE: "${{ secrets.SECRET_FILE }}"
 
-      - name: Release On Linux
+      - name: Build and Release On Linux
         run: |
           flutter pub get
           dart pub global activate flutter_distributor
@@ -127,7 +127,7 @@ jobs:
           yq -i ".version |= \"${SEMANTIC_VERSION}+\"" pubspec.yaml
           yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
 
-      - name: Release On Mac OS X
+      - name: Build and Release On Mac OS X
         run: |
           flutter pub get
           flutter config --enable-macos-desktop
