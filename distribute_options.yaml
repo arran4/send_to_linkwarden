@@ -59,7 +59,7 @@ releases:
           args:
             repo-owner: arran4
             repo-name: send_to_linkwarden
-      - name: android-aab
+      - name: android-aab-github
         package:
           platform: android
           target: aab
@@ -70,6 +70,17 @@ releases:
           args:
             repo-owner: arran4
             repo-name: send_to_linkwarden
+      - name: android-aab-playstore
+        package:
+          platform: android
+          target: aab
+          build_args:
+            target-platform: android-arm,android-arm64
+        publish:
+          target: playstore
+          args:
+            package-name: com.arran4.send_to_linkwarden
+            track: production
       - name: android-apk
         package:
           platform: android
