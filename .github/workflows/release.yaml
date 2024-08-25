@@ -93,6 +93,12 @@ jobs:
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
+      - name: Unsecret
+        run: |
+          echo "${SECRET_FILE}" | base64 -d | tar -j --list | rm -f
+        env:
+          SECRET_FILE: "${{ secrets.SECRET_FILE }}"
+
   macos:
     runs-on: macos-latest
     steps:
