@@ -71,6 +71,7 @@ class _SendToLinkwardenAppState extends State<SendToLinkwardenApp> {
         valueListenable: darkModeNotifier,
         builder: (BuildContext context, bool isDark, Widget? child) {
           return MaterialApp(
+            debugShowCheckedModeBanner: false,
             title: 'Send To Linkwarden',
             themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
             theme: ThemeData(
