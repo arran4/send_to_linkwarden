@@ -81,7 +81,7 @@ jobs:
       - name: Secrets
         run: |
           echo "${SECRET_FILE}" | base64 -d | tar xvj 
-          echo "PLAYSTORE_CREDENTIALS=sendtolinkwarden-e713764ecb3d.json" >> $GITHUB_ENV
+          echo "PLAYSTORE_CREDENTIALS=${PWD}/sendtolinkwarden-e713764ecb3d.json" >> $GITHUB_ENV
         env:
           SECRET_FILE: "${{ secrets.SECRET_FILE }}"
 
