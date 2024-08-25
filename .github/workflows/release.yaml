@@ -54,17 +54,6 @@ jobs:
           cache: true
           flutter-version: ${{ env.FLUTTER_VERSION  }}
 
-      - id: 'auth'
-        uses: 'google-github-actions/auth@v2'
-        with:
-          credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
-
-      - name: 'Set up Cloud SDK'
-        uses: 'google-github-actions/setup-gcloud@v2'
-
-      - name: 'Use gcloud CLI'
-        run: 'gcloud info'
-
       - name: Install Dependencies
         run: |
           sudo apt-get update -y
@@ -88,6 +77,13 @@ jobs:
           curl -sS https://webi.sh/yq | sh
           yq -i ".version |= \"${SEMANTIC_VERSION}+\"" pubspec.yaml
           yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
+
+      - name: Secrets
+        run: |
+          echo "${SECRET_FILE}" | base64 -d | tar xvj 
+          echo "PLAYSTORE_CREDENTIALS=sendtolinkwarden-e713764ecb3d.json" >> $GITHUB_ENV
+        env:
+          SECRET_FILE: "${{ secrets.SECRET_FILE }}"
 
       - name: Release On Linux
         run: |
