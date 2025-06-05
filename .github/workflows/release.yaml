@@ -38,6 +38,7 @@ jobs:
       - name: Build and Release On Windows
         run: |
           flutter pub get
+          flutter test
           flutter config --enable-windows-desktop
           dart pub global activate flutter_distributor
           flutter_distributor release --name onwindows
@@ -88,6 +89,7 @@ jobs:
       - name: Build and Release On Linux
         run: |
           flutter pub get
+          flutter test
           dart pub global activate flutter_distributor
           flutter_distributor release --name onlinux
         env:
@@ -130,6 +132,7 @@ jobs:
       - name: Build and Release On Mac OS X
         run: |
           flutter pub get
+          flutter test
           flutter config --enable-macos-desktop
           dart pub global activate flutter_distributor
           flutter_distributor release --name onmac
