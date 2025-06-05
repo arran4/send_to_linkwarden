@@ -67,6 +67,7 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
           );
         },
       ),
+    );
   }
 
   final TextEditingController urlTextController = TextEditingController();
