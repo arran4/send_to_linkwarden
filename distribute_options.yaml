@@ -13,7 +13,7 @@ releases:
             repo-name: send_to_linkwarden
   - name: onlinux
     jobs:
-# Broken pending: https://github.com/leanflutter/flutter_distributor/pull/221
+# Broken pending: https://github.com/fastforgedev/fastforge/pull/221
 #      - name: linux-appimage
 #        package:
 #          platform: linux

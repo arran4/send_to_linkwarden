@@ -39,8 +39,8 @@ jobs:
         run: |
           flutter pub get
           flutter config --enable-windows-desktop
-          dart pub global activate flutter_distributor
-          flutter_distributor release --name onwindows
+          dart pub global activate fastforge
+          fastforge release --name onwindows
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
@@ -88,8 +88,8 @@ jobs:
       - name: Build and Release On Linux
         run: |
           flutter pub get
-          dart pub global activate flutter_distributor
-          flutter_distributor release --name onlinux
+          dart pub global activate fastforge
+          fastforge release --name onlinux
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
@@ -131,8 +131,8 @@ jobs:
         run: |
           flutter pub get
           flutter config --enable-macos-desktop
-          dart pub global activate flutter_distributor
-          flutter_distributor release --name onmac
+          dart pub global activate fastforge
+          fastforge release --name onmac
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
