@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:send_to_linkwarden/core/pub_sub_replay.dart';
 import 'package:send_to_linkwarden/integrations/secure_storage.dart';
 import 'package:send_to_linkwarden/model/user_instance.dart';
+import 'package:send_to_linkwarden/state/default_user_instance.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 PubSubReplay<List<UserInstance>> userInstanceValueReplayer = PubSubReplay(onNoLastMessage: loadUserInstances);
@@ -39,4 +40,15 @@ void upsertUserInstance(UserInstance userInstances) async {
   }
   userInstanceValueReplayer.publish(current);
   _saveUserInstances(current);
+}
+
+Future<void> deleteUserInstance(UserInstance instance) async {
+  var sub = userInstanceValueReplayer.subscribe();
+  List<UserInstance> current = [...await sub.first];
+  current.removeWhere((e) => e.id == instance.id);
+  userInstanceValueReplayer.publish(current);
+  _saveUserInstances(current);
+  if ((await loadDefaultUserInstance()) == instance.id) {
+    await setDefaultUserInstance(null);
+  }
 }

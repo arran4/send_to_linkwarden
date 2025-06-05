@@ -12,6 +12,7 @@ import 'package:send_to_linkwarden/state/default_user_instance.dart';
 import 'package:send_to_linkwarden/state/tags_replayer.dart';
 import 'package:send_to_linkwarden/state/user_instance_replayer.dart';
 import 'package:send_to_linkwarden/view/select_tags_view.dart';
+import 'package:send_to_linkwarden/view/manage_user_instances_drawer.dart';
 
 import 'add_edit_user_instance_view.dart';
 
@@ -62,6 +63,7 @@ class _AddLinkViewState extends State<AddLinkView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const ManageUserInstancesDrawer(),
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text("Add Bookmark - Send To Linkwarden"),
