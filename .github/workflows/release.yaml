@@ -8,6 +8,7 @@ permissions:
 
 env:
   FLUTTER_VERSION: '3.24.1'
+  DART_VERSION: '3.8.1'
 
 jobs:
   windows:
@@ -15,6 +16,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: ${{ env.DART_VERSION }}
       - uses: subosito/flutter-action@v2
         with:
           cache: true
@@ -50,6 +53,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: ${{ env.DART_VERSION }}
       - uses: subosito/flutter-action@v2
         with:
           cache: true
@@ -106,6 +111,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: ${{ env.DART_VERSION }}
       - uses: subosito/flutter-action@v2
         with:
           cache: true

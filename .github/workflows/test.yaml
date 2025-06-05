@@ -5,16 +5,22 @@ on:
   push:
     branches: [ main ]
 
+env:
+  FLUTTER_VERSION: '3.24.1'
+  DART_VERSION: '3.8.1'
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: ${{ env.DART_VERSION }}
       - uses: subosito/flutter-action@v2
         with:
           cache: true
-          flutter-version: '3.24.1'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
       - name: Install dependencies
         run: flutter pub get
       - name: Run tests
