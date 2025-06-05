@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:send_to_linkwarden/state/dark_mode_notifier.dart';
 import 'package:send_to_linkwarden/view/add_collection_view.dart';
 import 'package:send_to_linkwarden/view/add_edit_user_instance_view.dart';
+import 'package:send_to_linkwarden/view/manage_user_instances_view.dart';
 import 'package:send_to_linkwarden/view/select_tags_view.dart';
 import 'package:send_to_linkwarden/view/add_link_view.dart';
 import 'package:receive_sharing_intent/receive_sharing_intent.dart';
@@ -88,6 +89,7 @@ class _SendToLinkwardenAppState extends State<SendToLinkwardenApp> {
               "tags/select": (BuildContext context) => SelectTagsView(arguments: ModalRoute.of(context)?.settings.arguments as SelectTagsViewArguments?),
               "collection/new": (BuildContext context) => AddCollectionView(arguments: ModalRoute.of(context)?.settings.arguments as AddCollectionViewArguments?),
               "userInstance/newEdit": (BuildContext context) => AddEditUserInstanceView(arguments: ModalRoute.of(context)?.settings.arguments as AddEditUserInstanceViewArguments?),
+              "userInstance/manage": (BuildContext context) => const ManageUserInstancesView(),
             },
           );
         });
