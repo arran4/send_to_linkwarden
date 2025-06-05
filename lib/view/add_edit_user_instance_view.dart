@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:send_to_linkwarden/model/user_instance.dart';
 import 'package:send_to_linkwarden/api/linkwarden.dart';
+import 'package:send_to_linkwarden/state/user_instance_replayer.dart';
 
 class AddEditUserInstanceViewArguments {
   final UserInstance? userInstance;
@@ -22,12 +23,14 @@ class AddEditUserInstanceView extends StatefulWidget {
 class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
   GlobalKey<FormState> formState = GlobalKey<FormState>();
   late UserInstance userInstance;
+  bool _editingExisting = false;
   String _method = 'apiKey';
 
   @override
   void initState() {
     super.initState();
     userInstance = widget.arguments?.userInstance ?? UserInstance();
+    _editingExisting = widget.arguments?.userInstance != null;
     _loadValues();
   }
 
@@ -38,23 +41,32 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text("Instance configuration - Send To Linkwarden"),
       ),
-      body: SingleChildScrollView(
-        child: Form(
-          key: formState,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              _instanceUrlInput(context),
-              _methodSelection(context),
-              if (_method == 'apiKey') _apiTokenInput(context),
-              if (_method == 'username') _usernameEmailInput(context),
-              if (_method == 'username') _passwordInput(context),
-              _actionButtons(context),
-            ],
-          ),
-        ),
+      body: StreamBuilder(
+        stream: userInstanceValueReplayer.subscribe(),
+        builder: (context, AsyncSnapshot<List<UserInstance>> snapshot) {
+          if (snapshot.hasError) {
+            return Center(child: Text("Error: ${snapshot.error}"));
+          }
+          var instances = snapshot.data ?? [];
+          return SingleChildScrollView(
+            child: Form(
+              key: formState,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  _instanceSelector(context, instances),
+                  _instanceUrlInput(context),
+                  _methodSelection(context),
+                  if (_method == 'apiKey') _apiTokenInput(context),
+                  if (_method == 'username') _usernameEmailInput(context),
+                  if (_method == 'username') _passwordInput(context),
+                  _actionButtons(context),
+                ],
+              ),
+            ),
+          );
+        },
       ),
-    );
   }
 
   final TextEditingController urlTextController = TextEditingController();
@@ -200,6 +212,57 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
     );
   }
 
+  Widget _instanceSelector(BuildContext context, List<UserInstance> instances) {
+    bool editing = instances.any((e) => e.id == userInstance.id);
+    return Row(
+      children: [
+        Expanded(
+          child: DropdownButton<UserInstance?>(
+            value: editing ? userInstance : null,
+            hint: const Text('Select Instance'),
+            items: [
+              for (var inst in instances)
+                DropdownMenuItem(value: inst, child: Text(inst.server ?? 'Unknown URL')),
+              const DropdownMenuItem(value: null, child: Text('New Instance')),
+            ],
+            onChanged: (value) {
+              setState(() {
+                userInstance = value ?? UserInstance();
+                _editingExisting = value != null;
+                _loadValues();
+              });
+            },
+          ),
+        ),
+        if (editing)
+          IconButton(
+            icon: const Icon(Icons.delete),
+            onPressed: () async {
+              bool? confirm = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Delete Instance'),
+                  content: const Text('Are you sure you want to delete this instance?'),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+                    TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete')),
+                  ],
+                ),
+              );
+              if (confirm == true) {
+                await deleteUserInstance(userInstance);
+                setState(() {
+                  userInstance = UserInstance();
+                  _editingExisting = false;
+                  _loadValues();
+                });
+              }
+            },
+          ),
+      ],
+    );
+  }
+
   void _loadValues() {
     usernameTextController.text = userInstance.user ?? "";
     urlTextController.text = userInstance.server ?? "";
@@ -210,5 +273,11 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
     } else {
       _method = 'username';
     }
+    // Determine if we are editing an existing instance based on stored list
+    userInstanceValueReplayer.subscribe().first.then((list) {
+      setState(() {
+        _editingExisting = list.any((e) => e.id == userInstance.id);
+      });
+    });
   }
 }
