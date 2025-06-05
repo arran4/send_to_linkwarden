@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:send_to_linkwarden/model/user_instance.dart';
+import 'package:send_to_linkwarden/api/linkwarden.dart';
 
 class AddEditUserInstanceViewArguments {
   final UserInstance? userInstance;
@@ -21,6 +22,7 @@ class AddEditUserInstanceView extends StatefulWidget {
 class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
   GlobalKey<FormState> formState = GlobalKey<FormState>();
   late UserInstance userInstance;
+  String _method = 'apiKey';
 
   @override
   void initState() {
@@ -43,9 +45,10 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               _instanceUrlInput(context),
-              _apiTokenInput(context),
-              // _usernameEmailInput(context),
-              // _passwordInput(context),
+              _methodSelection(context),
+              if (_method == 'apiKey') _apiTokenInput(context),
+              if (_method == 'username') _usernameEmailInput(context),
+              if (_method == 'username') _passwordInput(context),
               _actionButtons(context),
             ],
           ),
@@ -97,6 +100,24 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
     );
   }
 
+  Widget _methodSelection(BuildContext context) {
+    return DropdownButtonFormField(
+      decoration: const InputDecoration(
+        labelText: 'Authentication Method',
+      ),
+      value: _method,
+      items: const [
+        DropdownMenuItem(value: 'apiKey', child: Text('API Key')),
+        DropdownMenuItem(value: 'username', child: Text('Username/Password')),
+      ],
+      onChanged: (value) {
+        setState(() {
+          _method = value ?? 'apiKey';
+        });
+      },
+    );
+  }
+
   final TextEditingController passwordTextController = TextEditingController();
   Widget _passwordInput(BuildContext context) {
     return TextFormField(
@@ -140,16 +161,34 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
         TextButton(onPressed: () {
           setState(_loadValues);
         }, child: const Text("Reset")),
-        TextButton(onPressed: () {
+        TextButton(onPressed: () async {
           if (formState.currentState!.validate()) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Processing Data')),
             );
+            String? token = apiTokenTextController.text;
+            if (_method == 'username') {
+              try {
+                token = await createSession(
+                  urlTextController.text,
+                  usernameTextController.text,
+                  passwordTextController.text,
+                );
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Login failed: ${e.toString()}')),
+                  );
+                }
+                return;
+              }
+            }
+
             Navigator.pop(context, userInstance
               ..user = usernameTextController.text
               ..server = urlTextController.text
-              ..password = passwordTextController.text
-              ..apiToken = apiTokenTextController.text
+              ..password = _method == 'username' ? passwordTextController.text : null
+              ..apiToken = token
             );
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -166,5 +205,10 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
     urlTextController.text = userInstance.server ?? "";
     passwordTextController.text = userInstance.password ?? "";
     apiTokenTextController.text = userInstance.apiToken ?? "";
+    if (userInstance.apiToken != null && userInstance.apiToken!.isNotEmpty) {
+      _method = 'apiKey';
+    } else {
+      _method = 'username';
+    }
   }
 }
