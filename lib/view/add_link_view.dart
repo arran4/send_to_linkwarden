@@ -129,6 +129,7 @@ class _AddLinkViewState extends State<AddLinkView> {
     if (widget.arguments?.description != null) {
       descriptionTextController.text = widget.arguments!.description!;
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) => _promptForInstanceIfNeeded());
   }
 
   @override
@@ -138,6 +139,21 @@ class _AddLinkViewState extends State<AddLinkView> {
 
   void _darkMode() async {
     setDarkMode(!darkModeNotifier.value);
+  }
+
+  Future<void> _promptForInstanceIfNeeded() async {
+    var list = await userInstanceValueReplayer.subscribe().first;
+    if (list.isEmpty && context.mounted) {
+      var result = await Navigator.pushNamed(
+        context,
+        'userInstance/newEdit',
+        arguments: const AddEditUserInstanceViewArguments(),
+      );
+      if (result is UserInstance) {
+        upsertUserInstance(result);
+        _selectNewUserInstance(result, makeDefault: true);
+      }
+    }
   }
 
   Widget _submitButton(BuildContext context) {
@@ -246,19 +262,22 @@ class _AddLinkViewState extends State<AddLinkView> {
             if (list.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
-            // Should be a better way of doing this by combining the streams.
-            if (!selectedUserInstanceSet && defaultValueLoaded.data != null && selectedUserInstance == null) {
+            if (!selectedUserInstanceSet && list.connectionState == ConnectionState.active) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 setState(() {
                   selectedUserInstanceSet = true;
                 });
-                _selectNewUserInstance(list.requireData.where((each) => each.id == defaultValueLoaded.requireData).firstOrNull, makeDefault: false);
+                UserInstance? chosen;
+                if (defaultValueLoaded.data != null) {
+                  chosen = list.requireData.firstWhere(
+                    (each) => each.id == defaultValueLoaded.requireData,
+                    orElse: () => list.requireData.isNotEmpty ? list.requireData.first : null,
+                  );
+                } else if (list.requireData.isNotEmpty) {
+                  chosen = list.requireData.first;
+                }
+                _selectNewUserInstance(chosen, makeDefault: false);
               });
-            }
-            if (!selectedUserInstanceSet && list.connectionState == ConnectionState.active) {
-              WidgetsBinding.instance.addPostFrameCallback((_) => setState(() {
-                selectedUserInstanceSet = true;
-              }));
             }
             return Flex(
               direction: Axis.horizontal,

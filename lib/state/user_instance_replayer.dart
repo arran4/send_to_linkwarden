@@ -24,6 +24,14 @@ void _saveUserInstances(List<UserInstance> userInstances) async {
   await storage.write(key: "UserInstancesV1", value: jsonEncode(userInstances));
 }
 
+void _ensureDefaultIsFirst(List<UserInstance> userInstances) {
+  if (userInstances.isNotEmpty) {
+    setDefaultUserInstance(userInstances.first.id);
+  } else {
+    setDefaultUserInstance(null);
+  }
+}
+
 Future<UserInstance?> getUserInstanceById(String? id) async {
   var sub = userInstanceValueReplayer.subscribe();
   return (await sub.first).firstWhere((e) => e.id == id);
@@ -40,6 +48,7 @@ void upsertUserInstance(UserInstance userInstances) async {
   }
   userInstanceValueReplayer.publish(current);
   _saveUserInstances(current);
+  _ensureDefaultIsFirst(current);
 }
 
 Future<void> deleteUserInstance(UserInstance instance) async {
@@ -51,4 +60,18 @@ Future<void> deleteUserInstance(UserInstance instance) async {
   if ((await loadDefaultUserInstance()) == instance.id) {
     await setDefaultUserInstance(null);
   }
+  _ensureDefaultIsFirst(current);
+}
+
+void reorderUserInstances(int oldIndex, int newIndex) async {
+  var sub = userInstanceValueReplayer.subscribe();
+  List<UserInstance> current = [...await sub.first];
+  if (newIndex > oldIndex) {
+    newIndex -= 1;
+  }
+  final item = current.removeAt(oldIndex);
+  current.insert(newIndex, item);
+  userInstanceValueReplayer.publish(current);
+  _saveUserInstances(current);
+  _ensureDefaultIsFirst(current);
 }
