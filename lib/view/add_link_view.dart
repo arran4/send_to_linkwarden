@@ -41,6 +41,23 @@ class _AddLinkViewState extends State<AddLinkView> {
   TextEditingController nameTextController = TextEditingController();
   TextEditingController descriptionTextController = TextEditingController();
   TextEditingController linkTextController = TextEditingController();
+  String? previewImageUrl;
+
+  Future<void> _fetchPreview() async {
+    try {
+      final preview = await fetchPreview(linkTextController.text);
+      if (preview['title'] != null && nameTextController.text.isEmpty) {
+        nameTextController.text = preview['title']!;
+      }
+      if (preview['description'] != null &&
+          descriptionTextController.text.isEmpty) {
+        descriptionTextController.text = preview['description']!;
+      }
+      setState(() {
+        previewImageUrl = preview['image'];
+      });
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +78,7 @@ class _AddLinkViewState extends State<AddLinkView> {
               _userAndInstanceSelection(context),
               _collectionSelection(context),
               _linkInput(context),
+              _previewCard(),
               ..._tagsSelection(context),
               _nameInput(context),
               _descriptionInput(context),
@@ -79,6 +97,7 @@ class _AddLinkViewState extends State<AddLinkView> {
     collectionsStream = collectionsReplayer.subscribe(initialKey: null);
     if (widget.arguments?.link != null) {
       linkTextController.text = widget.arguments!.link!;
+      _fetchPreview();
     }
     if (widget.arguments?.name != null) {
       nameTextController.text = widget.arguments!.name!;
@@ -164,6 +183,7 @@ class _AddLinkViewState extends State<AddLinkView> {
     linkTextController.text = "";
     nameTextController.text = "";
     descriptionTextController.text = "";
+    previewImageUrl = null;
     setState(() {
       tags = [];
     });
@@ -448,8 +468,14 @@ class _AddLinkViewState extends State<AddLinkView> {
 
   Widget _linkInput(BuildContext context) {
     return TextFormField(
-      decoration: const InputDecoration(
-          labelText: "Link", helper: Text("e.g. http://example.com/")),
+      decoration: InputDecoration(
+          labelText: "Link",
+          helper: const Text("e.g. http://example.com/"),
+          suffixIcon: IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _fetchPreview,
+          )),
+      onEditingComplete: _fetchPreview,
       validator: (value) {
         if (value == null) {
           return "Please enter a value";
@@ -483,6 +509,16 @@ class _AddLinkViewState extends State<AddLinkView> {
           labelText: "Description", helper: Text("Notes, thoughts, etc.")),
       maxLines: null,
       controller: descriptionTextController,
+    );
+  }
+
+  Widget _previewCard() {
+    if (previewImageUrl == null) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Image.network(previewImageUrl!, height: 100),
     );
   }
 }
