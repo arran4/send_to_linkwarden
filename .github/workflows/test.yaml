@@ -21,6 +21,12 @@ jobs:
         with:
           cache: true
           flutter-version: ${{ env.FLUTTER_VERSION }}
+      - name: Dart Version
+        run: dart --version
+      - name: Flutter Version
+        run: flutter --version
+      - name: env
+        run: env
       - name: Install dependencies
         run: flutter pub get
       - name: Run tests
