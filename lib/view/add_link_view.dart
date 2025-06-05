@@ -13,6 +13,7 @@ import 'package:send_to_linkwarden/state/tags_replayer.dart';
 import 'package:send_to_linkwarden/state/user_instance_replayer.dart';
 import 'package:send_to_linkwarden/view/select_tags_view.dart';
 import 'package:send_to_linkwarden/view/main_drawer.dart';
+import 'package:collection/collection.dart';
 
 import 'add_edit_user_instance_view.dart';
 
@@ -269,10 +270,10 @@ class _AddLinkViewState extends State<AddLinkView> {
                 });
                 UserInstance? chosen;
                 if (defaultValueLoaded.data != null) {
-                  chosen = list.requireData.firstWhere(
+                  chosen = list.requireData.firstWhereOrNull(
                     (each) => each.id == defaultValueLoaded.requireData,
-                    orElse: () => list.requireData.isNotEmpty ? list.requireData.first : null,
                   );
+                  chosen ??= list.requireData.isNotEmpty ? list.requireData.first : null;
                 } else if (list.requireData.isNotEmpty) {
                   chosen = list.requireData.first;
                 }
