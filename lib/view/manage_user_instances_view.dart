@@ -3,9 +3,14 @@ import 'package:send_to_linkwarden/model/user_instance.dart';
 import 'package:send_to_linkwarden/state/user_instance_replayer.dart';
 import 'package:send_to_linkwarden/view/add_edit_user_instance_view.dart';
 
-class ManageUserInstancesView extends StatelessWidget {
+class ManageUserInstancesView extends StatefulWidget {
   const ManageUserInstancesView({super.key});
 
+  @override
+  State<ManageUserInstancesView> createState() => _ManageUserInstancesViewState();
+}
+
+class _ManageUserInstancesViewState extends State<ManageUserInstancesView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -43,63 +48,72 @@ class ManageUserInstancesView extends StatelessWidget {
                       return const Center(child: CircularProgressIndicator());
                     }
                     var instances = snapshot.data ?? [];
-                    return ListView(
-                      shrinkWrap: true,
+                    return Column(
                       children: [
-                        for (UserInstance instance in instances)
-                          ListTile(
-                            title: Text(instance.server ?? 'Unknown URL'),
-                            subtitle: Text(instance.user ?? ''),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.edit),
-                                  onPressed: () async {
-                                    var result = await Navigator.pushNamed(
-                                      context,
-                                      'userInstance/newEdit',
-                                      arguments:
-                                          AddEditUserInstanceViewArguments(
-                                              userInstance: instance),
-                                    );
-                                    if (result is UserInstance) {
-                                      upsertUserInstance(result);
-                                    }
-                                  },
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete),
-                                  onPressed: () async {
-                                    bool? confirm = await showDialog<bool>(
-                                      context: context,
-                                      builder: (context) => AlertDialog(
-                                        title: const Text('Delete Instance'),
-                                        content: const Text(
-                                            'Are you sure you want to delete this instance?'),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () =>
-                                                Navigator.pop(context, false),
-                                            child: const Text('Cancel'),
+                        ReorderableListView(
+                          shrinkWrap: true,
+                          onReorder: (oldIndex, newIndex) {
+                            reorderUserInstances(oldIndex, newIndex);
+                          },
+                          children: [
+                            for (UserInstance instance in instances)
+                              ListTile(
+                                key: ValueKey(instance.id),
+                                title: Text(instance.server ?? 'Unknown URL'),
+                                subtitle: Text(instance.user ?? ''),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit),
+                                      onPressed: () async {
+                                        var result = await Navigator.pushNamed(
+                                          context,
+                                          'userInstance/newEdit',
+                                          arguments:
+                                              AddEditUserInstanceViewArguments(
+                                                  userInstance: instance),
+                                        );
+                                        if (result is UserInstance) {
+                                          upsertUserInstance(result);
+                                        }
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete),
+                                      onPressed: () async {
+                                        bool? confirm = await showDialog<bool>(
+                                          context: context,
+                                          builder: (context) => AlertDialog(
+                                            title: const Text('Delete Instance'),
+                                            content: const Text(
+                                                'Are you sure you want to delete this instance?'),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.pop(context, false),
+                                                child: const Text('Cancel'),
+                                              ),
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.pop(context, true),
+                                                child: const Text('Delete'),
+                                              ),
+                                            ],
                                           ),
-                                          TextButton(
-                                            onPressed: () =>
-                                                Navigator.pop(context, true),
-                                            child: const Text('Delete'),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                    if (confirm == true) {
-                                      deleteUserInstance(instance);
-                                    }
-                                  },
+                                        );
+                                        if (confirm == true) {
+                                          deleteUserInstance(instance);
+                                        }
+                                      },
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                          ),
+                              ),
+                          ],
+                        ),
                         ListTile(
+                          key: const ValueKey('add'),
                           leading: const Icon(Icons.add),
                           title: const Text('Add Instance'),
                           onTap: () async {
