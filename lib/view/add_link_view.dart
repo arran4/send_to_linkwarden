@@ -71,21 +71,43 @@ class _AddLinkViewState extends State<AddLinkView> {
           IconButton(onPressed: _darkMode, icon: const Icon(Icons.dark_mode)),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Form(
-          key: formState,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              _userAndInstanceSelection(context),
-              _collectionSelection(context),
-              _linkInput(context),
-              _previewCard(),
-              ..._tagsSelection(context),
-              _nameInput(context),
-              _descriptionInput(context),
-              _submitButton(context),
-            ],
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xffe0f7fa), Color(0xff80deea)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Form(
+                    key: formState,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        _userAndInstanceSelection(context),
+                        _collectionSelection(context),
+                        _linkInput(context),
+                        _previewCard(),
+                        ..._tagsSelection(context),
+                        _nameInput(context),
+                        _descriptionInput(context),
+                        _submitButton(context),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),

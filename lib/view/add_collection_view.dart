@@ -26,17 +26,39 @@ class _AddCollectionViewState extends State<AddCollectionView> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text("New Collection - Send To Linkwarden"),
       ),
-      body: SingleChildScrollView(
-        child: Form(
-          key: formState,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              _collectionNameInput(context),
-              _descriptionInput(context),
-              ..._colourInput(context),
-              _actionButtons(context),
-            ],
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xffe0f7fa), Color(0xff80deea)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Form(
+                    key: formState,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        _collectionNameInput(context),
+                        _descriptionInput(context),
+                        ..._colourInput(context),
+                        _actionButtons(context),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),

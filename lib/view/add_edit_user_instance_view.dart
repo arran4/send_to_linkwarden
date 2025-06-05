@@ -41,31 +41,56 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text("Instance configuration - Send To Linkwarden"),
       ),
-      body: StreamBuilder(
-        stream: userInstanceValueReplayer.subscribe(),
-        builder: (context, AsyncSnapshot<List<UserInstance>> snapshot) {
-          if (snapshot.hasError) {
-            return Center(child: Text("Error: ${snapshot.error}"));
-          }
-          var instances = snapshot.data ?? [];
-          return SingleChildScrollView(
-            child: Form(
-              key: formState,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  _instanceSelector(context, instances),
-                  _instanceUrlInput(context),
-                  _methodSelection(context),
-                  if (_method == 'apiKey') _apiTokenInput(context),
-                  if (_method == 'username') _usernameEmailInput(context),
-                  if (_method == 'username') _passwordInput(context),
-                  _actionButtons(context),
-                ],
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xffe0f7fa), Color(0xff80deea)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: StreamBuilder(
+                    stream: userInstanceValueReplayer.subscribe(),
+                    builder:
+                        (context, AsyncSnapshot<List<UserInstance>> snapshot) {
+                      if (snapshot.hasError) {
+                        return Center(
+                            child: Text("Error: ${snapshot.error}"));
+                      }
+                      var instances = snapshot.data ?? [];
+                      return Form(
+                        key: formState,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            _instanceSelector(context, instances),
+                            _instanceUrlInput(context),
+                            _methodSelection(context),
+                            if (_method == 'apiKey') _apiTokenInput(context),
+                            if (_method == 'username')
+                              _usernameEmailInput(context),
+                            if (_method == 'username') _passwordInput(context),
+                            _actionButtons(context),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
               ),
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }
