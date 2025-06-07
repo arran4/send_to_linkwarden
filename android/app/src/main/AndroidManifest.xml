@@ -1,4 +1,4 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest package="com.arran4.send_to_linkwarden_v2" xmlns:android="http://schemas.android.com/apk/res/android">
     <application
         android:label="Send To Linkwarden"
         android:name="${applicationName}"
