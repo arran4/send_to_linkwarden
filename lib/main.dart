@@ -27,7 +27,7 @@ class _SendToLinkwardenAppState extends State<SendToLinkwardenApp> {
   @override
   void initState() {
     super.initState();
-    loadDarkMode();
+    unawaited(loadDarkMode());
     // Listen to media sharing coming from outside the app while the app is in the memory.
     _intentSub = ReceiveSharingIntent.instance.getMediaStream().listen((value) async {
       for (SharedMediaFile sharedMediaFile in value) {
@@ -47,7 +47,7 @@ class _SendToLinkwardenAppState extends State<SendToLinkwardenApp> {
     });
 
     // Get the media sharing coming from outside the app while the app is closed.
-    ReceiveSharingIntent.instance.getInitialMedia().then((value) async {
+    unawaited(ReceiveSharingIntent.instance.getInitialMedia().then((value) async {
       for (SharedMediaFile sharedMediaFile in value) {
         await navigatorKey.currentState?.pushNamed("link/new", arguments: AddLinkViewArguments(
           name: "",
@@ -56,13 +56,13 @@ class _SendToLinkwardenAppState extends State<SendToLinkwardenApp> {
         ));
       }
       // Tell the library that we are done processing the intent.
-      ReceiveSharingIntent.instance.reset();
-    });
+      await ReceiveSharingIntent.instance.reset();
+    }));
   }
 
   @override
   void dispose() {
-    _intentSub.cancel();
+    unawaited(_intentSub.cancel());
     super.dispose();
   }
 
