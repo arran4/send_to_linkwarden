@@ -96,7 +96,11 @@ class _SelectTagsViewState extends State<SelectTagsView> {
 
   @override
   void dispose() {
-    tagSubscription?.cancel();
+    final subscription = tagSubscription;
+    tagSubscription = null;
+    if (subscription != null) {
+      unawaited(subscription.cancel());
+    }
     super.dispose();
   }
 
