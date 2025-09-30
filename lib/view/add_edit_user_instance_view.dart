@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/material.dart';
 import 'package:send_to_linkwarden/model/user_instance.dart';
 import 'package:send_to_linkwarden/api/linkwarden.dart';
@@ -300,10 +302,13 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
       _method = 'username';
     }
     // Determine if we are editing an existing instance based on stored list
-    userInstanceValueReplayer.subscribe().first.then((list) {
+    unawaited(userInstanceValueReplayer.subscribe().first.then((list) {
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _editingExisting = list.any((e) => e.id == userInstance.id);
       });
-    });
+    }));
   }
 }
