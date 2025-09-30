@@ -1,3 +1,4 @@
+import 'dart:async' show unawaited;
 import 'dart:convert';
 
 import 'package:send_to_linkwarden/core/pub_sub_replay.dart';
@@ -26,9 +27,9 @@ void _saveUserInstances(List<UserInstance> userInstances) async {
 
 void _ensureDefaultIsFirst(List<UserInstance> userInstances) {
   if (userInstances.isNotEmpty) {
-    setDefaultUserInstance(userInstances.first.id);
+    unawaited(setDefaultUserInstance(userInstances.first.id));
   } else {
-    setDefaultUserInstance(null);
+    unawaited(setDefaultUserInstance(null));
   }
 }
 
