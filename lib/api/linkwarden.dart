@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:send_to_linkwarden/model/tag.dart';
 import 'package:send_to_linkwarden/model/collection.dart';
@@ -191,24 +193,29 @@ Future<Map<String, String?>> fetchPreview(String url) async {
       }
     }
 
-    final document = html.parse(utf8.decode(bytes));
-    String? title = document.querySelector('title')?.text;
-    title ??= document.querySelector('meta[property="og:title"]')?.attributes['content'];
-    title ??= document.querySelector('meta[name="twitter:title"]')?.attributes['content'];
-
-    String? description = document.querySelector('meta[name="description"]')?.attributes['content'];
-    description ??= document.querySelector('meta[property="og:description"]')?.attributes['content'];
-    description ??= document.querySelector('meta[name="twitter:description"]')?.attributes['content'];
-
-    String? image = document.querySelector('meta[property="og:image"]')?.attributes['content'];
-    image ??= document.querySelector('meta[name="twitter:image"]')?.attributes['content'];
-
-    return {
-      'title': title,
-      'description': description,
-      'image': image,
-    };
+    return await compute(_parsePreviewFromBytes, Uint8List.fromList(bytes));
   } finally {
     client.close();
   }
+}
+
+Map<String, String?> _parsePreviewFromBytes(Uint8List bytes) {
+  final document = html.parse(utf8.decode(bytes));
+  String? title = document.querySelector('title')?.text;
+  title ??= document.querySelector('meta[property="og:title"]')?.attributes['content'];
+  title ??= document.querySelector('meta[name="twitter:title"]')?.attributes['content'];
+
+  String? description = document.querySelector('meta[name="description"]')?.attributes['content'];
+  description ??= document.querySelector('meta[property="og:description"]')?.attributes['content'];
+  description ??=
+      document.querySelector('meta[name="twitter:description"]')?.attributes['content'];
+
+  String? image = document.querySelector('meta[property="og:image"]')?.attributes['content'];
+  image ??= document.querySelector('meta[name="twitter:image"]')?.attributes['content'];
+
+  return {
+    'title': title,
+    'description': description,
+    'image': image,
+  };
 }
