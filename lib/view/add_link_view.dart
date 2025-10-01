@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:send_to_linkwarden/api/linkwarden.dart';
@@ -69,7 +71,11 @@ class _AddLinkViewState extends State<AddLinkView> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text("Add Bookmark - Send To Linkwarden"),
         actions: [
-          IconButton(onPressed: _darkMode, icon: const Icon(Icons.dark_mode)),
+          IconButton(
+              onPressed: () {
+                unawaited(_darkMode());
+              },
+              icon: const Icon(Icons.dark_mode)),
         ],
       ),
       body: Container(
@@ -122,7 +128,7 @@ class _AddLinkViewState extends State<AddLinkView> {
     collectionsStream = collectionsReplayer.subscribe(initialKey: null);
     if (widget.arguments?.link != null) {
       linkTextController.text = widget.arguments!.link!;
-      _fetchPreview();
+      unawaited(_fetchPreview());
     }
     if (widget.arguments?.name != null) {
       nameTextController.text = widget.arguments!.name!;
@@ -130,7 +136,8 @@ class _AddLinkViewState extends State<AddLinkView> {
     if (widget.arguments?.description != null) {
       descriptionTextController.text = widget.arguments!.description!;
     }
-    WidgetsBinding.instance.addPostFrameCallback((_) => _promptForInstanceIfNeeded());
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => unawaited(_promptForInstanceIfNeeded()));
   }
 
   @override
@@ -138,8 +145,8 @@ class _AddLinkViewState extends State<AddLinkView> {
     super.dispose();
   }
 
-  void _darkMode() async {
-    setDarkMode(!darkModeNotifier.value);
+  Future<void> _darkMode() async {
+    await setDarkMode(!darkModeNotifier.value);
   }
 
   Future<void> _promptForInstanceIfNeeded() async {
@@ -345,7 +352,7 @@ class _AddLinkViewState extends State<AddLinkView> {
     });
     collectionsStream.currentKey = selectedUserInstance?.id;
     if (makeDefault) {
-      setDefaultUserInstance(selectedUserInstance?.id);
+      unawaited(setDefaultUserInstance(selectedUserInstance?.id));
     }
   }
 
@@ -517,9 +524,13 @@ class _AddLinkViewState extends State<AddLinkView> {
           helper: const Text("e.g. http://example.com/"),
           suffixIcon: IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: _fetchPreview,
+            onPressed: () {
+              unawaited(_fetchPreview());
+            },
           )),
-      onEditingComplete: _fetchPreview,
+      onEditingComplete: () {
+        unawaited(_fetchPreview());
+      },
       validator: (value) {
         if (value == null) {
           return "Please enter a value";
