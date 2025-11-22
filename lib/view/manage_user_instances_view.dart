@@ -19,12 +19,8 @@ class _ManageUserInstancesViewState extends State<ManageUserInstancesView> {
         title: const Text('Manage Linkwarden Instances'),
       ),
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xffe0f7fa), Color(0xff80deea)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
         ),
         child: Center(
           child: Padding(

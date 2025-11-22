@@ -25,14 +25,14 @@ class AddEditUserInstanceView extends StatefulWidget {
 class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
   GlobalKey<FormState> formState = GlobalKey<FormState>();
   late UserInstance userInstance;
-  bool _editingExisting = false;
+
   String _method = 'apiKey';
 
   @override
   void initState() {
     super.initState();
     userInstance = widget.arguments?.userInstance ?? UserInstance();
-    _editingExisting = widget.arguments?.userInstance != null;
+
     _loadValues();
   }
 
@@ -44,12 +44,8 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
         title: const Text("Instance configuration - Send To Linkwarden"),
       ),
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xffe0f7fa), Color(0xff80deea)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
         ),
         child: Center(
           child: SingleChildScrollView(
@@ -224,6 +220,7 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
               }
             }
 
+            if (!mounted) return;
             Navigator.pop(context, userInstance
               ..user = usernameTextController.text
               ..server = urlTextController.text
@@ -256,7 +253,7 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
             onChanged: (value) {
               setState(() {
                 userInstance = value ?? UserInstance();
-                _editingExisting = value != null;
+
                 _loadValues();
               });
             },
@@ -281,7 +278,7 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
                 await deleteUserInstance(userInstance);
                 setState(() {
                   userInstance = UserInstance();
-                  _editingExisting = false;
+
                   _loadValues();
                 });
               }
@@ -307,7 +304,7 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
         return;
       }
       setState(() {
-        _editingExisting = list.any((e) => e.id == userInstance.id);
+
       });
     }));
   }

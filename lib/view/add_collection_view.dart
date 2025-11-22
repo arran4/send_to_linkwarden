@@ -27,12 +27,8 @@ class _AddCollectionViewState extends State<AddCollectionView> {
         title: const Text("New Collection - Send To Linkwarden"),
       ),
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xffe0f7fa), Color(0xff80deea)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
         ),
         child: Center(
           child: SingleChildScrollView(

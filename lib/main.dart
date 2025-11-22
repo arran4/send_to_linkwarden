@@ -43,7 +43,7 @@ class _SendToLinkwardenAppState extends State<SendToLinkwardenApp> {
           SnackBar(content: Text('Media share error $err')),
         );
       }
-      print("getIntentDataStream error: $err");
+
     });
 
     // Get the media sharing coming from outside the app while the app is closed.
@@ -76,7 +76,7 @@ class _SendToLinkwardenAppState extends State<SendToLinkwardenApp> {
             title: 'Send To Linkwarden',
             themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
             theme: ThemeData(
-              colorScheme: ColorScheme.fromSeed(seedColor: Colors.white),
+              colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
               useMaterial3: true,
             ),
             navigatorKey: navigatorKey,

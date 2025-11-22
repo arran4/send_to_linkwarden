@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:send_to_linkwarden/core/individual_keyed_pub_sub_replay.dart';
+
 import 'package:send_to_linkwarden/model/tag.dart';
 import 'package:send_to_linkwarden/model/user_instance.dart';
 import 'package:send_to_linkwarden/state/tags_replayer.dart';
@@ -115,12 +115,8 @@ class _SelectTagsViewState extends State<SelectTagsView> {
         }, icon: const Icon(Icons.check))],
       ),
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xffe0f7fa), Color(0xff80deea)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
         ),
         child: Center(
           child: SingleChildScrollView(

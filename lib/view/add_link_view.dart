@@ -79,12 +79,8 @@ class _AddLinkViewState extends State<AddLinkView> {
         ],
       ),
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xffe0f7fa), Color(0xff80deea)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
         ),
         child: Center(
           child: SingleChildScrollView(
@@ -167,7 +163,7 @@ class _AddLinkViewState extends State<AddLinkView> {
   Widget _submitButton(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16),
-      child: ElevatedButton(
+      child: FilledButton(
         onPressed: () async {
           if (!formState.currentState!.validate()) {
             ScaffoldMessenger.of(context).showSnackBar(

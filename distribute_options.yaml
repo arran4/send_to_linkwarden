@@ -79,7 +79,7 @@ releases:
         publish:
           target: playstore
           args:
-            package-name: com.arran4.send_to_linkwarden_v2
+            package-name: com.arran4.send_to_linkwarden_v3
             track: production
       - name: android-apk
         package:
