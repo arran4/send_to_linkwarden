@@ -1,0 +1,24 @@
+{
+    "name": "Send To Linkwarden",
+    "description": "Mobile client for Linkwarden",
+    "version": "1.0.0",
+    "manifest_version": 2,
+    "browser_action": {
+        "default_popup": "index.html",
+        "default_icon": {
+            "16": "icons/Icon-192.png",
+            "48": "icons/Icon-192.png",
+            "128": "icons/Icon-192.png"
+        }
+    },
+    "icons": {
+        "16": "icons/Icon-192.png",
+        "48": "icons/Icon-192.png",
+        "128": "icons/Icon-192.png"
+    },
+    "permissions": [
+        "activeTab",
+        "storage"
+    ],
+    "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'"
+}
