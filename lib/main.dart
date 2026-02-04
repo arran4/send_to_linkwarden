@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:send_to_linkwarden/state/dark_mode_notifier.dart';
+import 'package:send_to_linkwarden/util/extension_helper.dart';
 import 'package:send_to_linkwarden/view/add_collection_view.dart';
 import 'package:send_to_linkwarden/view/add_edit_user_instance_view.dart';
 import 'package:send_to_linkwarden/view/manage_user_instances_view.dart';
@@ -21,48 +23,64 @@ class SendToLinkwardenApp extends StatefulWidget {
 }
 
 class _SendToLinkwardenAppState extends State<SendToLinkwardenApp> {
-  late StreamSubscription _intentSub;
+  StreamSubscription? _intentSub;
   GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
   @override
   void initState() {
     super.initState();
     unawaited(loadDarkMode());
-    // Listen to media sharing coming from outside the app while the app is in the memory.
-    _intentSub = ReceiveSharingIntent.instance.getMediaStream().listen((value) async {
-      for (SharedMediaFile sharedMediaFile in value) {
-        await navigatorKey.currentState?.pushNamed("link/new", arguments: AddLinkViewArguments(
-          name: "",
-          description: sharedMediaFile.message,
-          link: sharedMediaFile.path,
-        ));
-      }
-    }, onError: (err) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Media share error $err')),
-        );
-      }
+    if (kIsWeb) {
+      getCurrentTabUrl().then((value) {
+        if (value != null) {
+          navigatorKey.currentState?.pushNamed(
+            "link/new",
+            arguments: AddLinkViewArguments(
+              link: value,
+            ),
+          );
+        }
+      });
+    } else {
+      // Listen to media sharing coming from outside the app while the app is in the memory.
+      _intentSub =
+          ReceiveSharingIntent.instance.getMediaStream().listen((value) async {
+        for (SharedMediaFile sharedMediaFile in value) {
+          await navigatorKey.currentState?.pushNamed("link/new",
+              arguments: AddLinkViewArguments(
+                name: "",
+                description: sharedMediaFile.message,
+                link: sharedMediaFile.path,
+              ));
+        }
+      }, onError: (err) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Media share error $err')),
+          );
+        }
+      });
 
-    });
-
-    // Get the media sharing coming from outside the app while the app is closed.
-    unawaited(ReceiveSharingIntent.instance.getInitialMedia().then((value) async {
-      for (SharedMediaFile sharedMediaFile in value) {
-        await navigatorKey.currentState?.pushNamed("link/new", arguments: AddLinkViewArguments(
-          name: "",
-          description: sharedMediaFile.message,
-          link: sharedMediaFile.path,
-        ));
-      }
-      // Tell the library that we are done processing the intent.
-      await ReceiveSharingIntent.instance.reset();
-    }));
+      // Get the media sharing coming from outside the app while the app is closed.
+      unawaited(
+          ReceiveSharingIntent.instance.getInitialMedia().then((value) async {
+        for (SharedMediaFile sharedMediaFile in value) {
+          await navigatorKey.currentState?.pushNamed("link/new",
+              arguments: AddLinkViewArguments(
+                name: "",
+                description: sharedMediaFile.message,
+                link: sharedMediaFile.path,
+              ));
+        }
+        // Tell the library that we are done processing the intent.
+        await ReceiveSharingIntent.instance.reset();
+      }));
+    }
   }
 
   @override
   void dispose() {
-    unawaited(_intentSub.cancel());
+    unawaited(_intentSub?.cancel());
     super.dispose();
   }
 
