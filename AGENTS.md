@@ -4,7 +4,7 @@
 
 All automated tests are run using Flutter. To install Flutter:
 
-1. Download `https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.32.4-stable.tar.xz`.
+1. Download `https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.38.7-stable.tar.xz`.
 2. Extract the archive to a convenient location (for example `~/.flutter`).
 3. Add the extracted `bin` directory to the `PATH` environment variable.
 
