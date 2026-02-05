@@ -6,8 +6,8 @@ on:
     branches: [ main ]
 
 env:
-  FLUTTER_VERSION: '3.32.1'
-  DART_VERSION: '3.8.1'
+  FLUTTER_VERSION: '3.38.7'
+  DART_VERSION: '3.10.7'
 
 jobs:
   build:
