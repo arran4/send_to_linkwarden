@@ -14,3 +14,6 @@ preview image and pre-fill the title and description when available.
 
 ![Screenshot_20240823_155131.png](assets%2FScreenshot_20240823_155131.png)
 
+## License
+
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
