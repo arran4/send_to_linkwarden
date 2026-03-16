@@ -34,9 +34,11 @@ jobs:
         with:
           name: chrome-extension
           path: build/extension/chrome_extension.zip
+          retention-days: 1
 
       - name: Upload Firefox Extension
         uses: actions/upload-artifact@v4
         with:
           name: firefox-extension
           path: build/extension/firefox_extension.zip
+          retention-days: 1
