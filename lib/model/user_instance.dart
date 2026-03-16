@@ -19,7 +19,8 @@ class UserInstance {
     this.apiToken,
   }) : id = id ?? const Uuid().v4();
 
-  factory UserInstance.fromJson(Map<String, dynamic> json) => _$UserInstanceFromJson(json);
+  factory UserInstance.fromJson(Map<String, dynamic> json) =>
+      _$UserInstanceFromJson(json);
 
   Map<String, dynamic> toJson() => _$UserInstanceToJson(this);
 

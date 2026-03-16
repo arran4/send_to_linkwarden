@@ -29,7 +29,7 @@ class AddLinkViewArguments {
 
 class AddLinkView extends StatefulWidget {
   final AddLinkViewArguments? arguments;
-  const AddLinkView({super.key, this.arguments });
+  const AddLinkView({super.key, this.arguments});
 
   @override
   State<AddLinkView> createState() => _AddLinkViewState();
@@ -41,7 +41,8 @@ class _AddLinkViewState extends State<AddLinkView> {
   UserInstance? selectedUserInstance;
   bool selectedUserInstanceSet = false;
   Collection? selectedCollection;
-  late IndividualKeyedPubSubReplayStream<String?, List<Collection>?> collectionsStream;
+  late IndividualKeyedPubSubReplayStream<String?, List<Collection>?>
+  collectionsStream;
   TextEditingController nameTextController = TextEditingController();
   TextEditingController descriptionTextController = TextEditingController();
   TextEditingController linkTextController = TextEditingController();
@@ -72,16 +73,15 @@ class _AddLinkViewState extends State<AddLinkView> {
         title: const Text("Add Bookmark - Send To Linkwarden"),
         actions: [
           IconButton(
-              onPressed: () {
-                unawaited(_darkMode());
-              },
-              icon: const Icon(Icons.dark_mode)),
+            onPressed: () {
+              unawaited(_darkMode());
+            },
+            icon: const Icon(Icons.dark_mode),
+          ),
         ],
       ),
       body: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-        ),
+        decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface),
         child: Center(
           child: SingleChildScrollView(
             child: Padding(
@@ -89,7 +89,8 @@ class _AddLinkViewState extends State<AddLinkView> {
               child: Card(
                 elevation: 4,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Form(
@@ -132,8 +133,9 @@ class _AddLinkViewState extends State<AddLinkView> {
     if (widget.arguments?.description != null) {
       descriptionTextController.text = widget.arguments!.description!;
     }
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => unawaited(_promptForInstanceIfNeeded()));
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => unawaited(_promptForInstanceIfNeeded()),
+    );
   }
 
   @override
@@ -147,6 +149,7 @@ class _AddLinkViewState extends State<AddLinkView> {
 
   Future<void> _promptForInstanceIfNeeded() async {
     var list = await userInstanceValueReplayer.subscribe().first;
+    if (!mounted) return;
     if (list.isEmpty && context.mounted) {
       var result = await Navigator.pushNamed(
         context,
@@ -166,33 +169,40 @@ class _AddLinkViewState extends State<AddLinkView> {
       child: FilledButton(
         onPressed: () async {
           if (!formState.currentState!.validate()) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Validation errors')),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('Validation errors')));
             return;
           }
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Submitting Link')),
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Submitting Link')));
+          List<Tag>? allTags = await tagsReplayer
+              .subscribe(initialKey: selectedUserInstance!.id)
+              .first;
+          Map<String, Tag> tagLookup = Map<String, Tag>.fromIterable(
+            allTags ?? [],
+            key: (element) => element.name ?? "Untitled",
           );
-          List<Tag>? allTags = await tagsReplayer.subscribe(initialKey: selectedUserInstance!.id).first;
-          Map<String, Tag> tagLookup = Map<String, Tag>.fromIterable(allTags??[],key: (element) => element.name??"Untitled",);
           Link? result;
           try {
             result = await postLink(
-                selectedUserInstance!.apiToken!,
-                selectedUserInstance!.server!,
-                Link(
-                    name: nameTextController.text,
-                    description: descriptionTextController.text,
-                    url: linkTextController.text,
-                    collection: selectedCollection,
-                    tags: tags.map((tagName) {
-                      if (tagLookup.containsKey(tagName) &&
-                          tagLookup[tagName] != null) {
-                        return tagLookup[tagName]!;
-                      }
-                      return Tag(name: tagName);
-                    }).toList()));
+              selectedUserInstance!.apiToken!,
+              selectedUserInstance!.server!,
+              Link(
+                name: nameTextController.text,
+                description: descriptionTextController.text,
+                url: linkTextController.text,
+                collection: selectedCollection,
+                tags: tags.map((tagName) {
+                  if (tagLookup.containsKey(tagName) &&
+                      tagLookup[tagName] != null) {
+                    return tagLookup[tagName]!;
+                  }
+                  return Tag(name: tagName);
+                }).toList(),
+              ),
+            );
           } catch (e) {
             if (!context.mounted) {
               return;
@@ -209,9 +219,9 @@ class _AddLinkViewState extends State<AddLinkView> {
           if (result == null) {
             return;
           }
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Link ${result.id} created')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Link ${result.id} created')));
           if (widget.arguments != null) {
             Navigator.pop(context, result);
           }
@@ -242,7 +252,10 @@ class _AddLinkViewState extends State<AddLinkView> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text("Error loading default user instance: ${defaultValueLoaded.error}", style: const TextStyle(color: Colors.red)),
+                Text(
+                  "Error loading default user instance: ${defaultValueLoaded.error}",
+                  style: const TextStyle(color: Colors.red),
+                ),
               ],
             ),
           );
@@ -258,7 +271,10 @@ class _AddLinkViewState extends State<AddLinkView> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text("Error loading user instances: ${list.error}", style: const TextStyle(color: Colors.red)),
+                    Text(
+                      "Error loading user instances: ${list.error}",
+                      style: const TextStyle(color: Colors.red),
+                    ),
                   ],
                 ),
               );
@@ -266,7 +282,8 @@ class _AddLinkViewState extends State<AddLinkView> {
             if (list.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
-            if (!selectedUserInstanceSet && list.connectionState == ConnectionState.active) {
+            if (!selectedUserInstanceSet &&
+                list.connectionState == ConnectionState.active) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 setState(() {
                   selectedUserInstanceSet = true;
@@ -276,7 +293,9 @@ class _AddLinkViewState extends State<AddLinkView> {
                   chosen = list.requireData.firstWhereOrNull(
                     (each) => each.id == defaultValueLoaded.requireData,
                   );
-                  chosen ??= list.requireData.isNotEmpty ? list.requireData.first : null;
+                  chosen ??= list.requireData.isNotEmpty
+                      ? list.requireData.first
+                      : null;
                 } else if (list.requireData.isNotEmpty) {
                   chosen = list.requireData.first;
                 }
@@ -287,62 +306,72 @@ class _AddLinkViewState extends State<AddLinkView> {
               direction: Axis.horizontal,
               children: [
                 Flexible(
-                    child: DropdownButtonFormField(
-                  decoration: const InputDecoration(
-                    labelText: 'Select User And Linkwarden Instance',
-                  ),
-                  validator: (value) {
-                    if (value == null) {
-                      return "Please select an instance";
-                    }
-                    if (!value.valid) {
-                      return "Instance details lack either a URL or a ApiToken";
-                    }
-                    return null;
-                  },
-                  value: selectedUserInstance,
-                  items: [
-                    for (UserInstance ui in list.data??[])
-                      DropdownMenuItem(
-                        value: ui,
-                        key: ValueKey(ui.id),
-                        child: Text(ui.server??"Unknown URL"),
-                      ),
-                    const DropdownMenuItem(
-                      value: null,
-                      key: ValueKey("New"),
-                      child: Text("New"),
+                  child: DropdownButtonFormField(
+                    decoration: const InputDecoration(
+                      labelText: 'Select User And Linkwarden Instance',
                     ),
-                  ],
-                  onChanged: (value) {
-                    _selectNewUserInstance(value, makeDefault: true);
-                  },
-                )),
-                IconButton(
-                    onPressed: () async {
-                      var result =
-                          await Navigator.pushNamed(context, "userInstance/newEdit", arguments: AddEditUserInstanceViewArguments(userInstance: selectedUserInstance));
-                      if (result == null) {
-                        return;
+                    validator: (value) {
+                      if (value == null) {
+                        return "Please select an instance";
                       }
-                      assert(result is UserInstance);
-                      if (result is! UserInstance) {
-                        return;
+                      if (!value.valid) {
+                        return "Instance details lack either a URL or a ApiToken";
                       }
-                      upsertUserInstance(result);
-                      // make it default?
-                      _selectNewUserInstance(result, makeDefault: true);
+                      return null;
                     },
-                    icon: const Icon(Icons.edit))
+                    initialValue: selectedUserInstance,
+                    items: [
+                      for (UserInstance ui in list.data ?? [])
+                        DropdownMenuItem(
+                          value: ui,
+                          key: ValueKey(ui.id),
+                          child: Text(ui.server ?? "Unknown URL"),
+                        ),
+                      const DropdownMenuItem(
+                        value: null,
+                        key: ValueKey("New"),
+                        child: Text("New"),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      _selectNewUserInstance(value, makeDefault: true);
+                    },
+                  ),
+                ),
+                IconButton(
+                  onPressed: () async {
+                    var result = await Navigator.pushNamed(
+                      context,
+                      "userInstance/newEdit",
+                      arguments: AddEditUserInstanceViewArguments(
+                        userInstance: selectedUserInstance,
+                      ),
+                    );
+                    if (result == null) {
+                      return;
+                    }
+                    assert(result is UserInstance);
+                    if (result is! UserInstance) {
+                      return;
+                    }
+                    upsertUserInstance(result);
+                    // make it default?
+                    _selectNewUserInstance(result, makeDefault: true);
+                  },
+                  icon: const Icon(Icons.edit),
+                ),
               ],
             );
-          }
+          },
         );
-      }
+      },
     );
   }
 
-  void _selectNewUserInstance(UserInstance? result, { bool makeDefault = false }) {
+  void _selectNewUserInstance(
+    UserInstance? result, {
+    bool makeDefault = false,
+  }) {
     setState(() {
       selectedUserInstance = result;
     });
@@ -361,8 +390,10 @@ class _AddLinkViewState extends State<AddLinkView> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text("Error loading user instances: ${collections.error}",
-                    style: const TextStyle(color: Colors.red)),
+                Text(
+                  "Error loading user instances: ${collections.error}",
+                  style: const TextStyle(color: Colors.red),
+                ),
               ],
             ),
           );
@@ -375,103 +406,115 @@ class _AddLinkViewState extends State<AddLinkView> {
           direction: Axis.horizontal,
           children: [
             Flexible(
-                child: DropdownButtonFormField(
-                  decoration: const InputDecoration(
-                    labelText: 'Collection',
-                  ),
-                  value: selectedCollection,
-                  items: [
-                    for (Collection collection in collections.data ?? [])
-                      DropdownMenuItem(
-                        value: collection,
-                        key: ValueKey(collection.id ?? collection),
-                        child: Row(
-                          children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                  color: collection.color != null
-                                      ? colorFromHex(collection.color!)
-                                      : const Color(0xff008080),
-                                  border: Border.all()
-                              ),
-                              constraints: const BoxConstraints(
-                                maxHeight: 28,
-                                maxWidth: 28,
-                              ),
+              child: DropdownButtonFormField(
+                decoration: const InputDecoration(labelText: 'Collection'),
+                initialValue: selectedCollection,
+                items: [
+                  for (Collection collection in collections.data ?? [])
+                    DropdownMenuItem(
+                      value: collection,
+                      key: ValueKey(collection.id ?? collection),
+                      child: Row(
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              color: collection.color != null
+                                  ? colorFromHex(collection.color!)
+                                  : const Color(0xff008080),
+                              border: Border.all(),
                             ),
-                            Text(collection.name ?? "Unnamed Collection"),
-                          ],
-                        ),
+                            constraints: const BoxConstraints(
+                              maxHeight: 28,
+                              maxWidth: 28,
+                            ),
+                          ),
+                          Text(collection.name ?? "Unnamed Collection"),
+                        ],
                       ),
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      selectedCollection = value;
-                    });
-                  },
-                  validator: (value) {
-                    if (value == null) {
-                      return "Please select a category";
-                    }
-                    return null;
-                  },
-                )),
-            IconButton(
-                onPressed: () async {
-                  if (selectedUserInstance?.id != null) {
-                    collectionsReplayer.reset(selectedUserInstance!.id);
-                  }
+                    ),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    selectedCollection = value;
+                  });
                 },
-                icon: const Icon(Icons.refresh),
+                validator: (value) {
+                  if (value == null) {
+                    return "Please select a category";
+                  }
+                  return null;
+                },
+              ),
             ),
             IconButton(
-                onPressed: () async {
-                  if (selectedUserInstance?.apiToken == null || selectedUserInstance?.server == null) {
+              onPressed: () async {
+                if (selectedUserInstance?.id != null) {
+                  collectionsReplayer.reset(selectedUserInstance!.id);
+                }
+              },
+              icon: const Icon(Icons.refresh),
+            ),
+            IconButton(
+              onPressed: () async {
+                if (selectedUserInstance?.apiToken == null ||
+                    selectedUserInstance?.server == null) {
+                  return;
+                }
+                var result = await Navigator.pushNamed(
+                  context,
+                  "collection/new",
+                );
+                if (result == null) {
+                  return;
+                }
+                assert(result is Collection);
+                if (result is! Collection) {
+                  return;
+                }
+                if (selectedUserInstance?.apiToken == null ||
+                    selectedUserInstance?.server == null) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Error creating collection'),
+                      ),
+                    );
+                  }
+                  return;
+                }
+                try {
+                  Collection? collection = await createCollection(
+                    selectedUserInstance!.apiToken!,
+                    selectedUserInstance!.server!,
+                    result,
+                  );
+                  if (collection == null) {
                     return;
                   }
-                  var result = await Navigator.pushNamed(
-                      context, "collection/new");
-                  if (result == null) {
-                    return;
+                  collectionsReplayer.publish([
+                    ...collections.data ?? [],
+                    collection,
+                  ], currentKey: selectedUserInstance?.id);
+                  setState(() {
+                    selectedCollection = collection;
+                  });
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Error creating collection: ${e.toString()}',
+                        ),
+                      ),
+                    );
                   }
-                  assert(result is Collection);
-                  if (result is! Collection) {
-                    return;
-                  }
-                  if (selectedUserInstance?.apiToken == null || selectedUserInstance?.server == null) {
-                    if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Error creating collection')),
-                        );
-                      }
-                      return;
-                  }
-                  try {
-                    Collection? collection = await createCollection(
-                        selectedUserInstance!.apiToken!,
-                        selectedUserInstance!.server!, result);
-                    if (collection == null) {
-                      return;
-                    }
-                    collectionsReplayer.publish(
-                        [...collections.data ?? [], collection],
-                        currentKey: selectedUserInstance?.id);
-                    setState(() {
-                      selectedCollection = collection;
-                    });
-                  } catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Error creating collection: ${e.toString()}')),
-                      );
-                    }
-                  }
-                },
-                icon: const Icon(Icons.add),
+                }
+              },
+              icon: const Icon(Icons.add),
             ),
           ],
         );
-      }
+      },
     );
   }
 
@@ -479,35 +522,37 @@ class _AddLinkViewState extends State<AddLinkView> {
     return [
       const Row(
         mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Text("Tags:"),
-        ],
+        children: [Text("Tags:")],
       ),
       Flex(
         direction: Axis.horizontal,
         // crossAxisAlignment: CrossAxisAlignment.center,
         // mainAxisSize: MainAxisSize.min,
         children: [
-          Wrap(
-            children: [
-              for (String tag in tags) Chip(label: Text(tag))
-            ],
-          ),
+          Wrap(children: [for (String tag in tags) Chip(label: Text(tag))]),
           IconButton(
-              onPressed: () async {
-                var result = await Navigator.pushNamed(context, "tags/select", arguments: SelectTagsViewArguments(selectedTags: tags, userInstance: selectedUserInstance));
-                if (result == null) {
-                  return;
-                }
-                assert(result is List<String>);
-                if (result is! List<String>) {
-                  return;
-                }
-                setState(() {
-                  tags = result;
-                });
-              },
-              icon: const Icon(Icons.edit))
+            onPressed: () async {
+              var result = await Navigator.pushNamed(
+                context,
+                "tags/select",
+                arguments: SelectTagsViewArguments(
+                  selectedTags: tags,
+                  userInstance: selectedUserInstance,
+                ),
+              );
+              if (result == null) {
+                return;
+              }
+              assert(result is List<String>);
+              if (result is! List<String>) {
+                return;
+              }
+              setState(() {
+                tags = result;
+              });
+            },
+            icon: const Icon(Icons.edit),
+          ),
         ],
       ),
     ];
@@ -516,14 +561,15 @@ class _AddLinkViewState extends State<AddLinkView> {
   Widget _linkInput(BuildContext context) {
     return TextFormField(
       decoration: InputDecoration(
-          labelText: "Link",
-          helper: const Text("e.g. http://example.com/"),
-          suffixIcon: IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              unawaited(_fetchPreview());
-            },
-          )),
+        labelText: "Link",
+        helper: const Text("e.g. http://example.com/"),
+        suffixIcon: IconButton(
+          icon: const Icon(Icons.refresh),
+          onPressed: () {
+            unawaited(_fetchPreview());
+          },
+        ),
+      ),
       onEditingComplete: () {
         unawaited(_fetchPreview());
       },
@@ -547,8 +593,8 @@ class _AddLinkViewState extends State<AddLinkView> {
   Widget _nameInput(BuildContext context) {
     return TextFormField(
       decoration: const InputDecoration(
-          labelText: "Name",
-          helper: Text("Will be auto generated if left empty."),
+        labelText: "Name",
+        helper: Text("Will be auto generated if left empty."),
       ),
       controller: nameTextController,
     );
@@ -557,7 +603,9 @@ class _AddLinkViewState extends State<AddLinkView> {
   Widget _descriptionInput(BuildContext context) {
     return TextFormField(
       decoration: const InputDecoration(
-          labelText: "Description", helper: Text("Notes, thoughts, etc.")),
+        labelText: "Description",
+        helper: Text("Notes, thoughts, etc."),
+      ),
       maxLines: null,
       controller: descriptionTextController,
     );

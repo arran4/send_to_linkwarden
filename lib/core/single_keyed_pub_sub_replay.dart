@@ -4,23 +4,32 @@ class SingleKeyedPubSubReplay<K, T> {
   final Map<K, T> _lastMessage = <K, T>{};
   K _currentKey;
   final List<StreamController<T>> _subscribers = [];
-  final void Function(SingleKeyedPubSubReplay<K, T> queue, T currentKey)? _onNoLastMessage;
+  final void Function(SingleKeyedPubSubReplay<K, T> queue, K currentKey)?
+  _onNoLastMessage;
 
-  SingleKeyedPubSubReplay({required K currentKey, void Function(SingleKeyedPubSubReplay<K, T> queue, T currentKey)? onNoLastMessage})
-      : _onNoLastMessage = onNoLastMessage, _currentKey = currentKey;
+  SingleKeyedPubSubReplay({
+    required K currentKey,
+    void Function(SingleKeyedPubSubReplay<K, T> queue, K currentKey)?
+    onNoLastMessage,
+  }) : _onNoLastMessage = onNoLastMessage,
+       _currentKey = currentKey;
 
-  get currentKey {
+  K get currentKey {
     return _currentKey;
   }
 
-  set currentKey(newValue) {
+  set currentKey(K newValue) {
     _currentKey = newValue;
     _checkAndInitialize();
   }
 
-  void _checkAndInitialize({ StreamController<T>? singleTarget }) {
+  void _checkAndInitialize({StreamController<T>? singleTarget}) {
     if (_lastMessage.containsKey(currentKey)) {
-      publish(_lastMessage[currentKey] as T, keyCheck: currentKey, singleTarget: singleTarget);
+      publish(
+        _lastMessage[currentKey] as T,
+        keyCheck: currentKey,
+        singleTarget: singleTarget,
+      );
     } else {
       _onNoLastMessage?.call(this, currentKey);
     }
@@ -33,7 +42,7 @@ class SingleKeyedPubSubReplay<K, T> {
     }
   }
 
-  void publish(T message, { K? keyCheck, StreamController<T>? singleTarget }) {
+  void publish(T message, {K? keyCheck, StreamController<T>? singleTarget}) {
     if (keyCheck != null && currentKey != keyCheck) {
       _lastMessage[keyCheck] = message;
       return;

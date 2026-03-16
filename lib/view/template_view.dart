@@ -29,13 +29,13 @@ class _TemplateViewState extends State<TemplateView> {
               child: Card(
                 elevation: 4,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(12))),
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                ),
                 child: Padding(
                   padding: EdgeInsets.all(16.0),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                    ],
+                    children: <Widget>[],
                   ),
                 ),
               ),

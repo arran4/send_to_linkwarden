@@ -22,13 +22,16 @@ Future<String?> getCurrentTabUrl() async {
 
   final queryInfo = QueryInfo(active: true, currentWindow: true);
 
-  query(queryInfo as JSObject, (JSArray<Tab> tabs) {
-    if (tabs.toDart.isNotEmpty) {
-      completer.complete(tabs.toDart.first.url);
-    } else {
-      completer.complete(null);
-    }
-  }.toJS);
+  query(
+    queryInfo as JSObject,
+    (JSArray<Tab> tabs) {
+      if (tabs.toDart.isNotEmpty) {
+        completer.complete(tabs.toDart.first.url);
+      } else {
+        completer.complete(null);
+      }
+    }.toJS,
+  );
 
   return completer.future;
 }
