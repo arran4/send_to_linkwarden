@@ -35,7 +35,6 @@ Future<List<Tag>?> getTags(String token, String baseUrl) async {
   return tags;
 }
 
-
 Future<List<Collection>?> getCollections(String token, String baseUrl) async {
   final url = Uri.parse('$baseUrl/api/v1/collections');
 
@@ -63,7 +62,11 @@ Future<List<Collection>?> getCollections(String token, String baseUrl) async {
   return collections;
 }
 
-Future<Collection?> createCollection(String token, String baseUrl, Collection collection) async {
+Future<Collection?> createCollection(
+  String token,
+  String baseUrl,
+  Collection collection,
+) async {
   final url = Uri.parse('$baseUrl/api/v1/collections');
 
   final headers = {
@@ -108,16 +111,15 @@ Future<Link?> postLink(String token, String baseUrl, Link link) async {
     "name": link.name,
     "description": link.description,
     "url": link.url,
-    "collection": link.collection != null ? {
-      "id": link.collection?.id,
-      "ownerId": link.collection?.ownerId,
-      "name": link.collection?.name,
-    } : null,
-    "tags": (link.tags??[]).map((e) {
-      return {
-        "id": e.id,
-        "name": e.name,
-        };
+    "collection": link.collection != null
+        ? {
+            "id": link.collection?.id,
+            "ownerId": link.collection?.ownerId,
+            "name": link.collection?.name,
+          }
+        : null,
+    "tags": (link.tags ?? []).map((e) {
+      return {"id": e.id, "name": e.name};
     }).toList(),
   };
 
@@ -138,7 +140,11 @@ Future<Link?> postLink(String token, String baseUrl, Link link) async {
   return Link.fromJson(responseObject['response']);
 }
 
-Future<String> createSession(String baseUrl, String username, String password) async {
+Future<String> createSession(
+  String baseUrl,
+  String username,
+  String password,
+) async {
   final url = Uri.parse('$baseUrl/api/v1/session');
 
   final headers = {
@@ -160,7 +166,8 @@ Future<String> createSession(String baseUrl, String username, String password) a
 
   final Map<String, dynamic> responseObject = json.decode(response.body);
 
-  if (responseObject['response'] == null || responseObject['response']['token'] == null) {
+  if (responseObject['response'] == null ||
+      responseObject['response']['token'] == null) {
     throw const FormatException('Invalid response structure');
   }
 
@@ -173,7 +180,9 @@ Future<Map<String, String?>> fetchPreview(String url) async {
   try {
     final request = http.Request('GET', uri)
       ..headers[HttpHeaders.rangeHeader] = 'bytes=0-102399';
-    final response = await client.send(request).timeout(const Duration(seconds: 1));
+    final response = await client
+        .send(request)
+        .timeout(const Duration(seconds: 1));
 
     if (response.statusCode < 200 || response.statusCode > 299) {
       throw HttpException('Failed to load preview: ${response.statusCode}');
@@ -202,20 +211,29 @@ Future<Map<String, String?>> fetchPreview(String url) async {
 Map<String, String?> _parsePreviewFromBytes(Uint8List bytes) {
   final document = html.parse(utf8.decode(bytes));
   String? title = document.querySelector('title')?.text;
-  title ??= document.querySelector('meta[property="og:title"]')?.attributes['content'];
-  title ??= document.querySelector('meta[name="twitter:title"]')?.attributes['content'];
+  title ??= document
+      .querySelector('meta[property="og:title"]')
+      ?.attributes['content'];
+  title ??= document
+      .querySelector('meta[name="twitter:title"]')
+      ?.attributes['content'];
 
-  String? description = document.querySelector('meta[name="description"]')?.attributes['content'];
-  description ??= document.querySelector('meta[property="og:description"]')?.attributes['content'];
-  description ??=
-      document.querySelector('meta[name="twitter:description"]')?.attributes['content'];
+  String? description = document
+      .querySelector('meta[name="description"]')
+      ?.attributes['content'];
+  description ??= document
+      .querySelector('meta[property="og:description"]')
+      ?.attributes['content'];
+  description ??= document
+      .querySelector('meta[name="twitter:description"]')
+      ?.attributes['content'];
 
-  String? image = document.querySelector('meta[property="og:image"]')?.attributes['content'];
-  image ??= document.querySelector('meta[name="twitter:image"]')?.attributes['content'];
+  String? image = document
+      .querySelector('meta[property="og:image"]')
+      ?.attributes['content'];
+  image ??= document
+      .querySelector('meta[name="twitter:image"]')
+      ?.attributes['content'];
 
-  return {
-    'title': title,
-    'description': description,
-    'image': image,
-  };
+  return {'title': title, 'description': description, 'image': image};
 }

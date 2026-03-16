@@ -6,7 +6,7 @@ class PubSubReplay<T> {
   void Function(PubSubReplay<T> queue)? _onNoLastMessage;
 
   PubSubReplay({void Function(PubSubReplay<T> queue)? onNoLastMessage})
-      : _onNoLastMessage = onNoLastMessage;
+    : _onNoLastMessage = onNoLastMessage;
 
   void publish(T message) {
     _lastMessage = message;

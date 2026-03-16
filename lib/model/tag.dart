@@ -8,7 +8,8 @@ class TagCount {
 
   TagCount({this.links});
 
-  factory TagCount.fromJson(Map<String, dynamic> json) => _$TagCountFromJson(json);
+  factory TagCount.fromJson(Map<String, dynamic> json) =>
+      _$TagCountFromJson(json);
 
   Map<String, dynamic> toJson() => _$TagCountToJson(this);
 }
@@ -36,9 +37,10 @@ class Tag {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-          other is Tag &&
-              runtimeType == other.runtimeType &&
-              ((id != null && other.id != null && id == other.id) || (name == other.name));
+      other is Tag &&
+          runtimeType == other.runtimeType &&
+          ((id != null && other.id != null && id == other.id) ||
+              (name == other.name));
 
   @override
   int get hashCode => id?.hashCode ?? name.hashCode;

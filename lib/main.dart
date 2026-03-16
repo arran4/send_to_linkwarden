@@ -35,46 +35,51 @@ class _SendToLinkwardenAppState extends State<SendToLinkwardenApp> {
         if (value != null) {
           navigatorKey.currentState?.pushNamed(
             "link/new",
-            arguments: AddLinkViewArguments(
-              link: value,
-            ),
+            arguments: AddLinkViewArguments(link: value),
           );
         }
       });
     } else {
       // Listen to media sharing coming from outside the app while the app is in the memory.
-      _intentSub =
-          ReceiveSharingIntent.instance.getMediaStream().listen((value) async {
-        for (SharedMediaFile sharedMediaFile in value) {
-          await navigatorKey.currentState?.pushNamed("link/new",
+      _intentSub = ReceiveSharingIntent.instance.getMediaStream().listen(
+        (value) async {
+          for (SharedMediaFile sharedMediaFile in value) {
+            await navigatorKey.currentState?.pushNamed(
+              "link/new",
               arguments: AddLinkViewArguments(
                 name: "",
                 description: sharedMediaFile.message,
                 link: sharedMediaFile.path,
-              ));
-        }
-      }, onError: (err) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Media share error $err')),
-          );
-        }
-      });
+              ),
+            );
+          }
+        },
+        onError: (err) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text('Media share error $err')));
+          }
+        },
+      );
 
       // Get the media sharing coming from outside the app while the app is closed.
       unawaited(
-          ReceiveSharingIntent.instance.getInitialMedia().then((value) async {
-        for (SharedMediaFile sharedMediaFile in value) {
-          await navigatorKey.currentState?.pushNamed("link/new",
+        ReceiveSharingIntent.instance.getInitialMedia().then((value) async {
+          for (SharedMediaFile sharedMediaFile in value) {
+            await navigatorKey.currentState?.pushNamed(
+              "link/new",
               arguments: AddLinkViewArguments(
                 name: "",
                 description: sharedMediaFile.message,
                 link: sharedMediaFile.path,
-              ));
-        }
-        // Tell the library that we are done processing the intent.
-        await ReceiveSharingIntent.instance.reset();
-      }));
+              ),
+            );
+          }
+          // Tell the library that we are done processing the intent.
+          await ReceiveSharingIntent.instance.reset();
+        }),
+      );
     }
   }
 
@@ -87,30 +92,46 @@ class _SendToLinkwardenAppState extends State<SendToLinkwardenApp> {
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<bool>(
-        valueListenable: darkModeNotifier,
-        builder: (BuildContext context, bool isDark, Widget? child) {
-          return MaterialApp(
-            debugShowCheckedModeBanner: false,
-            title: 'Send To Linkwarden',
-            themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
-            theme: ThemeData(
-              colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
-              useMaterial3: true,
+      valueListenable: darkModeNotifier,
+      builder: (BuildContext context, bool isDark, Widget? child) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'Send To Linkwarden',
+          themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
+            useMaterial3: true,
+          ),
+          navigatorKey: navigatorKey,
+          darkTheme: ThemeData.dark(useMaterial3: true),
+          routes: {
+            "/": (BuildContext context) => const AddLinkView(),
+            "link/new": (BuildContext context) => AddLinkView(
+              arguments:
+                  ModalRoute.of(context)?.settings.arguments
+                      as AddLinkViewArguments?,
             ),
-            navigatorKey: navigatorKey,
-            darkTheme: ThemeData.dark(
-              useMaterial3: true,
+            "tags/select": (BuildContext context) => SelectTagsView(
+              arguments:
+                  ModalRoute.of(context)?.settings.arguments
+                      as SelectTagsViewArguments?,
             ),
-            routes: {
-              "/": (BuildContext context) => const AddLinkView(),
-              "link/new": (BuildContext context) => AddLinkView(arguments: ModalRoute.of(context)?.settings.arguments as AddLinkViewArguments?),
-              "tags/select": (BuildContext context) => SelectTagsView(arguments: ModalRoute.of(context)?.settings.arguments as SelectTagsViewArguments?),
-              "collection/new": (BuildContext context) => AddCollectionView(arguments: ModalRoute.of(context)?.settings.arguments as AddCollectionViewArguments?),
-              "userInstance/newEdit": (BuildContext context) => AddEditUserInstanceView(arguments: ModalRoute.of(context)?.settings.arguments as AddEditUserInstanceViewArguments?),
-              "userInstance/manage": (BuildContext context) => const ManageUserInstancesView(),
-            },
-          );
-        });
+            "collection/new": (BuildContext context) => AddCollectionView(
+              arguments:
+                  ModalRoute.of(context)?.settings.arguments
+                      as AddCollectionViewArguments?,
+            ),
+            "userInstance/newEdit": (BuildContext context) =>
+                AddEditUserInstanceView(
+                  arguments:
+                      ModalRoute.of(context)?.settings.arguments
+                          as AddEditUserInstanceViewArguments?,
+                ),
+            "userInstance/manage": (BuildContext context) =>
+                const ManageUserInstancesView(),
+          },
+        );
+      },
+    );
   }
 }
-
