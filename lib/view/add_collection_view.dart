@@ -27,9 +27,7 @@ class _AddCollectionViewState extends State<AddCollectionView> {
         title: const Text("New Collection - Send To Linkwarden"),
       ),
       body: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-        ),
+        decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface),
         child: Center(
           child: SingleChildScrollView(
             child: Padding(
@@ -37,7 +35,8 @@ class _AddCollectionViewState extends State<AddCollectionView> {
               child: Card(
                 elevation: 4,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Form(
@@ -93,58 +92,52 @@ class _AddCollectionViewState extends State<AddCollectionView> {
 
   List<Widget> _colourInput(BuildContext context) {
     return [
-      const Row(
-        children: [
-          Text(
-              "Collection Color: "
-          ),
-        ],
-      ),
+      const Row(children: [Text("Collection Color: ")]),
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Container(
             decoration: BoxDecoration(
               color: currentColor,
-              border: Border.all()
+              border: Border.all(),
             ),
-            constraints: const BoxConstraints(
-              maxHeight: 28,
-              maxWidth: 140,
-            ),
+            constraints: const BoxConstraints(maxHeight: 28, maxWidth: 140),
           ),
-          TextButton(onPressed: () async {
-            var result = await showDialog(
-              context: context,
-              builder: (context) {
-                Color pickerColor = currentColor;
-                return AlertDialog(
-                  title: const Text('Pick a color!'),
-                  content: SingleChildScrollView(
-                    child: ColorPicker(
-                      pickerColor: pickerColor,
-                      onColorChanged: (value) {
-                        pickerColor = value;
-                      },
+          TextButton(
+            onPressed: () async {
+              var result = await showDialog(
+                context: context,
+                builder: (context) {
+                  Color pickerColor = currentColor;
+                  return AlertDialog(
+                    title: const Text('Pick a color!'),
+                    content: SingleChildScrollView(
+                      child: ColorPicker(
+                        pickerColor: pickerColor,
+                        onColorChanged: (value) {
+                          pickerColor = value;
+                        },
+                      ),
                     ),
-                  ),
-                  actions: <Widget>[
-                    ElevatedButton(
-                      child: const Text('Got it'),
-                      onPressed: () {
-                        Navigator.of(context).pop(pickerColor);
-                      },
-                    ),
-                  ],
-                );
-              },
-            );
-            if (result is Color) {
-              setState(() {
-                currentColor = result;
-              });
-            }
-          }, child: const Text("Change")),
+                    actions: <Widget>[
+                      ElevatedButton(
+                        child: const Text('Got it'),
+                        onPressed: () {
+                          Navigator.of(context).pop(pickerColor);
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
+              if (result is Color) {
+                setState(() {
+                  currentColor = result;
+                });
+              }
+            },
+            child: const Text("Change"),
+          ),
         ],
       ),
     ];
@@ -154,22 +147,32 @@ class _AddCollectionViewState extends State<AddCollectionView> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        TextButton(onPressed: () {
-          if (formState.currentState!.validate()) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Processing Data')),
-            );
-            Navigator.pop(context, Collection()
-              ..name = nameTextController.text
-              ..description = descriptionTextController.text
-              ..color = colorToHex(currentColor, includeHashSign: true, enableAlpha: false, toUpperCase: false)
-            );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Validation errors')),
-            );
-          }
-        }, child: const Text("Save")),
+        TextButton(
+          onPressed: () {
+            if (formState.currentState!.validate()) {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('Processing Data')));
+              Navigator.pop(
+                context,
+                Collection()
+                  ..name = nameTextController.text
+                  ..description = descriptionTextController.text
+                  ..color = colorToHex(
+                    currentColor,
+                    includeHashSign: true,
+                    enableAlpha: false,
+                    toUpperCase: false,
+                  ),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Validation errors')),
+              );
+            }
+          },
+          child: const Text("Save"),
+        ),
       ],
     );
   }

@@ -15,30 +15,27 @@ class _ManageUserInstancesViewState extends State<ManageUserInstancesView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Manage Linkwarden Instances'),
-      ),
+      appBar: AppBar(title: const Text('Manage Linkwarden Instances')),
       body: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-        ),
+        decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface),
         child: Center(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Card(
               elevation: 4,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+                borderRadius: BorderRadius.circular(12),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: StreamBuilder(
                   stream: userInstanceValueReplayer.subscribe(),
-                  builder:
-                      (context, AsyncSnapshot<List<UserInstance>> snapshot) {
+                  builder: (context, AsyncSnapshot<List<UserInstance>> snapshot) {
                     if (snapshot.hasError) {
                       return Center(
-                        child:
-                            Text('Error loading instances: ${snapshot.error}'),
+                        child: Text(
+                          'Error loading instances: ${snapshot.error}',
+                        ),
                       );
                     }
                     if (!snapshot.hasData) {
@@ -69,7 +66,8 @@ class _ManageUserInstancesViewState extends State<ManageUserInstancesView> {
                                           'userInstance/newEdit',
                                           arguments:
                                               AddEditUserInstanceViewArguments(
-                                                  userInstance: instance),
+                                                userInstance: instance,
+                                              ),
                                         );
                                         if (result is UserInstance) {
                                           upsertUserInstance(result);
@@ -82,19 +80,25 @@ class _ManageUserInstancesViewState extends State<ManageUserInstancesView> {
                                         bool? confirm = await showDialog<bool>(
                                           context: context,
                                           builder: (context) => AlertDialog(
-                                            title:
-                                                const Text('Delete Instance'),
+                                            title: const Text(
+                                              'Delete Instance',
+                                            ),
                                             content: const Text(
-                                                'Are you sure you want to delete this instance?'),
+                                              'Are you sure you want to delete this instance?',
+                                            ),
                                             actions: [
                                               TextButton(
                                                 onPressed: () => Navigator.pop(
-                                                    context, false),
+                                                  context,
+                                                  false,
+                                                ),
                                                 child: const Text('Cancel'),
                                               ),
                                               TextButton(
                                                 onPressed: () => Navigator.pop(
-                                                    context, true),
+                                                  context,
+                                                  true,
+                                                ),
                                                 child: const Text('Delete'),
                                               ),
                                             ],
@@ -104,18 +108,21 @@ class _ManageUserInstancesViewState extends State<ManageUserInstancesView> {
                                           try {
                                             await deleteUserInstance(instance);
                                             if (mounted) {
-                                              ScaffoldMessenger.of(context)
-                                                  .showSnackBar(
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
                                                 const SnackBar(
                                                   content: Text(
-                                                      'Instance deleted successfully.'),
+                                                    'Instance deleted successfully.',
+                                                  ),
                                                 ),
                                               );
                                             }
                                           } catch (error) {
                                             if (mounted) {
-                                              ScaffoldMessenger.of(context)
-                                                  .showSnackBar(
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
                                                 SnackBar(
                                                   content: Text(
                                                     'Failed to delete instance: $error',

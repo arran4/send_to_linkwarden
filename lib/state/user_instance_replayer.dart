@@ -7,7 +7,9 @@ import 'package:send_to_linkwarden/model/user_instance.dart';
 import 'package:send_to_linkwarden/state/default_user_instance.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-PubSubReplay<List<UserInstance>> userInstanceValueReplayer = PubSubReplay(onNoLastMessage: loadUserInstances);
+PubSubReplay<List<UserInstance>> userInstanceValueReplayer = PubSubReplay(
+  onNoLastMessage: loadUserInstances,
+);
 
 void loadUserInstances(PubSubReplay<List<UserInstance>?> queue) async {
   final FlutterSecureStorage storage = getSecureStorage();
@@ -17,7 +19,9 @@ void loadUserInstances(PubSubReplay<List<UserInstance>?> queue) async {
     return;
   }
   List<dynamic> unmarshalled = jsonDecode(stored);
-  queue.publish(unmarshalled.map((each) => UserInstance.fromJson(each)).toList());
+  queue.publish(
+    unmarshalled.map((each) => UserInstance.fromJson(each)).toList(),
+  );
 }
 
 void _saveUserInstances(List<UserInstance> userInstances) async {

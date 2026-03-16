@@ -5,8 +5,13 @@ class IndividualKeyedPubSubReplayStream<K, T> implements Stream<T> {
   K _currentKey;
   final IndividualKeyedPubSubReplay<K, T> _parent;
   final StreamController<T> _controller;
-  
-  IndividualKeyedPubSubReplayStream(this._realStream, K currentKey, this._parent, this._controller) : _currentKey = currentKey;
+
+  IndividualKeyedPubSubReplayStream(
+    this._realStream,
+    K currentKey,
+    this._parent,
+    this._controller,
+  ) : _currentKey = currentKey;
 
   K get currentKey {
     return _currentKey;
@@ -16,7 +21,6 @@ class IndividualKeyedPubSubReplayStream<K, T> implements Stream<T> {
     _parent.moveSubscription(_currentKey, newValue, _controller);
     _currentKey = newValue;
   }
-
 
   void removeSelf() {
     _parent.removeSubscription(_currentKey, _controller);
@@ -28,8 +32,14 @@ class IndividualKeyedPubSubReplayStream<K, T> implements Stream<T> {
   }
 
   @override
-  Stream<T> asBroadcastStream({void Function(StreamSubscription<T> subscription)? onListen, void Function(StreamSubscription<T> subscription)? onCancel}) {
-    return _realStream.asBroadcastStream(onListen: onListen, onCancel: onCancel);
+  Stream<T> asBroadcastStream({
+    void Function(StreamSubscription<T> subscription)? onListen,
+    void Function(StreamSubscription<T> subscription)? onCancel,
+  }) {
+    return _realStream.asBroadcastStream(
+      onListen: onListen,
+      onCancel: onCancel,
+    );
   }
 
   @override
@@ -96,7 +106,10 @@ class IndividualKeyedPubSubReplayStream<K, T> implements Stream<T> {
   }
 
   @override
-  Stream<T> handleError(Function onError, {bool Function(dynamic error)? test}) {
+  Stream<T> handleError(
+    Function onError, {
+    bool Function(dynamic error)? test,
+  }) {
     return _realStream.handleError(onError, test: test);
   }
 
@@ -123,8 +136,18 @@ class IndividualKeyedPubSubReplayStream<K, T> implements Stream<T> {
   Future<int> get length => _realStream.length;
 
   @override
-  StreamSubscription<T> listen(void Function(T event)? onData, {Function? onError, void Function()? onDone, bool? cancelOnError}) {
-    return _realStream.listen(onData, onError: onError, onDone: onDone, cancelOnError: cancelOnError);
+  StreamSubscription<T> listen(
+    void Function(T event)? onData, {
+    Function? onError,
+    void Function()? onDone,
+    bool? cancelOnError,
+  }) {
+    return _realStream.listen(
+      onData,
+      onError: onError,
+      onDone: onDone,
+      cancelOnError: cancelOnError,
+    );
   }
 
   @override
@@ -171,7 +194,10 @@ class IndividualKeyedPubSubReplayStream<K, T> implements Stream<T> {
   }
 
   @override
-  Stream<T> timeout(Duration timeLimit, {void Function(EventSink<T> sink)? onTimeout}) {
+  Stream<T> timeout(
+    Duration timeLimit, {
+    void Function(EventSink<T> sink)? onTimeout,
+  }) {
     return _realStream.timeout(timeLimit, onTimeout: onTimeout);
   }
 
@@ -196,18 +222,27 @@ class IndividualKeyedPubSubReplayStream<K, T> implements Stream<T> {
   }
 }
 
-
 class IndividualKeyedPubSubReplay<K, T> {
   final Map<K, T> _lastMessage = <K, T>{};
   final Map<K, List<StreamController<T>>> _subscribers = {};
-  final void Function(IndividualKeyedPubSubReplay<K, T> queue, K currentKey)? _onNoLastMessage;
+  final void Function(IndividualKeyedPubSubReplay<K, T> queue, K currentKey)?
+  _onNoLastMessage;
 
-  IndividualKeyedPubSubReplay({void Function(IndividualKeyedPubSubReplay<K, T> queue, K currentKey)? onNoLastMessage})
-      : _onNoLastMessage = onNoLastMessage;
+  IndividualKeyedPubSubReplay({
+    void Function(IndividualKeyedPubSubReplay<K, T> queue, K currentKey)?
+    onNoLastMessage,
+  }) : _onNoLastMessage = onNoLastMessage;
 
-  void _checkAndInitialize({ required K currentKey, StreamController<T>? singleTarget }) {
+  void _checkAndInitialize({
+    required K currentKey,
+    StreamController<T>? singleTarget,
+  }) {
     if (_lastMessage.containsKey(currentKey)) {
-      publish(_lastMessage[currentKey] as T, currentKey: currentKey, singleTarget: singleTarget);
+      publish(
+        _lastMessage[currentKey] as T,
+        currentKey: currentKey,
+        singleTarget: singleTarget,
+      );
     } else {
       _onNoLastMessage?.call(this, currentKey);
     }
@@ -218,7 +253,11 @@ class IndividualKeyedPubSubReplay<K, T> {
     _checkAndInitialize(currentKey: key);
   }
 
-  void publish(T message, { required K currentKey, StreamController<T>? singleTarget }) {
+  void publish(
+    T message, {
+    required K currentKey,
+    StreamController<T>? singleTarget,
+  }) {
     _lastMessage[currentKey] = message;
     if (singleTarget != null) {
       singleTarget.add(message);
@@ -240,7 +279,13 @@ class IndividualKeyedPubSubReplay<K, T> {
     } else {
       _subscribers[initialKey]!.add(controller);
     }
-    IndividualKeyedPubSubReplayStream<K, T> stream = IndividualKeyedPubSubReplayStream<K, T>(controller.stream, initialKey, this, controller);
+    IndividualKeyedPubSubReplayStream<K, T> stream =
+        IndividualKeyedPubSubReplayStream<K, T>(
+          controller.stream,
+          initialKey,
+          this,
+          controller,
+        );
     controller.onCancel = () {
       stream.removeSelf();
     };

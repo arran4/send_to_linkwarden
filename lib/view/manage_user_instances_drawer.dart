@@ -24,9 +24,7 @@ class ManageUserInstancesDrawer extends StatelessWidget {
           return ListView(
             padding: EdgeInsets.zero,
             children: [
-              const DrawerHeader(
-                child: Text('Manage Linkwarden Instances'),
-              ),
+              const DrawerHeader(child: Text('Manage Linkwarden Instances')),
               for (UserInstance instance in instances)
                 ListTile(
                   title: Text(instance.server ?? 'Unknown URL'),
@@ -41,7 +39,9 @@ class ManageUserInstancesDrawer extends StatelessWidget {
                           var result = await Navigator.pushNamed(
                             context,
                             'userInstance/newEdit',
-                            arguments: AddEditUserInstanceViewArguments(userInstance: instance),
+                            arguments: AddEditUserInstanceViewArguments(
+                              userInstance: instance,
+                            ),
                           );
                           if (result is UserInstance) {
                             upsertUserInstance(result);
@@ -55,10 +55,13 @@ class ManageUserInstancesDrawer extends StatelessWidget {
                             context: context,
                             builder: (context) => AlertDialog(
                               title: const Text('Delete Instance'),
-                              content: const Text('Are you sure you want to delete this instance?'),
+                              content: const Text(
+                                'Are you sure you want to delete this instance?',
+                              ),
                               actions: [
                                 TextButton(
-                                  onPressed: () => Navigator.pop(context, false),
+                                  onPressed: () =>
+                                      Navigator.pop(context, false),
                                   child: const Text('Cancel'),
                                 ),
                                 TextButton(

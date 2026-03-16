@@ -20,7 +20,7 @@ class SelectTagsViewArguments {
 
 class SelectTagsView extends StatefulWidget {
   final SelectTagsViewArguments? arguments;
-  
+
   const SelectTagsView({super.key, this.arguments});
 
   @override
@@ -43,7 +43,7 @@ class _SelectTagsViewState extends State<SelectTagsView> {
   @override
   void initState() {
     super.initState();
-    selectedTags = Set.from(widget.arguments?.selectedTags??[]);
+    selectedTags = Set.from(widget.arguments?.selectedTags ?? []);
     filterText = "";
     searchAddTextController.addListener(() {
       setState(() {
@@ -59,7 +59,7 @@ class _SelectTagsViewState extends State<SelectTagsView> {
       var tagStream = tagsReplayer.subscribe(initialKey: userInstance!.id);
       tagSubscription = tagStream.listen((List<Tag>? event) {
         setState(() {
-          allTags = [...event??[]];
+          allTags = [...event ?? []];
           addNewTags();
           sortTags();
         });
@@ -81,12 +81,15 @@ class _SelectTagsViewState extends State<SelectTagsView> {
       if (!containsA && containsB) {
         return 1;
       }
-      return (a.name??"").compareTo(b.name??"");
+      return (a.name ?? "").compareTo(b.name ?? "");
     });
   }
 
   void addNewTags() {
-    Map<String, Tag> hasTag = Map<String, Tag>.fromIterable(allTags??[],key: (element) => element.name??"Untitled",);
+    Map<String, Tag> hasTag = Map<String, Tag>.fromIterable(
+      allTags ?? [],
+      key: (element) => element.name ?? "Untitled",
+    );
     for (String tag in selectedTags) {
       if (!hasTag.containsKey(tag)) {
         allTags?.add(Tag(name: tag));
@@ -110,14 +113,17 @@ class _SelectTagsViewState extends State<SelectTagsView> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text("Select Tags - Send To Linkwarden"),
-        actions: [IconButton(onPressed: () {
-          Navigator.pop(context, selectedTags.toList());
-        }, icon: const Icon(Icons.check))],
+        actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.pop(context, selectedTags.toList());
+            },
+            icon: const Icon(Icons.check),
+          ),
+        ],
       ),
       body: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-        ),
+        decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface),
         child: Center(
           child: SingleChildScrollView(
             child: Padding(
@@ -125,7 +131,8 @@ class _SelectTagsViewState extends State<SelectTagsView> {
               child: Card(
                 elevation: 4,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
@@ -150,12 +157,13 @@ class _SelectTagsViewState extends State<SelectTagsView> {
         labelText: "Tag Name",
         helperText: "Filter or add",
         hintText: "...",
-        suffix: IconButton(onPressed: () {
-          add(searchAddTextController.text);
-          searchAddTextController.clear();
-          findOrAddFocusNode.requestFocus();
-        },
-            icon: const Icon(Icons.add),
+        suffix: IconButton(
+          onPressed: () {
+            add(searchAddTextController.text);
+            searchAddTextController.clear();
+            findOrAddFocusNode.requestFocus();
+          },
+          icon: const Icon(Icons.add),
         ),
       ),
       focusNode: findOrAddFocusNode,
@@ -170,9 +178,11 @@ class _SelectTagsViewState extends State<SelectTagsView> {
 
   List<Tag> get filteredTags {
     if (filterText == "") {
-      return allTags??[];
+      return allTags ?? [];
     } else {
-      return (allTags??[]).where((element) => element.name?.contains(filterText)??false).toList();
+      return (allTags ?? [])
+          .where((element) => element.name?.contains(filterText) ?? false)
+          .toList();
     }
   }
 
@@ -186,22 +196,23 @@ class _SelectTagsViewState extends State<SelectTagsView> {
           ListTile(
             key: ValueKey(tag),
             leading: Checkbox(
-                value: selectedTags.contains(tag.name??"Untitled Tag"),
-                onChanged: (value) {
-                  if (value == null) {
-                    return;
+              value: selectedTags.contains(tag.name ?? "Untitled Tag"),
+              onChanged: (value) {
+                if (value == null) {
+                  return;
+                }
+                setState(() {
+                  String tagName = tag.name ?? "Untitled Tag";
+                  if (selectedTags.contains(tagName)) {
+                    selectedTags.remove(tagName);
+                  } else {
+                    selectedTags.add(tagName);
                   }
-                  setState(() {
-                    String tagName = tag.name??"Untitled Tag";
-                    if (selectedTags.contains(tagName)) {
-                      selectedTags.remove(tagName);
-                    } else {
-                      selectedTags.add(tagName);
-                    }
-                    sortTags();
-                  });
-                }),
-            title: Text(tag.name??"Unnamed Tag"),
+                  sortTags();
+                });
+              },
+            ),
+            title: Text(tag.name ?? "Unnamed Tag"),
           ),
       ],
     );
@@ -212,7 +223,10 @@ class _SelectTagsViewState extends State<SelectTagsView> {
     if (trimmed == "") {
       return;
     }
-    Tag? search = List<Tag?>.from(allTags??[]).firstWhere((t) => t?.name?.contains(trimmed) ?? false, orElse: () => null);
+    Tag? search = List<Tag?>.from(allTags ?? []).firstWhere(
+      (t) => t?.name?.contains(trimmed) ?? false,
+      orElse: () => null,
+    );
     if (search != null) {
       setState(() {
         if (selectedTags.contains(trimmed)) {
@@ -224,9 +238,7 @@ class _SelectTagsViewState extends State<SelectTagsView> {
       });
       return;
     }
-    Tag tag = Tag(
-      name: trimmed,
-    );
+    Tag tag = Tag(name: trimmed);
     setState(() {
       allTags?.add(tag);
       selectedTags.add(trimmed);
