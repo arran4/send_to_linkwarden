@@ -457,7 +457,7 @@ jobs:
           # Extract semantic version for branch name (remove build number if desired, or keep it)
           # Often release branches are v1.2.3.
           SEMANTIC_VERSION=$(echo $NEW_VERSION | cut -d'+' -f1)
-          BRANCH_NAME="release/v${SEMANTIC_VERSION}"
+          BRANCH_NAME="release/v${SEMANTIC_VERSION}-${GITHUB_RUN_ID}"
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
 
           git checkout -b "$BRANCH_NAME"
@@ -471,7 +471,7 @@ jobs:
             --title "Bump version to ${NEW_VERSION}" \
             --body "This PR bumps the version to ${NEW_VERSION}. Automated by Prepare Release workflow." \
             --base main \
-            --head "${BRANCH_NAME}"
+            --head "${BRANCH_NAME}" || true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
