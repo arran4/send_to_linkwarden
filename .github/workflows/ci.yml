@@ -457,13 +457,13 @@ jobs:
           # Extract semantic version for branch name (remove build number if desired, or keep it)
           # Often release branches are v1.2.3.
           SEMANTIC_VERSION=$(echo $NEW_VERSION | cut -d'+' -f1)
-          BRANCH_NAME="release/v${SEMANTIC_VERSION}"
+          BRANCH_NAME="release/v${SEMANTIC_VERSION}-${GITHUB_RUN_ID}"
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
 
           git checkout -b "$BRANCH_NAME"
           git add pubspec.yaml
           git commit -m "Bump version to ${NEW_VERSION}"
-          git push -f origin "$BRANCH_NAME"
+          git push origin "$BRANCH_NAME"
 
       - name: Create Pull Request
         run: |
