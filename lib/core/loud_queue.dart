@@ -1,7 +1,7 @@
 import 'dart:async';
 
 class LoudQueue<T> {
-  List<T> _queue = [];
+  final List<T> _queue = [];
   final _controller = StreamController<int>.broadcast();
 
   Stream<int> get onQueueIncrement => _controller.stream;

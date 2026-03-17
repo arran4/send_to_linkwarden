@@ -6,7 +6,7 @@ FlutterSecureStorage getSecureStorage() {
   FlutterSecureStorage storage;
   if (Platform.isAndroid) {
     AndroidOptions getAndroidOptions() =>
-        const AndroidOptions(encryptedSharedPreferences: true);
+        const AndroidOptions();
     storage = FlutterSecureStorage(aOptions: getAndroidOptions());
   } else {
     storage = const FlutterSecureStorage();

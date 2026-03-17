@@ -149,7 +149,8 @@ class _AddLinkViewState extends State<AddLinkView> {
 
   Future<void> _promptForInstanceIfNeeded() async {
     var list = await userInstanceValueReplayer.subscribe().first;
-    if (list.isEmpty && context.mounted) {
+    if (!mounted) return;
+    if (list.isEmpty) {
       var result = await Navigator.pushNamed(
         context,
         'userInstance/newEdit',
@@ -318,7 +319,7 @@ class _AddLinkViewState extends State<AddLinkView> {
                       }
                       return null;
                     },
-                    value: selectedUserInstance,
+                    initialValue: selectedUserInstance,
                     items: [
                       for (UserInstance ui in list.data ?? [])
                         DropdownMenuItem(
@@ -407,7 +408,7 @@ class _AddLinkViewState extends State<AddLinkView> {
             Flexible(
               child: DropdownButtonFormField(
                 decoration: const InputDecoration(labelText: 'Collection'),
-                value: selectedCollection,
+                initialValue: selectedCollection,
                 items: [
                   for (Collection collection in collections.data ?? [])
                     DropdownMenuItem(

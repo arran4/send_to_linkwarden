@@ -107,7 +107,7 @@ class _ManageUserInstancesViewState extends State<ManageUserInstancesView> {
                                         if (confirm == true) {
                                           try {
                                             await deleteUserInstance(instance);
-                                            if (mounted) {
+                                            if (context.mounted) {
                                               ScaffoldMessenger.of(
                                                 context,
                                               ).showSnackBar(
@@ -119,7 +119,7 @@ class _ManageUserInstancesViewState extends State<ManageUserInstancesView> {
                                               );
                                             }
                                           } catch (error) {
-                                            if (mounted) {
+                                            if (context.mounted) {
                                               ScaffoldMessenger.of(
                                                 context,
                                               ).showSnackBar(

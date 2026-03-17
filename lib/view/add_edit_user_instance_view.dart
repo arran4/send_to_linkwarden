@@ -140,7 +140,7 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
   Widget _methodSelection(BuildContext context) {
     return DropdownButtonFormField(
       decoration: const InputDecoration(labelText: 'Authentication Method'),
-      value: _method,
+      initialValue: _method,
       items: const [
         DropdownMenuItem(value: 'apiKey', child: Text('API Key')),
         DropdownMenuItem(value: 'username', child: Text('Username/Password')),
@@ -225,7 +225,7 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
                 }
               }
 
-              if (!mounted) return;
+              if (!context.mounted) return;
               Navigator.pop(
                 context,
                 userInstance
