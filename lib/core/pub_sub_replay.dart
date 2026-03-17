@@ -19,7 +19,7 @@ class PubSubReplay<T> {
     StreamController<T> controller = StreamController<T>.broadcast();
     controller.onListen = () {
       if (_lastMessage != null) {
-        controller.add(_lastMessage!);
+        controller.add(_lastMessage as T);
       } else {
         _onNoLastMessage?.call(this);
         _onNoLastMessage = null;

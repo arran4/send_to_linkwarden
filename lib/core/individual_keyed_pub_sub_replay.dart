@@ -305,7 +305,7 @@ class IndividualKeyedPubSubReplay<K, T> {
     _checkAndInitialize(currentKey: newKey, singleTarget: controller);
   }
 
-  void removeSubscription(currentKey, StreamController<T> controller) {
+  void removeSubscription(K currentKey, StreamController<T> controller) {
     if (_subscribers.containsKey(currentKey)) {
       _subscribers[currentKey]!.remove(controller);
     }

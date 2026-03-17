@@ -4,21 +4,21 @@ class SingleKeyedPubSubReplay<K, T> {
   final Map<K, T> _lastMessage = <K, T>{};
   K _currentKey;
   final List<StreamController<T>> _subscribers = [];
-  final void Function(SingleKeyedPubSubReplay<K, T> queue, T currentKey)?
+  final void Function(SingleKeyedPubSubReplay<K, T> queue, K currentKey)?
   _onNoLastMessage;
 
   SingleKeyedPubSubReplay({
     required K currentKey,
-    void Function(SingleKeyedPubSubReplay<K, T> queue, T currentKey)?
+    void Function(SingleKeyedPubSubReplay<K, T> queue, K currentKey)?
     onNoLastMessage,
   }) : _onNoLastMessage = onNoLastMessage,
        _currentKey = currentKey;
 
-  get currentKey {
+  K get currentKey {
     return _currentKey;
   }
 
-  set currentKey(newValue) {
+  set currentKey(K newValue) {
     _currentKey = newValue;
     _checkAndInitialize();
   }
