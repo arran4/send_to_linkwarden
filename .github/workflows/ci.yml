@@ -463,7 +463,7 @@ jobs:
           git checkout -b "$BRANCH_NAME"
           git add pubspec.yaml
           git commit -m "Bump version to ${NEW_VERSION}"
-          git push origin "$BRANCH_NAME"
+          git push -f origin "$BRANCH_NAME"
 
       - name: Create Pull Request
         run: |
@@ -471,7 +471,7 @@ jobs:
             --title "Bump version to ${NEW_VERSION}" \
             --body "This PR bumps the version to ${NEW_VERSION}. Automated by Prepare Release workflow." \
             --base main \
-            --head "${BRANCH_NAME}"
+            --head "${BRANCH_NAME}" || true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
