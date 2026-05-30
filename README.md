@@ -12,7 +12,15 @@ the official browser extension.
 The link form now fetches a small portion of the target page to display a
 preview image and pre-fill the title and description when available.
 
-![Screenshot_20240823_155131.png](assets%2FScreenshot_20240823_155131.png)
+![screenshot.png](assets/screenshot.png)
+
+### Regenerating Screenshots
+
+To regenerate the screenshot for the README, you can run the following script:
+
+```bash
+./scripts/generate_screenshots.sh
+```
 
 ## License
 
