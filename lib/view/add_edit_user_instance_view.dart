@@ -138,13 +138,12 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
   }
 
   Widget _methodSelection(BuildContext context) {
-    return DropdownButtonFormField<String>(
-      isExpanded: true,
+    return DropdownButtonFormField(
       decoration: const InputDecoration(labelText: 'Authentication Method'),
       initialValue: _method,
       items: const [
-        DropdownMenuItem(value: 'apiKey', child: Text('API Key', overflow: TextOverflow.ellipsis)),
-        DropdownMenuItem(value: 'username', child: Text('Username/Password', overflow: TextOverflow.ellipsis)),
+        DropdownMenuItem(value: 'apiKey', child: Text('API Key')),
+        DropdownMenuItem(value: 'username', child: Text('Username/Password')),
       ],
       onChanged: (value) {
         setState(() {
