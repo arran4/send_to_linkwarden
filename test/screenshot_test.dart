@@ -30,15 +30,12 @@ void main() {
   });
 
   testWidgets('Generate screenshot golden', (WidgetTester tester) async {
-    tester.view.physicalSize = const Size(1920, 1080);
-    tester.view.devicePixelRatio = 1.0;
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 3.0;
 
     // Build our app and trigger a frame.
     await tester.pumpWidget(const SendToLinkwardenApp());
     await tester.pumpAndSettle();
-
-    // Set toleration for rendering differences to make it robust, or overwrite
-    // it. In this case we just run --update-goldens which will overwrite the file.
 
     // The golden test will save the image to test/goldens/screenshot.png
     await expectLater(
@@ -48,5 +45,5 @@ void main() {
 
     tester.view.resetPhysicalSize();
     tester.view.resetDevicePixelRatio();
-  });
+  }, tags: 'golden');
 }
