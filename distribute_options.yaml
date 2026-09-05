@@ -75,3 +75,16 @@ releases:
     package:
       platform: macos
       target: zip
+- name: playstore-only
+  jobs:
+  - name: android-aab-playstore
+    package:
+      platform: android
+      target: aab
+      build_args:
+        target-platform: android-arm,android-arm64
+    publish:
+      target: playstore
+      args:
+        package-name: com.arran4.send_to_linkwarden_v3
+        track: production

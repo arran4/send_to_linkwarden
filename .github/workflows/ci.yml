@@ -93,7 +93,7 @@ jobs:
           case "${{ github.event_name }}" in
             push)
               run_code_checks=true
-              if [[ "${{ github.ref }}" == refs/tags/v* || "${{ github.ref }}" == refs/tags/test-* ]]; then
+              if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
                 run_release=true
                 run_build=true
               fi
@@ -103,9 +103,7 @@ jobs:
                 run_cleanup=true
               else
                 run_pr_meta_checks=true
-                if [[ "${{ github.event.pull_request.head.repo.full_name || '' }}" != "${{ github.repository }}" ]]; then
-                  run_code_checks=true
-                fi
+                run_code_checks=true
               fi
               ;;
             workflow_dispatch)
@@ -124,8 +122,8 @@ jobs:
                   run_release=true
                   ;;
                 publish-tag)
-                  if [[ "${{ github.ref_type }}" != "tag" ]]; then
-                    echo "publish-tag mode requires an eligible tag context" >&2
+                  if [[ "${{ github.ref_type }}" != "tag" || ! "${{ github.ref }}" =~ ^refs/tags/v[0-9]+ ]]; then
+                    echo "publish-tag mode requires an eligible tag context (e.g. vX.Y.Z)" >&2
                     false
                   fi
                   run_code_checks=true
@@ -585,7 +583,7 @@ jobs:
           flutter test
           flutter config --enable-windows-desktop
           dart pub global activate fastforge
-          fastforge package --name onwindows
+          fastforge package --platform=windows --targets=exe,msix,zip
       - name: Upload Windows
         uses: actions/upload-artifact@v4
         with:
@@ -638,11 +636,14 @@ jobs:
           flutter pub get
           flutter test
           dart pub global activate fastforge
-          fastforge package --name onlinux
+          fastforge package --platform=linux --targets=deb,rpm,pacman,zip
+          fastforge package --platform=android --targets=apk,aab --build-target-platform=android-arm,android-arm64
+          fastforge package --platform=web --targets=zip
       - name: Deploy Android to Play Store
+        if: ${{ startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-rc') && !contains(github.ref, '-alpha') && !contains(github.ref, '-beta') && !contains(github.ref, '-test') }}
         run: |
-          dart pub global activate fastforge || true
-          fastforge publish --name onlinux-android-aab-playstore || true
+          dart pub global activate fastforge
+          fastforge release --name playstore-only
       - name: Upload Linux
         uses: actions/upload-artifact@v4
         with:
@@ -689,7 +690,7 @@ jobs:
           flutter test
           flutter config --enable-macos-desktop
           dart pub global activate fastforge
-          fastforge package --name onmac
+          fastforge package --platform=macos --targets=dmg,zip
       - name: Upload macOS
         uses: actions/upload-artifact@v4
         with:
