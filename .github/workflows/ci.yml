@@ -93,7 +93,7 @@ jobs:
           case "${{ github.event_name }}" in
             push)
               run_code_checks=true
-              if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+              if [[ "${{ github.ref }}" =~ ^refs/tags/v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-(alpha|beta|rc|test)[0-9A-Za-z-]*)?$ ]]; then
                 run_release=true
                 run_build=true
               fi
@@ -122,8 +122,8 @@ jobs:
                   run_release=true
                   ;;
                 publish-tag)
-                  if [[ "${{ github.ref_type }}" != "tag" || ! "${{ github.ref }}" =~ ^refs/tags/v[0-9]+ ]]; then
-                    echo "publish-tag mode requires an eligible tag context (e.g. vX.Y.Z)" >&2
+                  if [[ "${{ github.ref_type }}" != "tag" || ! "${{ github.ref }}" =~ ^refs/tags/v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-(alpha|beta|rc|test)[0-9A-Za-z-]*)?$ ]]; then
+                    echo "publish-tag mode requires an eligible semver tag context (e.g. vX.Y.Z or vX.Y.Z-rc1)" >&2
                     false
                   fi
                   run_code_checks=true
@@ -405,7 +405,12 @@ jobs:
               next_tag=$(git-tag-inc "${args[@]}")
             fi
 
-            if git rev-parse "$next_tag" >/dev/null 2>&1; then
+            if [[ ! "$next_tag" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-(alpha|beta|rc|test)[0-9A-Za-z-]*)?$ ]]; then
+            echo "Computed tag is not a valid semver tag: $next_tag" >&2
+            false
+          fi
+
+          if git rev-parse "$next_tag" >/dev/null 2>&1; then
               REMOTE_TAG_SHA=$(git ls-remote --tags origin "refs/tags/$next_tag" | awk '{print $1}')
               if [[ "$REMOTE_TAG_SHA" == "${GITHUB_SHA}" ]]; then
                 echo "Tag $next_tag exists and points to GITHUB_SHA. Safe to retry."
@@ -710,9 +715,19 @@ jobs:
       - name: Collect release artifacts
         uses: actions/download-artifact@v4
         with:
-          path: dist-release
+          path: artifacts
           pattern: '*-release'
-          merge-multiple: true
+          merge-multiple: false
+      - name: Flatten and Verify Artifacts
+        run: |
+          mkdir -p dist-release
+          find artifacts -type f -exec mv -n {} dist-release/ \;
+
+          # Check for known expected files from fastforge
+          if ! ls dist-release/*.zip 1> /dev/null 2>&1; then
+            echo "Error: Missing zip artifacts!" >&2
+            false
+          fi
       - name: Create published GitHub release and upload assets
         uses: softprops/action-gh-release@v2
         with:
