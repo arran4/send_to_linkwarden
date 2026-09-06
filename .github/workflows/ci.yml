@@ -93,7 +93,7 @@ jobs:
           case "${{ github.event_name }}" in
             push)
               run_code_checks=true
-              if [[ "${{ github.ref }}" =~ ^refs/tags/v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-(alpha|beta|rc|test)[0-9A-Za-z-]*)?$ ]]; then
+              if [[ "${{ github.ref }}" =~ ^refs/tags/v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-(alpha|beta|rc|test)[0-9A-Za-z-\.]*)?$ ]]; then
                 run_release=true
                 run_build=true
               fi
@@ -122,7 +122,7 @@ jobs:
                   run_release=true
                   ;;
                 publish-tag)
-                  if [[ "${{ github.ref_type }}" != "tag" || ! "${{ github.ref }}" =~ ^refs/tags/v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-(alpha|beta|rc|test)[0-9A-Za-z-]*)?$ ]]; then
+                  if [[ "${{ github.ref_type }}" != "tag" || ! "${{ github.ref }}" =~ ^refs/tags/v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-(alpha|beta|rc|test)[0-9A-Za-z-\.]*)?$ ]]; then
                     echo "publish-tag mode requires an eligible semver tag context (e.g. vX.Y.Z or vX.Y.Z-rc1)" >&2
                     false
                   fi
@@ -721,13 +721,34 @@ jobs:
       - name: Flatten and Verify Artifacts
         run: |
           mkdir -p dist-release
-          find artifacts -type f -exec mv -n {} dist-release/ \;
 
-          # Check for known expected files from fastforge
-          if ! ls dist-release/*.zip 1> /dev/null 2>&1; then
-            echo "Error: Missing zip artifacts!" >&2
+          # Detect collisions before moving
+          duplicates=$(find artifacts -type f -exec basename {} \; | sort | uniq -d)
+          if [[ -n "$duplicates" ]]; then
+            echo "Error: Duplicate artifact basenames detected!" >&2
+            echo "$duplicates" >&2
             false
           fi
+
+          find artifacts -type f -exec mv {} dist-release/ \;
+
+          echo "Verifying required artifacts exist..."
+          # Windows
+          ls dist-release/*-windows-*.zip || { echo "Missing Windows zip"; false; }
+          ls dist-release/*-windows-*.exe || { echo "Missing Windows exe"; false; }
+          ls dist-release/*-windows-*.msix || { echo "Missing Windows msix"; false; }
+          # Linux
+          ls dist-release/*-linux-*.deb || { echo "Missing Linux deb"; false; }
+          ls dist-release/*-linux-*.rpm || { echo "Missing Linux rpm"; false; }
+          ls dist-release/*-linux-*.zip || { echo "Missing Linux zip"; false; }
+          # macOS
+          ls dist-release/*-macos-*.dmg || { echo "Missing macOS dmg"; false; }
+          ls dist-release/*-macos-*.zip || { echo "Missing macOS zip"; false; }
+          # Extensions
+          ls dist-release/chrome_extension.zip || { echo "Missing Chrome extension"; false; }
+          ls dist-release/firefox_extension.zip || { echo "Missing Firefox extension"; false; }
+          echo "All required artifacts verified."
+
       - name: Create published GitHub release and upload assets
         uses: softprops/action-gh-release@v2
         with:
