@@ -1,11 +1,13 @@
 # Agent rules for generation:
-# https://arran4.com/post/2026/006-Github-CI-and-Deploy/
+# https://arran4.github.io/blog/post/2026/042-simplified-github-ci-release-safe/
+# Release safety details:
+# https://arran4.github.io/blog/post/2026/041-release-safe-single-owner-github-ci/
+# Built using these posts as reference/guidance.
 name: CI/CD
 
 on:
   push:
     branches: [main, master]
-    # semantic version tags + rc/beta snapshots
     tags:
       - 'v*'
       - 'v*.*.*'
@@ -34,6 +36,7 @@ on:
           - release-rc
           - release-alpha
           - monthly-maintenance
+          - publish-tag
       release_version_override:
         description: "Optional explicit release version (for example 2.4.0 or 2.4.0-rc.2)"
         required: false
@@ -45,21 +48,16 @@ on:
         default: true
         type: boolean
   schedule:
-    # preferred heavy monthly run (quota reset strategy)
     - cron: '17 3 1 * *'
-    # optional nightly lightweight checks
     - cron: '41 2 * * *'
+
 concurrency:
-  # Keep this as a safety net, not the primary dedupe mechanism.
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
-  contents: write
-  pull-requests: write
-  checks: write
-  packages: write
-  security-events: write
+  contents: read
+  pull-requests: read
 
 env:
   FLUTTER_VERSION: '3.38.7'
@@ -74,12 +72,12 @@ jobs:
       run_pr_meta_checks: ${{ steps.route.outputs.run_pr_meta_checks }}
       run_cleanup: ${{ steps.route.outputs.run_cleanup }}
       run_release: ${{ steps.route.outputs.run_release }}
+      run_build: ${{ steps.route.outputs.run_build }}
+      run_post_release: ${{ steps.route.outputs.run_post_release }}
       is_monthly: ${{ steps.route.outputs.is_monthly }}
       is_nightly: ${{ steps.route.outputs.is_nightly }}
-      run_prepare_release: ${{ steps.route.outputs.run_prepare_release }}
     steps:
       - id: route
-        shell: bash
         run: |
           set -euo pipefail
 
@@ -87,46 +85,59 @@ jobs:
           run_pr_meta_checks=false
           run_cleanup=false
           run_release=false
+          run_build=false
+          run_post_release=false
           is_monthly=false
           is_nightly=false
-          run_prepare_release=false
 
           case "${{ github.event_name }}" in
             push)
               run_code_checks=true
-              if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+              if [[ "${{ github.ref }}" =~ ^refs/tags/v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-(alpha|beta|rc|test)([-.]?[0-9]+))?$ ]]; then
                 run_release=true
+                run_build=true
               fi
               ;;
             pull_request)
               if [[ "${{ github.event.action }}" == "closed" ]]; then
                 run_cleanup=true
               else
-                # Push wins for code checks on same-repo branches.
-                # PR lane focuses on metadata/docs/review checks.
                 run_pr_meta_checks=true
-
-                # Optional exception for fork PRs where base repo has no push event for the branch:
-                if [[ "${{ github.event.pull_request.head.repo.full_name || '' }}" != "${{ github.repository }}" ]]; then
-                  run_code_checks=true
-                fi
+                run_code_checks=true
               fi
-              ;;
-            release)
-              run_release=true
               ;;
             workflow_dispatch)
-              run_code_checks=true
-              if [[ "${{ inputs.mode }}" == release-* ]]; then
-                run_prepare_release=true
-              fi
-              if [[ "${{ inputs.mode }}" == "monthly-maintenance" ]]; then
-                is_monthly=true
-              fi
-              if [[ "${{ inputs.mode }}" == "lint-fix" ]]; then
-                # Manual lint-fix acts as an on-demand nightly-style maintenance pass.
-                is_nightly=true
-              fi
+              case "${{ inputs.mode }}" in
+                lint-fix)
+                  run_code_checks=true
+                  is_nightly=true
+                  ;;
+                build)
+                  run_code_checks=true
+                  run_build=true
+                  ;;
+                release-*)
+                  run_code_checks=true
+                  run_build=true
+                  run_release=true
+                  ;;
+                publish-tag)
+                  if [[ "${{ github.ref_type }}" != "tag" || ! "${{ github.ref }}" =~ ^refs/tags/v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-(alpha|beta|rc|test)([-.]?[0-9]+))?$ ]]; then
+                    echo "publish-tag mode requires an eligible semver tag context (e.g. vX.Y.Z or vX.Y.Z-rc1)" >&2
+                    false
+                  fi
+                  run_code_checks=true
+                  run_build=true
+                  run_release=true
+                  ;;
+                monthly-maintenance)
+                  run_code_checks=true
+                  is_monthly=true
+                  ;;
+              esac
+              ;;
+            release)
+              run_post_release=true
               ;;
             schedule)
               run_code_checks=true
@@ -143,9 +154,10 @@ jobs:
           echo "run_pr_meta_checks=$run_pr_meta_checks" >> "$GITHUB_OUTPUT"
           echo "run_cleanup=$run_cleanup" >> "$GITHUB_OUTPUT"
           echo "run_release=$run_release" >> "$GITHUB_OUTPUT"
+          echo "run_build=$run_build" >> "$GITHUB_OUTPUT"
+          echo "run_post_release=$run_post_release" >> "$GITHUB_OUTPUT"
           echo "is_monthly=$is_monthly" >> "$GITHUB_OUTPUT"
           echo "is_nightly=$is_nightly" >> "$GITHUB_OUTPUT"
-          echo "run_prepare_release=$run_prepare_release" >> "$GITHUB_OUTPUT"
 
   discover:
     name: Discover capabilities and cost profile
@@ -165,17 +177,6 @@ jobs:
       has_packaging: ${{ steps.detect.outputs.has_packaging }}
     steps:
       - uses: actions/checkout@v4
-
-      # Template-time toggles (set these once for the repo; avoid broad auto-detection)
-      # EXPECT_GO=true
-      # EXPECT_NODE=false
-      # EXPECT_DART=false
-      # EXPECT_FLUTTER=true
-      # EXPECT_QT_CPP=false
-      # EXPECT_MAKE_C=false
-      # EXPECT_DOCKER=false
-      # EXPECT_GORELEASER=true
-
       - id: detect
         env:
           EXPECT_GO: false
@@ -186,12 +187,8 @@ jobs:
           EXPECT_MAKE_C: false
           EXPECT_DOCKER: false
           EXPECT_GORELEASER: false
-        shell: bash
         run: |
           set -euo pipefail
-          # Keep this minimal: most language choices should be decided at workflow install/customization time.
-          # Runtime checks stay for optional tests and packaging folders.
-
           echo "has_go=${EXPECT_GO:-false}" >> "$GITHUB_OUTPUT"
           echo "has_node=${EXPECT_NODE:-false}" >> "$GITHUB_OUTPUT"
           echo "has_dart=${EXPECT_DART:-false}" >> "$GITHUB_OUTPUT"
@@ -200,15 +197,10 @@ jobs:
           echo "has_make_c=${EXPECT_MAKE_C:-false}" >> "$GITHUB_OUTPUT"
           echo "has_docker=${EXPECT_DOCKER:-false}" >> "$GITHUB_OUTPUT"
           echo "has_goreleaser=${EXPECT_GORELEASER:-false}" >> "$GITHUB_OUTPUT"
-
           ([[ -d test ]] || [[ -d tests ]] || [[ -f pubspec.yaml ]]) && echo "has_dart_or_flutter_tests=true" >> "$GITHUB_OUTPUT" || echo "has_dart_or_flutter_tests=false" >> "$GITHUB_OUTPUT"
           ([[ -d packaging ]] || [[ -d pkg ]] || [[ -f debian/control ]]) && echo "has_packaging=true" >> "$GITHUB_OUTPUT" || echo "has_packaging=false" >> "$GITHUB_OUTPUT"
-
       - id: profile
-        shell: bash
         run: |
-          set -euo pipefail
-          # repo visibility is authoritative
           if [[ "${{ github.event.repository.private }}" == "true" ]]; then
             echo "profile=private" >> "$GITHUB_OUTPUT"
           else
@@ -226,40 +218,9 @@ jobs:
         with:
           cache: true
           flutter-version: ${{ env.FLUTTER_VERSION }}
-      - run: flutter --version
       - run: flutter pub get
       - name: Check format
-        id: check_format
-        continue-on-error: true
         run: dart format --set-exit-if-changed .
-      - name: Create PR if formatting failed and allowed
-        if: steps.check_format.outcome == 'failure' && github.event_name == 'workflow_dispatch' && inputs.allow_prs == true
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          dart format .
-          if git diff --quiet; then
-            echo "No changes; exiting."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          BRANCH_NAME="ci-autofix-$(date +%s)"
-          git checkout -b "$BRANCH_NAME"
-          git add .
-          git commit -m "chore: auto-format"
-          git push origin "$BRANCH_NAME"
-          gh pr create \
-            --title "chore: auto-format" \
-            --body "Automated formatting fixes." \
-            --base "${{ github.ref_name }}" \
-            --head "$BRANCH_NAME" \
-            --label "ci-autofix"
-      - name: Fail job if formatting failed
-        if: steps.check_format.outcome == 'failure'
-        run: exit 1
 
   flutter-analyze:
     name: Flutter analyze
@@ -272,7 +233,6 @@ jobs:
         with:
           cache: true
           flutter-version: ${{ env.FLUTTER_VERSION }}
-      - run: flutter --version
       - run: flutter pub get
       - run: flutter analyze
 
@@ -287,40 +247,36 @@ jobs:
         with:
           cache: true
           flutter-version: ${{ env.FLUTTER_VERSION }}
-      - run: flutter --version
       - run: flutter pub get
       - run: flutter test
-
 
   autofix:
     name: Auto-format and open PR
     needs: [route, discover]
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'lint-fix' && inputs.allow_prs == true }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup Go (if needed)
         if: ${{ needs.discover.outputs.has_go == 'true' }}
         uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
-
       - name: Setup Node (if needed)
         if: ${{ needs.discover.outputs.has_node == 'true' }}
         uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
-
       - name: Setup Dart/Flutter (if needed)
         if: ${{ needs.discover.outputs.has_dart == 'true' || needs.discover.outputs.has_flutter == 'true' }}
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-
       - name: Run autofix formatters
-        shell: bash
         run: |
           set -euo pipefail
           if [[ "${{ needs.discover.outputs.has_go }}" == "true" ]]; then
@@ -334,41 +290,34 @@ jobs:
           if [[ "${{ needs.discover.outputs.has_dart }}" == "true" || "${{ needs.discover.outputs.has_flutter }}" == "true" ]]; then
             dart format . || true
           fi
-
       - name: Create PR if changes exist
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
         run: |
           set -euo pipefail
           if git diff --quiet; then
             echo "No changes; exiting."
-            exit 0
+            true
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            PARENT_PR="${{ github.event.pull_request.number || 'none' }}"
+            BRANCH="ci/autofix/${{ github.run_id }}-parent-${PARENT_PR}"
+            git checkout -b "$BRANCH"
+            git add -A
+            git commit -m "ci: automated formatting fixes"
+            git push origin "$BRANCH" || true
+            gh pr create               --title "ci: automated formatting fixes"               --body "Automated formatting pass. Parent-PR: ${PARENT_PR}"               --base main               --head "$BRANCH"               --label "ci-autofix" || true
           fi
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          PARENT_PR="${{ github.event.pull_request.number || 'none' }}"
-          BRANCH="ci/autofix/${{ github.run_id }}-parent-${PARENT_PR}"
-
-          git checkout -b "$BRANCH"
-          git add -A
-          git commit -m "ci: automated formatting fixes"
-          git push origin "$BRANCH"
-
-          gh pr create \
-            --title "ci: automated formatting fixes" \
-            --body "Automated formatting pass. Parent-PR: ${PARENT_PR}" \
-            --base main \
-            --head "$BRANCH" \
-            --label "ci-autofix"
 
   cleanup-autofix-prs:
     name: Cleanup autofix PRs on parent close
     needs: [route]
     if: ${{ needs.route.outputs.run_cleanup == 'true' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
       - env:
@@ -376,42 +325,165 @@ jobs:
           PARENT_PR: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
-          gh pr list --state open --search "label:ci-autofix in:title" --json number,headRefName,body | \
-            jq -r '.[] | select(.body | contains("Parent-PR: '"$PARENT_PR"'")) | [.number, .headRefName] | @tsv' | \
-            while IFS=$'\t' read -r pr branch; do
+          gh pr list --state open --search "label:ci-autofix in:title" --json number,headRefName,body |             jq -r '.[] | select(.body | contains("Parent-PR: '"$PARENT_PR"'")) | [.number, .headRefName] | @tsv' |             while IFS=$'	' read -r pr branch; do
               gh pr close "$pr" --comment "Closing auto-fix PR because parent PR #$PARENT_PR was closed."
               git push origin --delete "$branch" || true
             done
+
+  prepare-release-tag:
+    name: Prepare release tag
+    needs: [route]
+    if: ${{ needs.route.outputs.run_release == 'true' }}
+    runs-on: ubuntu-latest
+    outputs:
+      release_tag: ${{ steps.tag.outputs.release_tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup git-tag-inc
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode != 'publish-tag' }}
+        uses: arran4/git-tag-inc-action@v1
+        with:
+          mode: install
+      - id: tag
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            echo "release_tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+            true
+          elif [[ "${{ inputs.mode }}" == "publish-tag" ]]; then
+            echo "release_tag=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+            true
+          else
+            MODE="${{ inputs.mode }}"
+            OVERRIDE="${{ inputs.release_version_override }}"
+            git fetch --tags --force
+            if [[ -n "$OVERRIDE" ]]; then
+              OVERRIDE="${OVERRIDE#v}"
+              next_tag="v$OVERRIDE"
+            else
+              case "$MODE" in
+                release-major) level="major"; suffix="" ;;
+                release-minor) level="minor"; suffix="" ;;
+                release-patch) level="patch"; suffix="" ;;
+                release-test)  level="patch"; suffix="test" ;;
+                release-rc)    level="patch"; suffix="rc" ;;
+                release-alpha) level="patch"; suffix="alpha" ;;
+                *) echo "Unsupported release mode: $MODE" >&2; false ;;
+              esac
+              args=(-print-version-only "$level")
+              [[ -n "$suffix" ]] && args+=("$suffix")
+              next_tag=$(git-tag-inc "${args[@]}")
+            fi
+
+            if [[ ! "$next_tag" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-(alpha|beta|rc|test)([-.]?[0-9]+))?$ ]]; then
+            echo "Computed tag is not a valid semver tag: $next_tag" >&2
+            false
+          fi
+
+          if git rev-parse "$next_tag" >/dev/null 2>&1; then
+              REMOTE_TAG_SHA=$(git ls-remote --tags origin "refs/tags/$next_tag" | awk '{print $1}')
+              if [[ "$REMOTE_TAG_SHA" == "${GITHUB_SHA}" ]]; then
+                echo "Tag $next_tag exists and points to GITHUB_SHA. Safe to retry."
+              else
+                echo "Tag already exists and points to $REMOTE_TAG_SHA: $next_tag" >&2
+                false
+              fi
+            fi
+            echo "release_tag=$next_tag" >> "$GITHUB_OUTPUT"
+          fi
+
+  release-validation:
+    name: Release Validation Gate
+    needs: [route, discover, flutter-format, flutter-analyze, flutter-test]
+    if: |
+      !failure() && !cancelled() &&
+      needs.route.result == 'success' &&
+      needs.discover.result == 'success' &&
+      (needs.discover.outputs.has_flutter != 'true' || (needs.flutter-format.result == 'success' && needs.flutter-analyze.result == 'success' && needs.flutter-test.result == 'success'))
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "All required language checks passed."
+
+  release-context:
+    name: Release Context & Gate
+    needs: [route, prepare-release-tag, release-validation]
+    if: ${{ !failure() && !cancelled() && needs.route.outputs.run_release == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+    outputs:
+      release_tag: ${{ steps.export.outputs.release_tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Normalize and push tag
+        id: export
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="${{ needs.prepare-release-tag.outputs.release_tag }}"
+          echo "release_tag=$TAG" >> "$GITHUB_OUTPUT"
+
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            true
+          elif [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.mode }}" == "publish-tag" ]]; then
+            if [[ "${{ github.ref_type }}" != "tag" ]]; then
+              echo "Error: publish-tag mode invoked on a non-tag ref." >&2
+              false
+            fi
+            true
+          else
+            git fetch --tags --force
+            REMOTE_TAG_SHA=$(git ls-remote --tags origin "refs/tags/$TAG" | awk '{print $1}')
+            if [[ -n "$REMOTE_TAG_SHA" ]]; then
+              if [[ "$REMOTE_TAG_SHA" != "${GITHUB_SHA}" ]]; then
+                echo "Tag $TAG exists but points to $REMOTE_TAG_SHA. Failing." >&2
+                false
+              fi
+            else
+              git tag "$TAG" "${GITHUB_SHA}"
+              git push origin "$TAG" || (
+                VERIFY_SHA=$(git ls-remote --tags origin "refs/tags/$TAG" | awk '{print $1}' || echo "failed")
+                if [[ "$VERIFY_SHA" != "${GITHUB_SHA}" ]]; then
+                  echo "Tag push failed." >&2
+                  false
+                fi
+              )
+            fi
+
+            if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+              gh workflow run "ci.yml" --ref "$TAG" -f mode="publish-tag"
+            fi
+          fi
 
   flutter-build-extension:
     needs: [route, discover, flutter-format, flutter-analyze, flutter-test]
     if: ${{ needs.discover.outputs.has_flutter == 'true' && needs.route.outputs.run_code_checks == 'true' }}
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           cache: true
           flutter-version: ${{ env.FLUTTER_VERSION }}
-
       - name: Install Dependencies
         run: flutter pub get
-
       - name: Build Extensions
         run: |
           chmod +x scripts/build_extension.sh
           ./scripts/build_extension.sh
-
       - name: Upload Chrome Extension
         uses: actions/upload-artifact@v4
         with:
           name: chrome-extension
           path: build/extension/chrome_extension.zip
           retention-days: 1
-
       - name: Upload Firefox Extension
         uses: actions/upload-artifact@v4
         with:
@@ -419,231 +491,28 @@ jobs:
           path: build/extension/firefox_extension.zip
           retention-days: 1
 
-
-  prepare-release:
-    runs-on: ubuntu-latest
-    needs: [route, discover]
-    if: ${{ needs.route.outputs.run_prepare_release == 'true' }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
-
-      - name: Bump Version
-        id: bump
-        run: |
-          # Run the python script
-          MODE="${{ inputs.mode }}"
-          VERSION_ARG="${MODE#release-}"
-          if [[ -n "${{ inputs.release_version_override }}" ]]; then
-            VERSION_ARG="${{ inputs.release_version_override }}"
-          fi
-          python3 scripts/bump_version.py "$VERSION_ARG"
-
-          # Read the new version from pubspec.yaml to set output
-          # Assumes version: X.Y.Z+N
-          VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}')
-          # Sanitize strictly if needed, but awk should catch the value.
-          echo "NEW_VERSION=$VERSION" >> $GITHUB_ENV
-
-      - name: Create Branch and Commit
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
-          # Extract semantic version for branch name (remove build number if desired, or keep it)
-          # Often release branches are v1.2.3.
-          SEMANTIC_VERSION=$(echo $NEW_VERSION | cut -d'+' -f1)
-          BRANCH_NAME="release/v${SEMANTIC_VERSION}-${GITHUB_RUN_ID}"
-          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
-
-          git checkout -b "$BRANCH_NAME"
-          git add pubspec.yaml
-          git commit -m "Bump version to ${NEW_VERSION}"
-          git push origin "$BRANCH_NAME"
-
-      - name: Create Pull Request
-        run: |
-          gh pr create \
-            --title "Bump version to ${NEW_VERSION}" \
-            --body "This PR bumps the version to ${NEW_VERSION}. Automated by Prepare Release workflow." \
-            --base main \
-            --head "${BRANCH_NAME}" || true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-
-  windows:
-    runs-on: windows-latest
-    needs: [route, discover, flutter-format, flutter-analyze, flutter-test]
-    if: ${{ needs.route.outputs.run_release == 'true' }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dart-lang/setup-dart@v1
-        with:
-          sdk: ${{ env.DART_VERSION }}
-      - uses: subosito/flutter-action@v2
-        with:
-          cache: true
-          flutter-version: ${{ env.FLUTTER_VERSION  }}
-
-      - name: Set up environment vars
-        shell: bash
-        run: |
-          TAG_NAME=$(echo ${GITHUB_REF#refs/tags/v})
-          echo "SEMANTIC_VERSION=$TAG_NAME" >> $GITHUB_ENV
-          echo "FLUTTER_VERSION=${TAG_NAME}+${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
-          echo "GITHUB_REPOSITORY_NAME=${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}" >> $GITHUB_ENV
-
-      - name: Update version number
-        shell: bash
-        run: |
-          choco install sed make yq -y
-          yq -i ".version |= \"${SEMANTIC_VERSION}+\"" pubspec.yaml
-          yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
-
-      - name: Build and Release On Windows
-        run: |
-          flutter pub get
-          flutter test
-          flutter config --enable-windows-desktop
-          dart pub global activate fastforge
-          fastforge release --name onwindows
-        env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-
-
-  linux:
-    runs-on: ubuntu-latest
-    needs: [route, discover, flutter-format, flutter-analyze, flutter-test]
-    if: ${{ needs.route.outputs.run_release == 'true' }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dart-lang/setup-dart@v1
-        with:
-          sdk: ${{ env.DART_VERSION }}
-      - uses: subosito/flutter-action@v2
-        with:
-          cache: true
-          flutter-version: ${{ env.FLUTTER_VERSION  }}
-
-      - name: Install Dependencies
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y appstream clang cmake desktop-file-utils fakeroot fuse gir1.2-appindicator3-0.1 libappindicator3-1 libappindicator3-dev libarchive-tools libgdk-pixbuf2.0-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgtk-3-dev libjsoncpp25 libjsoncpp-dev libmpv-dev libnotify-bin libnotify-dev libsecret-1-0 libsecret-1-dev libunwind-dev locate make mpv ninja-build patchelf pkg-config python3-pip python3-setuptools strace tar xmlstarlet
-
-      - name: Install AppImage Tool
-        run: |
-          wget -O appimagetool "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
-          chmod +x appimagetool
-          mv -v appimagetool /usr/local/bin/
-
-      - name: Set up environment vars
-        run: |
-          TAG_NAME=$(echo ${GITHUB_REF#refs/tags/v})
-          echo "SEMANTIC_VERSION=$TAG_NAME" >> $GITHUB_ENV
-          echo "FLUTTER_VERSION=${TAG_NAME}+${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
-          echo "GITHUB_REPOSITORY_NAME=${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}" >> $GITHUB_ENV
-
-      - name: Update version number
-        run: |
-          curl -sS https://webi.sh/yq | sh
-          yq -i ".version |= \"${SEMANTIC_VERSION}+\"" pubspec.yaml
-          yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
-
-      - name: Secrets
-        run: |
-          echo "${SECRET_FILE}" | base64 -d | tar xvj
-          echo "PLAYSTORE_CREDENTIALS=${PWD}/sendtolinkwarden-e713764ecb3d.json" >> $GITHUB_ENV
-        env:
-          SECRET_FILE: "${{ secrets.SECRET_FILE }}"
-
-      - name: Build and Release On Linux
-        run: |
-          flutter pub get
-          flutter test
-          dart pub global activate fastforge
-          fastforge release --name onlinux
-        env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-
-      - name: Unsecret
-        run: |
-          echo "${SECRET_FILE}" | base64 -d | tar -j --list | xargs rm -f
-        env:
-          SECRET_FILE: "${{ secrets.SECRET_FILE }}"
-
-
-  macos:
-    runs-on: macos-latest
-    needs: [route, discover, flutter-format, flutter-analyze, flutter-test]
-    if: ${{ needs.route.outputs.run_release == 'true' }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dart-lang/setup-dart@v1
-        with:
-          sdk: ${{ env.DART_VERSION }}
-      - uses: subosito/flutter-action@v2
-        with:
-          cache: true
-          flutter-version: ${{ env.FLUTTER_VERSION  }}
-
-      - name: Dependencies
-        run: |
-          python3 -m pip install --break-system-packages setuptools
-          npm install --break-system-packages -g appdmg
-
-      - name: Set version environment vars
-        run: |
-          TAG_NAME=$(echo ${GITHUB_REF#refs/tags/v})
-          echo "SEMANTIC_VERSION=$TAG_NAME" >> $GITHUB_ENV
-          echo "FLUTTER_VERSION=${TAG_NAME}+${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
-          echo "GITHUB_REPOSITORY_NAME=${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}" >> $GITHUB_ENV
-
-      - name: Update version number
-        run: |
-          brew install yq
-          yq -i ".version |= \"${SEMANTIC_VERSION}+\"" pubspec.yaml
-          yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
-
-      - name: Build and Release On Mac OS X
-        run: |
-          flutter pub get
-          flutter test
-          flutter config --enable-macos-desktop
-          dart pub global activate fastforge
-          fastforge release --name onmac
-        env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-
-
   extension-release:
     runs-on: ubuntu-latest
-    needs: [route, discover, flutter-format, flutter-analyze, flutter-test]
-    if: ${{ needs.route.outputs.run_release == 'true' }}
+    needs: [route, discover, flutter-format, flutter-analyze, flutter-test, release-context]
+    if: ${{ needs.route.outputs.run_release == 'true' && startsWith(github.ref, 'refs/tags/') }}
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
           cache: true
           flutter-version: ${{ env.FLUTTER_VERSION }}
-
       - name: Set up environment vars
         run: |
-          TAG_NAME=$(echo ${GITHUB_REF#refs/tags/v})
+          TAG_NAME=$(echo ${{ needs.release-context.outputs.release_tag }} | sed 's/^v//')
           echo "SEMANTIC_VERSION=$TAG_NAME" >> $GITHUB_ENV
           echo "FLUTTER_VERSION=${TAG_NAME}+${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
           echo "GITHUB_REPOSITORY_NAME=${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}" >> $GITHUB_ENV
-
       - name: Update version number
         run: |
-          curl -sS https://webi.sh/yq | sh
-          yq -i ".version |= \"${SEMANTIC_VERSION}+\"" pubspec.yaml
-          yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
-
+          wget -O yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          chmod +x yq
+          ./yq -i ".version |= \"${SEMANTIC_VERSION}+\"" pubspec.yaml
+          ./yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
       - name: Build Extensions
         run: |
           chmod +x scripts/build_extension.sh
@@ -651,46 +520,222 @@ jobs:
       - name: Upload Chrome Extension Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: chrome-extension
+          name: chrome-extension-release
           path: build/extension/chrome_extension.zip
           retention-days: 1
       - name: Upload Firefox Extension Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: firefox-extension
+          name: firefox-extension-release
           path: build/extension/firefox_extension.zip
           retention-days: 1
 
-
-  release:
-    runs-on: ubuntu-latest
-    if: ${{ needs.route.outputs.run_release == 'true' }}
-    needs:
-      - windows
-      - linux
-      - macos
-      - extension-release
+  windows:
+    runs-on: windows-latest
+    needs: [route, discover, flutter-format, flutter-analyze, flutter-test, release-context]
+    if: ${{ needs.route.outputs.run_release == 'true' && startsWith(github.ref, 'refs/tags/') }}
     steps:
       - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: ${{ env.DART_VERSION }}
+      - uses: subosito/flutter-action@v2
+        with:
+          cache: true
+          flutter-version: ${{ env.FLUTTER_VERSION  }}
+      - name: Set up environment vars
+        run: |
+          TAG_NAME=$(echo ${{ needs.release-context.outputs.release_tag }} | sed 's/^v//')
+          echo "SEMANTIC_VERSION=$TAG_NAME" >> $GITHUB_ENV
+          echo "FLUTTER_VERSION=${TAG_NAME}+${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
+          echo "GITHUB_REPOSITORY_NAME=${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}" >> $GITHUB_ENV
+      - name: Update version number
+        run: |
+          choco install sed make yq -y || true
+          yq -i ".version |= \"${SEMANTIC_VERSION}+\"" pubspec.yaml
+          yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
+      - name: Build On Windows
+        run: |
+          flutter pub get
+          flutter test
+          flutter config --enable-windows-desktop
+          dart pub global activate fastforge
+          fastforge package --platform=windows --targets=exe,msix,zip
+      - name: Upload Windows
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-release
+          path: dist/
+          retention-days: 1
 
-      - name: Download Chrome Extension
+  linux:
+    runs-on: ubuntu-latest
+    needs: [route, discover, flutter-format, flutter-analyze, flutter-test, release-context]
+    if: ${{ needs.route.outputs.run_release == 'true' && startsWith(github.ref, 'refs/tags/') }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: ${{ env.DART_VERSION }}
+      - uses: subosito/flutter-action@v2
+        with:
+          cache: true
+          flutter-version: ${{ env.FLUTTER_VERSION  }}
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y appstream clang cmake desktop-file-utils fakeroot fuse gir1.2-appindicator3-0.1 libappindicator3-1 libappindicator3-dev libarchive-tools libgdk-pixbuf2.0-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgtk-3-dev libjsoncpp25 libjsoncpp-dev libmpv-dev libnotify-bin libnotify-dev libsecret-1-0 libsecret-1-dev libunwind-dev locate make mpv ninja-build patchelf pkg-config python3-pip python3-setuptools strace tar xmlstarlet
+      - name: Install AppImage Tool
+        run: |
+          wget -O appimagetool "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
+          chmod +x appimagetool
+          sudo mv -v appimagetool /usr/local/bin/
+      - name: Set up environment vars
+        run: |
+          TAG_NAME=$(echo ${{ needs.release-context.outputs.release_tag }} | sed 's/^v//')
+          echo "SEMANTIC_VERSION=$TAG_NAME" >> $GITHUB_ENV
+          echo "FLUTTER_VERSION=${TAG_NAME}+${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
+          echo "GITHUB_REPOSITORY_NAME=${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}" >> $GITHUB_ENV
+      - name: Update version number
+        run: |
+          wget -O yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          chmod +x yq
+          ./yq -i ".version |= \"${SEMANTIC_VERSION}+\"" pubspec.yaml
+          ./yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
+      - name: Secrets
+        run: |
+          echo "${SECRET_FILE}" | base64 -d | tar xvj
+          echo "PLAYSTORE_CREDENTIALS=${PWD}/sendtolinkwarden-e713764ecb3d.json" >> $GITHUB_ENV
+        env:
+          SECRET_FILE: ${{ secrets.SECRET_FILE }}
+      - name: Build On Linux
+        run: |
+          flutter pub get
+          flutter test
+          dart pub global activate fastforge
+          fastforge package --platform=linux --targets=deb,rpm,pacman,zip
+          fastforge package --platform=android --targets=apk,aab --build-target-platform=android-arm,android-arm64
+          fastforge package --platform=web --targets=zip
+      - name: Deploy Android to Play Store
+        run: |
+          if [[ "${{ github.ref }}" =~ ^refs/tags/v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            dart pub global activate fastforge
+            fastforge release --name playstore-only
+          else
+            echo "Skipping Play Store: tag is not a stable release (e.g. contains prerelease suffix or not valid)"
+            true
+          fi
+      - name: Upload Linux
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-release
+          path: dist/
+          retention-days: 1
+      - name: Unsecret
+        run: |
+          echo "${SECRET_FILE}" | base64 -d | tar -j --list | xargs rm -f || true
+        env:
+          SECRET_FILE: ${{ secrets.SECRET_FILE }}
+
+  macos:
+    runs-on: macos-latest
+    needs: [route, discover, flutter-format, flutter-analyze, flutter-test, release-context]
+    if: ${{ needs.route.outputs.run_release == 'true' && startsWith(github.ref, 'refs/tags/') }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: ${{ env.DART_VERSION }}
+      - uses: subosito/flutter-action@v2
+        with:
+          cache: true
+          flutter-version: ${{ env.FLUTTER_VERSION  }}
+      - name: Dependencies
+        run: |
+          python3 -m pip install --break-system-packages setuptools
+          npm install --break-system-packages -g appdmg
+      - name: Set version environment vars
+        run: |
+          TAG_NAME=$(echo ${{ needs.release-context.outputs.release_tag }} | sed 's/^v//')
+          echo "SEMANTIC_VERSION=$TAG_NAME" >> $GITHUB_ENV
+          echo "FLUTTER_VERSION=${TAG_NAME}+${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
+          echo "GITHUB_REPOSITORY_NAME=${GITHUB_REPOSITORY#$GITHUB_REPOSITORY_OWNER/}" >> $GITHUB_ENV
+      - name: Update version number
+        run: |
+          brew install yq
+          yq -i ".version |= \"${SEMANTIC_VERSION}+\"" pubspec.yaml
+          yq -i '.version += strenv(GITHUB_RUN_NUMBER)' pubspec.yaml
+      - name: Build On Mac OS X
+        run: |
+          flutter pub get
+          flutter test
+          flutter config --enable-macos-desktop
+          dart pub global activate fastforge
+          fastforge package --platform=macos --targets=dmg,zip
+      - name: Upload macOS
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-release
+          path: dist/
+          retention-days: 1
+
+  github-release:
+    name: Publish GitHub release
+    needs: [route, release-context, extension-release, windows, linux, macos]
+    if: ${{ !failure() && !cancelled() && needs.route.outputs.run_release == 'true' && startsWith(github.ref, 'refs/tags/') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      discussions: write
+    steps:
+      - name: Collect release artifacts
         uses: actions/download-artifact@v4
         with:
-          name: chrome-extension
+          path: artifacts
+          pattern: '*-release'
+          merge-multiple: false
+      - name: Flatten and Verify Artifacts
+        run: |
+          mkdir -p dist-release
 
-      - name: Download Firefox Extension
-        uses: actions/download-artifact@v4
+          # Detect collisions before moving
+          duplicates=$(find artifacts -type f -exec basename {} \; | sort | uniq -d)
+          if [[ -n "$duplicates" ]]; then
+            echo "Error: Duplicate artifact basenames detected!" >&2
+            echo "$duplicates" >&2
+            false
+          fi
+
+          find artifacts -type f -exec mv {} dist-release/ \;
+
+          echo "Verifying required artifacts exist..."
+          # Windows
+          ls dist-release/*-windows.zip || { echo "Missing Windows zip"; false; }
+          ls dist-release/*-windows-setup.exe || ls dist-release/*-windows.exe || { echo "Missing Windows exe"; false; }
+          ls dist-release/*-windows.msix || { echo "Missing Windows msix"; false; }
+          # Linux
+          ls dist-release/*-linux.deb || { echo "Missing Linux deb"; false; }
+          ls dist-release/*-linux.rpm || { echo "Missing Linux rpm"; false; }
+          ls dist-release/*-linux.pacman || { echo "Missing Linux pacman"; false; }
+          ls dist-release/*-linux.zip || { echo "Missing Linux zip"; false; }
+          # Android
+          ls dist-release/*-android.apk || { echo "Missing Android apk"; false; }
+          ls dist-release/*-android.aab || { echo "Missing Android aab"; false; }
+          # Web
+          ls dist-release/*-web.zip || { echo "Missing Web zip"; false; }
+          # macOS
+          ls dist-release/*-macos.dmg || { echo "Missing macOS dmg"; false; }
+          ls dist-release/*-macos.zip || { echo "Missing macOS zip"; false; }
+          # Extensions
+          ls dist-release/chrome_extension.zip || { echo "Missing Chrome extension"; false; }
+          ls dist-release/firefox_extension.zip || { echo "Missing Firefox extension"; false; }
+          echo "All required artifacts verified."
+
+      - name: Create published GitHub release and upload assets
+        uses: softprops/action-gh-release@v2
         with:
-          name: firefox-extension
-
-      - name: Upload Extensions to Release
-        run: |
-          gh release upload "$(echo ${GITHUB_REF#refs/tags/})" chrome_extension.zip firefox_extension.zip
-        env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-
-      - name: No longer draft
-        run: |
-          gh release edit "$(echo ${GITHUB_REF#refs/tags/})" --draft=false
-        env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          draft: false
+          tag_name: ${{ needs.release-context.outputs.release_tag }}
+          prerelease: ${{ contains(needs.release-context.outputs.release_tag, '-rc') || contains(needs.release-context.outputs.release_tag, '-alpha') || contains(needs.release-context.outputs.release_tag, '-beta') || contains(needs.release-context.outputs.release_tag, '-test') }}
+          generate_release_notes: true
+          files: dist-release/**

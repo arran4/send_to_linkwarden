@@ -1,174 +1,90 @@
 output: dist/
 releases:
-  - name: test
-    jobs:
-      - name: web-direct
-        package:
-          platform: web
-          target: zip
-        publish:
-          target: github
-          args:
-            repo-owner: arran4
-            repo-name: send_to_linkwarden
-  - name: onlinux
-    jobs:
-# Broken pending: https://github.com/fastforgedev/fastforge/pull/221
-#      - name: linux-appimage
-#        package:
-#          platform: linux
-#          target: appimage
-#        publish:
-#          target: github
-#          args:
-#            repo-owner: arran4
-#            repo-name: send_to_linkwarden
-      - name: linux-deb
-        package:
-          platform: linux
-          target: deb
-        publish:
-          target: github
-          args:
-            repo-owner: arran4
-            repo-name: send_to_linkwarden
-      - name: linux-rpm
-        package:
-          platform: linux
-          target: rpm
-        publish:
-          target: github
-          args:
-            repo-owner: arran4
-            repo-name: send_to_linkwarden
-      - name: linux-pacman
-        package:
-          platform: linux
-          target: pacman
-        publish:
-          target: github
-          args:
-            repo-owner: arran4
-            repo-name: send_to_linkwarden
-      - name: linux-zip
-        package:
-          platform: linux
-          target: zip
-        publish:
-          target: github
-          args:
-            repo-owner: arran4
-            repo-name: send_to_linkwarden
-      - name: android-aab-github
-        package:
-          platform: android
-          target: aab
-          build_args:
-            target-platform: android-arm,android-arm64
-        publish:
-          target: github
-          args:
-            repo-owner: arran4
-            repo-name: send_to_linkwarden
-      - name: android-aab-playstore
-        package:
-          platform: android
-          target: aab
-          build_args:
-            target-platform: android-arm,android-arm64
-        publish:
-          target: playstore
-          args:
-            package-name: com.arran4.send_to_linkwarden_v3
-            track: production
-      - name: android-apk
-        package:
-          platform: android
-          target: apk
-          build_args:
-            target-platform: android-arm,android-arm64
-        publish:
-          target: github
-          args:
-            repo-owner: arran4
-            repo-name: send_to_linkwarden
-      - name: web-direct
-        package:
-          platform: web
-          target: zip
-        publish:
-          target: github
-          args:
-            repo-owner: arran4
-            repo-name: send_to_linkwarden
-  - name: onwindows
-    jobs:
-      - name: windows-exe
-        package:
-          platform: windows
-          target: exe
-        publish:
-          target: github
-          args:
-            repo-owner: arran4
-            repo-name: send_to_linkwarden
-      - name: windows-msix
-        package:
-          platform: windows
-          target: msix
-        publish:
-          target: github
-          args:
-            repo-owner: arran4
-            repo-name: send_to_linkwarden
-      - name: windows-zip
-        package:
-          platform: windows
-          target: zip
-        publish:
-          target: github
-          args:
-            repo-owner: arran4
-            repo-name: send_to_linkwarden
-  - name: onmac
-    jobs:
-# Disabled for packaging reasons atm.
-#      - name: ios-ipa
-#        package:
-#          platform: ios
-#          target: ipa
-#          build_args:
-#            export-method: ad-hoc
-#        publish:
-#          target: github
-#          args:
-#            repo-owner: arran4
-#            repo-name: send_to_linkwarden
-      - name: macos-dmg
-        package:
-          platform: macos
-          target: dmg
-        publish:
-          target: github
-          args:
-            repo-owner: arran4
-            repo-name: send_to_linkwarden
-# Disabled for packaging reasons atm.
-#      - name: macos-pkg
-#        package:
-#          platform: macos
-#          target: pkg
-#        publish:
-#          target: github
-#          args:
-#            repo-owner: arran4
-#            repo-name: send_to_linkwarden
-      - name: macos-zip
-        package:
-          platform: macos
-          target: zip
-        publish:
-          target: github
-          args:
-            repo-owner: arran4
-            repo-name: send_to_linkwarden
+- name: test
+  jobs:
+  - name: web-direct
+    package:
+      platform: web
+      target: zip
+- name: onlinux
+  jobs:
+  - name: linux-deb
+    package:
+      platform: linux
+      target: deb
+  - name: linux-rpm
+    package:
+      platform: linux
+      target: rpm
+  - name: linux-pacman
+    package:
+      platform: linux
+      target: pacman
+  - name: linux-zip
+    package:
+      platform: linux
+      target: zip
+  - name: android-aab-github
+    package:
+      platform: android
+      target: aab
+      build_args:
+        target-platform: android-arm,android-arm64
+  - name: android-aab-playstore
+    package:
+      platform: android
+      target: aab
+      build_args:
+        target-platform: android-arm,android-arm64
+    publish:
+      target: playstore
+      args:
+        package-name: com.arran4.send_to_linkwarden_v3
+        track: production
+  - name: android-apk
+    package:
+      platform: android
+      target: apk
+      build_args:
+        target-platform: android-arm,android-arm64
+  - name: web-direct
+    package:
+      platform: web
+      target: zip
+- name: onwindows
+  jobs:
+  - name: windows-exe
+    package:
+      platform: windows
+      target: exe
+  - name: windows-msix
+    package:
+      platform: windows
+      target: msix
+  - name: windows-zip
+    package:
+      platform: windows
+      target: zip
+- name: onmac
+  jobs:
+  - name: macos-dmg
+    package:
+      platform: macos
+      target: dmg
+  - name: macos-zip
+    package:
+      platform: macos
+      target: zip
+- name: playstore-only
+  jobs:
+  - name: android-aab-playstore
+    package:
+      platform: android
+      target: aab
+      build_args:
+        target-platform: android-arm,android-arm64
+    publish:
+      target: playstore
+      args:
+        package-name: com.arran4.send_to_linkwarden_v3
+        track: production
