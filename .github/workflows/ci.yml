@@ -212,9 +212,6 @@ jobs:
     needs: [route, discover]
     if: ${{ needs.discover.outputs.has_flutter == 'true' && needs.route.outputs.run_code_checks == 'true' }}
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
     steps:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
@@ -223,32 +220,7 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
       - run: flutter pub get
       - name: Check format
-        id: check_format
-        continue-on-error: true
         run: dart format --set-exit-if-changed .
-      - name: Create PR if formatting failed and allowed
-        if: steps.check_format.outcome == 'failure' && github.event_name == 'workflow_dispatch' && inputs.allow_prs == true
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          dart format .
-          if git diff --quiet; then
-            echo "No changes; exiting."
-            true
-          else
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            BRANCH_NAME="ci-autofix-$(date +%s)"
-            git checkout -b "$BRANCH_NAME"
-            git add .
-            git commit -m "chore: auto-format"
-            git push origin "$BRANCH_NAME" || true
-            gh pr create               --title "chore: auto-format"               --body "Automated formatting fixes."               --base "${{ github.ref_name }}"               --head "$BRANCH_NAME"               --label "ci-autofix" || true
-          fi
-      - name: Fail job if formatting failed
-        if: steps.check_format.outcome == 'failure'
-        run: false
 
   flutter-analyze:
     name: Flutter analyze
@@ -405,7 +377,7 @@ jobs:
               next_tag=$(git-tag-inc "${args[@]}")
             fi
 
-            if [[ ! "$next_tag" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-(alpha|beta|rc|test)[0-9A-Za-z-]*)?$ ]]; then
+            if [[ ! "$next_tag" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-(alpha|beta|rc|test)[0-9A-Za-z-\.]*)?$ ]]; then
             echo "Computed tag is not a valid semver tag: $next_tag" >&2
             false
           fi
@@ -645,10 +617,14 @@ jobs:
           fastforge package --platform=android --targets=apk,aab --build-target-platform=android-arm,android-arm64
           fastforge package --platform=web --targets=zip
       - name: Deploy Android to Play Store
-        if: ${{ startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, '-rc') && !contains(github.ref, '-alpha') && !contains(github.ref, '-beta') && !contains(github.ref, '-test') }}
         run: |
-          dart pub global activate fastforge
-          fastforge release --name playstore-only
+          if [[ "${{ github.ref }}" =~ ^refs/tags/v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            dart pub global activate fastforge
+            fastforge release --name playstore-only
+          else
+            echo "Skipping Play Store: tag is not a stable release (e.g. contains prerelease suffix or not valid)"
+            true
+          fi
       - name: Upload Linux
         uses: actions/upload-artifact@v4
         with:
@@ -734,16 +710,22 @@ jobs:
 
           echo "Verifying required artifacts exist..."
           # Windows
-          ls dist-release/*-windows-*.zip || { echo "Missing Windows zip"; false; }
-          ls dist-release/*-windows-*.exe || { echo "Missing Windows exe"; false; }
-          ls dist-release/*-windows-*.msix || { echo "Missing Windows msix"; false; }
+          ls dist-release/*-windows.zip || { echo "Missing Windows zip"; false; }
+          ls dist-release/*-windows-setup.exe || ls dist-release/*-windows.exe || { echo "Missing Windows exe"; false; }
+          ls dist-release/*-windows.msix || { echo "Missing Windows msix"; false; }
           # Linux
-          ls dist-release/*-linux-*.deb || { echo "Missing Linux deb"; false; }
-          ls dist-release/*-linux-*.rpm || { echo "Missing Linux rpm"; false; }
-          ls dist-release/*-linux-*.zip || { echo "Missing Linux zip"; false; }
+          ls dist-release/*-linux.deb || { echo "Missing Linux deb"; false; }
+          ls dist-release/*-linux.rpm || { echo "Missing Linux rpm"; false; }
+          ls dist-release/*-linux.pacman || { echo "Missing Linux pacman"; false; }
+          ls dist-release/*-linux.zip || { echo "Missing Linux zip"; false; }
+          # Android
+          ls dist-release/*-android.apk || { echo "Missing Android apk"; false; }
+          ls dist-release/*-android.aab || { echo "Missing Android aab"; false; }
+          # Web
+          ls dist-release/*-web.zip || { echo "Missing Web zip"; false; }
           # macOS
-          ls dist-release/*-macos-*.dmg || { echo "Missing macOS dmg"; false; }
-          ls dist-release/*-macos-*.zip || { echo "Missing macOS zip"; false; }
+          ls dist-release/*-macos.dmg || { echo "Missing macOS dmg"; false; }
+          ls dist-release/*-macos.zip || { echo "Missing macOS zip"; false; }
           # Extensions
           ls dist-release/chrome_extension.zip || { echo "Missing Chrome extension"; false; }
           ls dist-release/firefox_extension.zip || { echo "Missing Firefox extension"; false; }
