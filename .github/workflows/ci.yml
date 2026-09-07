@@ -249,6 +249,7 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
       - run: flutter pub get
       - run: flutter test
+      - run: flutter test --platform chrome test/extension_helper_web_test.dart
 
   autofix:
     name: Auto-format and open PR
