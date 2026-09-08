@@ -1,0 +1,12 @@
+{
+  "response": [
+    {"id": 99, "name": "legacy_tag_should_be_ignored"}
+  ],
+  "data": {
+    "tags": [
+      {"id": 1, "name": "tag1"}
+    ],
+    "nextCursor": null
+  },
+  "success": true
+}

@@ -53,6 +53,7 @@ class _SelectTagsViewState extends State<SelectTagsView> {
 
     if (widget.arguments?.allTags != null) {
       allTags = [...widget.arguments!.allTags!];
+      _normalizeSelectedTags();
       addNewTags();
       sortTags();
     } else if (userInstance?.valid == true) {
@@ -60,6 +61,7 @@ class _SelectTagsViewState extends State<SelectTagsView> {
       tagSubscription = tagStream.listen((List<Tag>? event) {
         setState(() {
           allTags = [...event ?? []];
+          _normalizeSelectedTags();
           addNewTags();
           sortTags();
         });
@@ -71,10 +73,33 @@ class _SelectTagsViewState extends State<SelectTagsView> {
     }
   }
 
+  void _normalizeSelectedTags() {
+    final Map<String, String> canonicalNames = {};
+    for (var tag in allTags ?? []) {
+      final name = tag.name;
+      if (name != null) {
+        canonicalNames[name.trim().toLowerCase()] = name;
+      }
+    }
+
+    final Set<String> normalized = {};
+    for (var tag in selectedTags) {
+      final lower = tag.trim().toLowerCase();
+      normalized.add(canonicalNames[lower] ?? tag);
+    }
+    selectedTags = normalized;
+  }
+
+  bool _isSelected(String? name) {
+    if (name == null) return false;
+    final lowerName = name.trim().toLowerCase();
+    return selectedTags.any((t) => t.trim().toLowerCase() == lowerName);
+  }
+
   void sortTags() {
     allTags?.sort((Tag a, Tag b) {
-      var containsA = selectedTags.contains(a.name);
-      var containsB = selectedTags.contains(b.name);
+      var containsA = _isSelected(a.name);
+      var containsB = _isSelected(b.name);
       if (containsA && !containsB) {
         return -1;
       }
@@ -86,12 +111,15 @@ class _SelectTagsViewState extends State<SelectTagsView> {
   }
 
   void addNewTags() {
-    Map<String, Tag> hasTag = Map<String, Tag>.fromIterable(
-      allTags ?? [],
-      key: (element) => element.name ?? "Untitled",
-    );
+    final Map<String, Tag> hasTag = {};
+    for (var tag in allTags ?? []) {
+      if (tag.name != null) {
+        hasTag[tag.name!.trim().toLowerCase()] = tag;
+      }
+    }
+
     for (String tag in selectedTags) {
-      if (!hasTag.containsKey(tag)) {
+      if (!hasTag.containsKey(tag.trim().toLowerCase())) {
         allTags?.add(Tag(name: tag));
       }
     }
@@ -114,20 +142,26 @@ class _SelectTagsViewState extends State<SelectTagsView> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text("Select Tags - Send To Linkwarden"),
         actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.pop(context, selectedTags.toList());
-            },
-            icon: const Icon(Icons.check),
+          Tooltip(
+            message: "Confirm selection",
+            child: IconButton(
+              onPressed: () {
+                Navigator.pop(context, selectedTags.toList());
+              },
+              icon: const Icon(Icons.check),
+            ),
           ),
         ],
       ),
       body: Container(
         decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface),
         child: Center(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.8,
+              ),
               child: Card(
                 elevation: 4,
                 shape: RoundedRectangleBorder(
@@ -136,10 +170,10 @@ class _SelectTagsViewState extends State<SelectTagsView> {
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
                       _findOrAddWidget(context),
-                      _listOfElements(context),
+                      Flexible(child: _listOfElements(context)),
                     ],
                   ),
                 ),
@@ -157,13 +191,16 @@ class _SelectTagsViewState extends State<SelectTagsView> {
         labelText: "Tag Name",
         helperText: "Filter or add",
         hintText: "...",
-        suffix: IconButton(
-          onPressed: () {
-            add(searchAddTextController.text);
-            searchAddTextController.clear();
-            findOrAddFocusNode.requestFocus();
-          },
-          icon: const Icon(Icons.add),
+        suffix: Tooltip(
+          message: "Add tag",
+          child: IconButton(
+            onPressed: () {
+              add(searchAddTextController.text);
+              searchAddTextController.clear();
+              findOrAddFocusNode.requestFocus();
+            },
+            icon: const Icon(Icons.add),
+          ),
         ),
       ),
       focusNode: findOrAddFocusNode,
@@ -180,8 +217,11 @@ class _SelectTagsViewState extends State<SelectTagsView> {
     if (filterText == "") {
       return allTags ?? [];
     } else {
+      final query = filterText.trim().toLowerCase();
       return (allTags ?? [])
-          .where((element) => element.name?.contains(filterText) ?? false)
+          .where(
+            (element) => element.name?.toLowerCase().contains(query) ?? false,
+          )
           .toList();
     }
   }
@@ -190,32 +230,92 @@ class _SelectTagsViewState extends State<SelectTagsView> {
     if (allTags == null) {
       return const CircularProgressIndicator();
     }
-    return ListBody(
+
+    final tagsToShow = filteredTags;
+    final trimmedFilter = filterText.trim();
+
+    bool showCreateOption = false;
+    if (trimmedFilter.isNotEmpty) {
+      final exactMatchExists = allTags!.any(
+        (t) => t.name?.trim().toLowerCase() == trimmedFilter.toLowerCase(),
+      );
+      if (!exactMatchExists) {
+        showCreateOption = true;
+      }
+    }
+
+    if (allTags!.isEmpty && !showCreateOption) {
+      return const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Text("No tags yet."),
+      );
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (Tag tag in filteredTags)
-          ListTile(
-            key: ValueKey(tag),
-            leading: Checkbox(
-              value: selectedTags.contains(tag.name ?? "Untitled Tag"),
-              onChanged: (value) {
-                if (value == null) {
-                  return;
-                }
-                setState(() {
-                  String tagName = tag.name ?? "Untitled Tag";
-                  if (selectedTags.contains(tagName)) {
-                    selectedTags.remove(tagName);
-                  } else {
-                    selectedTags.add(tagName);
-                  }
-                  sortTags();
-                });
-              },
-            ),
-            title: Text(tag.name ?? "Unnamed Tag"),
+        if (tagsToShow.isEmpty && allTags!.isNotEmpty)
+          const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text("No tags match your search."),
           ),
+        Flexible(
+          child: ListView.builder(
+            itemCount: tagsToShow.length + (showCreateOption ? 1 : 0),
+            itemBuilder: (context, index) {
+              if (showCreateOption && index == tagsToShow.length) {
+                return ListTile(
+                  key: const ValueKey("create_new_tag"),
+                  leading: const Icon(Icons.add),
+                  title: Text("Create tag '$trimmedFilter'"),
+                  onTap: () {
+                    add(trimmedFilter);
+                    searchAddTextController.clear();
+                    findOrAddFocusNode.requestFocus();
+                  },
+                );
+              }
+
+              final tag = tagsToShow[index];
+              final String tagName = tag.name ?? "Untitled Tag";
+              final bool isSelected = _isSelected(tagName);
+
+              return ListTile(
+                key: ValueKey(tag),
+                leading: Checkbox(
+                  value: isSelected,
+                  onChanged: (value) {
+                    if (value == null) return;
+                    _toggleSelection(tagName);
+                  },
+                ),
+                title: Text(tagName),
+                onTap: () => _toggleSelection(tagName),
+              );
+            },
+          ),
+        ),
       ],
     );
+  }
+
+  void _toggleSelection(String tagName) {
+    setState(() {
+      final lowerName = tagName.trim().toLowerCase();
+      final existing = selectedTags
+          .where((t) => t.trim().toLowerCase() == lowerName)
+          .toList();
+
+      if (existing.isNotEmpty) {
+        for (var e in existing) {
+          selectedTags.remove(e);
+        }
+      } else {
+        selectedTags.add(tagName);
+      }
+      sortTags();
+    });
   }
 
   void add(String text) {
@@ -224,18 +324,11 @@ class _SelectTagsViewState extends State<SelectTagsView> {
       return;
     }
     Tag? search = List<Tag?>.from(allTags ?? []).firstWhere(
-      (t) => t?.name?.contains(trimmed) ?? false,
+      (t) => t?.name?.trim().toLowerCase() == trimmed.toLowerCase(),
       orElse: () => null,
     );
-    if (search != null) {
-      setState(() {
-        if (selectedTags.contains(trimmed)) {
-          selectedTags.remove(trimmed);
-        } else {
-          selectedTags.add(trimmed);
-        }
-        sortTags();
-      });
+    if (search != null && search.name != null) {
+      _toggleSelection(search.name!);
       return;
     }
     Tag tag = Tag(name: trimmed);
