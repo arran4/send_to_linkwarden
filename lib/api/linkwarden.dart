@@ -7,31 +7,84 @@ import 'package:send_to_linkwarden/model/collection.dart';
 import 'package:send_to_linkwarden/model/link.dart';
 import 'package:html/parser.dart' as html;
 
-Future<List<Tag>?> getTags(String token, String baseUrl) async {
-  final url = Uri.parse('$baseUrl/api/v1/tags');
+Future<List<Tag>?> getTags(
+  String token,
+  String baseUrl, {
+  http.Client? client,
+}) async {
+  final bool ownsClient = client == null;
+  final httpClient = client ?? http.Client();
 
   final headers = {
     HttpHeaders.authorizationHeader: 'Bearer $token',
     HttpHeaders.acceptHeader: 'application/json',
   };
 
-  final response = await http.get(url, headers: headers);
+  final List<Tag> allTags = [];
+  int? nextCursor;
+  int loopCount = 0;
+  final int maxLoops = 1000;
+  final Set<int> seenCursors = {};
 
-  if (response.statusCode < 200 || response.statusCode > 299) {
-    throw HttpException('Failed to load tags: ${response.statusCode}');
+  try {
+    do {
+      if (nextCursor != null) {
+        if (seenCursors.contains(nextCursor)) {
+          break; // Infinite loop detected
+        }
+        seenCursors.add(nextCursor);
+      }
+
+      final uri = nextCursor != null
+          ? Uri.parse('$baseUrl/api/v1/tags?cursor=$nextCursor')
+          : Uri.parse('$baseUrl/api/v1/tags');
+
+      final response = await httpClient.get(uri, headers: headers);
+
+      if (response.statusCode < 200 || response.statusCode > 299) {
+        throw HttpException('Failed to load tags: ${response.statusCode}');
+      }
+
+      final Map<String, dynamic> responseObject = json.decode(response.body);
+
+      final data = responseObject['data'];
+
+      if (data is Map<String, dynamic> && data['tags'] is List) {
+        // Authoritative paginated response format
+        final List<Tag> tags = (data['tags'] as List)
+            .map((tagJson) => Tag.fromJson(tagJson as Map<String, dynamic>))
+            .toList();
+        allTags.addAll(tags);
+
+        final nextCursorValue = data['nextCursor'];
+        if (nextCursorValue is int) {
+          nextCursor = nextCursorValue;
+        } else {
+          nextCursor = null; // Terminal state
+        }
+      } else if (responseObject['response'] is List) {
+        // Fallback to legacy top-level unpaginated list
+        final List<Tag> tags = (responseObject['response'] as List)
+            .map((tagJson) => Tag.fromJson(tagJson as Map<String, dynamic>))
+            .toList();
+        allTags.addAll(tags);
+        break; // No pagination in legacy
+      } else {
+        throw const FormatException('Invalid response structure');
+      }
+
+      loopCount++;
+      if (loopCount >= maxLoops) {
+        break; // Stop iteration safely
+      }
+    } while (nextCursor != null);
+  } finally {
+    if (ownsClient) {
+      httpClient.close();
+    }
   }
 
-  final Map<String, dynamic> responseObject = json.decode(response.body);
-
-  if (responseObject['response'] == null) {
-    throw const FormatException('Invalid response structure');
-  }
-
-  final List<Tag> tags = (responseObject['response'] as List)
-      .map((tagJson) => Tag.fromJson(tagJson))
-      .toList();
-
-  return tags;
+  return allTags;
 }
 
 Future<List<Collection>?> getCollections(String token, String baseUrl) async {

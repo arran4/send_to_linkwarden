@@ -125,9 +125,12 @@ class _SelectTagsViewState extends State<SelectTagsView> {
       body: Container(
         decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface),
         child: Center(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.8,
+              ),
               child: Card(
                 elevation: 4,
                 shape: RoundedRectangleBorder(
@@ -136,10 +139,10 @@ class _SelectTagsViewState extends State<SelectTagsView> {
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
                       _findOrAddWidget(context),
-                      _listOfElements(context),
+                      Flexible(child: _listOfElements(context)),
                     ],
                   ),
                 ),
@@ -180,8 +183,11 @@ class _SelectTagsViewState extends State<SelectTagsView> {
     if (filterText == "") {
       return allTags ?? [];
     } else {
+      final query = filterText.toLowerCase();
       return (allTags ?? [])
-          .where((element) => element.name?.contains(filterText) ?? false)
+          .where(
+            (element) => element.name?.toLowerCase().contains(query) ?? false,
+          )
           .toList();
     }
   }
@@ -190,32 +196,73 @@ class _SelectTagsViewState extends State<SelectTagsView> {
     if (allTags == null) {
       return const CircularProgressIndicator();
     }
-    return ListBody(
-      children: [
-        for (Tag tag in filteredTags)
-          ListTile(
-            key: ValueKey(tag),
-            leading: Checkbox(
-              value: selectedTags.contains(tag.name ?? "Untitled Tag"),
-              onChanged: (value) {
-                if (value == null) {
-                  return;
-                }
-                setState(() {
-                  String tagName = tag.name ?? "Untitled Tag";
-                  if (selectedTags.contains(tagName)) {
-                    selectedTags.remove(tagName);
-                  } else {
-                    selectedTags.add(tagName);
-                  }
-                  sortTags();
-                });
-              },
-            ),
-            title: Text(tag.name ?? "Unnamed Tag"),
+
+    final tagsToShow = filteredTags;
+    final trimmedFilter = filterText.trim();
+
+    bool showCreateOption = false;
+    if (trimmedFilter.isNotEmpty) {
+      final exactMatchExists = allTags!.any(
+        (t) => t.name?.toLowerCase() == trimmedFilter.toLowerCase(),
+      );
+      if (!exactMatchExists) {
+        showCreateOption = true;
+      }
+    }
+
+    if (tagsToShow.isEmpty && !showCreateOption) {
+      return const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Text("No tags found"),
+      );
+    }
+
+    return ListView.builder(
+      shrinkWrap: true,
+      itemCount: tagsToShow.length + (showCreateOption ? 1 : 0),
+      itemBuilder: (context, index) {
+        if (showCreateOption && index == tagsToShow.length) {
+          return ListTile(
+            key: const ValueKey("create_new_tag"),
+            leading: const Icon(Icons.add),
+            title: Text("Create tag '$trimmedFilter'"),
+            onTap: () {
+              add(trimmedFilter);
+              searchAddTextController.clear();
+              findOrAddFocusNode.requestFocus();
+            },
+          );
+        }
+
+        final tag = tagsToShow[index];
+        final String tagName = tag.name ?? "Untitled Tag";
+        final bool isSelected = selectedTags.contains(tagName);
+
+        return ListTile(
+          key: ValueKey(tag),
+          leading: Checkbox(
+            value: isSelected,
+            onChanged: (value) {
+              if (value == null) return;
+              _toggleSelection(tagName);
+            },
           ),
-      ],
+          title: Text(tagName),
+          onTap: () => _toggleSelection(tagName),
+        );
+      },
     );
+  }
+
+  void _toggleSelection(String tagName) {
+    setState(() {
+      if (selectedTags.contains(tagName)) {
+        selectedTags.remove(tagName);
+      } else {
+        selectedTags.add(tagName);
+      }
+      sortTags();
+    });
   }
 
   void add(String text) {
@@ -224,18 +271,11 @@ class _SelectTagsViewState extends State<SelectTagsView> {
       return;
     }
     Tag? search = List<Tag?>.from(allTags ?? []).firstWhere(
-      (t) => t?.name?.contains(trimmed) ?? false,
+      (t) => t?.name?.toLowerCase() == trimmed.toLowerCase(),
       orElse: () => null,
     );
-    if (search != null) {
-      setState(() {
-        if (selectedTags.contains(trimmed)) {
-          selectedTags.remove(trimmed);
-        } else {
-          selectedTags.add(trimmed);
-        }
-        sortTags();
-      });
+    if (search != null && search.name != null) {
+      _toggleSelection(search.name!);
       return;
     }
     Tag tag = Tag(name: trimmed);
