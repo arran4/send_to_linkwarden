@@ -101,7 +101,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // List should still say no tags found
-      expect(find.text('No tags found. Create one below.'), findsOneWidget);
+      expect(find.text('No tags yet.'), findsOneWidget);
     });
 
     testWidgets(
@@ -273,5 +273,47 @@ void main() {
       final Checkbox checkbox = tester.widget(find.byType(Checkbox));
       expect(checkbox.value, isTrue);
     });
+
+    testWidgets(
+      'whitespace search filtering trims and matches canonical tag without duplicating',
+      (WidgetTester tester) async {
+        final List<Tag> allTags = [Tag(name: 'foo')];
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: SelectTagsView(
+              arguments: SelectTagsViewArguments(allTags: allTags),
+            ),
+          ),
+        );
+
+        await tester.pumpAndSettle();
+
+        // Enter a search string with whitespace around it
+        await tester.enterText(find.byType(TextField), ' foo ');
+        await tester.pumpAndSettle();
+
+        // Ensure 'foo' is still visible (trimmed filter match)
+        expect(
+          find.descendant(
+            of: find.byType(ListTile),
+            matching: find.text('foo'),
+          ),
+          findsOneWidget,
+        );
+
+        // Ensure 'Create tag 'foo'' is NOT presented
+        expect(find.text("Create tag 'foo'"), findsNothing);
+        expect(find.text("Create tag ' foo '"), findsNothing);
+
+        // Submit
+        await tester.testTextInput.receiveAction(TextInputAction.done);
+        await tester.pumpAndSettle();
+
+        // Ensure canonical foo gets checked
+        final Checkbox checkbox = tester.widget(find.byType(Checkbox));
+        expect(checkbox.value, isTrue);
+      },
+    );
   });
 }

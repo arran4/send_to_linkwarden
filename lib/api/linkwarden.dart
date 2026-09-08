@@ -60,7 +60,11 @@ Future<List<Tag>?> getTags(
           if (tagJson is! Map<String, dynamic>) {
             throw const FormatException('Invalid tag element structure');
           }
-          tags.add(Tag.fromJson(tagJson));
+          try {
+            tags.add(Tag.fromJson(tagJson));
+          } catch (e) {
+            throw const FormatException('Invalid tag field type');
+          }
         }
         allTags.addAll(tags);
 
@@ -76,7 +80,11 @@ Future<List<Tag>?> getTags(
           if (tagJson is! Map<String, dynamic>) {
             throw const FormatException('Invalid tag element structure');
           }
-          tags.add(Tag.fromJson(tagJson));
+          try {
+            tags.add(Tag.fromJson(tagJson));
+          } catch (e) {
+            throw const FormatException('Invalid tag field type');
+          }
         }
         allTags.addAll(tags);
         break; // No pagination in legacy

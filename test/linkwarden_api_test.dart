@@ -177,5 +177,31 @@ void main() {
         );
       },
     );
+
+    test(
+      'getTags throws FormatException on malformed tag field type',
+      () async {
+        final mockClient = MockClient((request) async {
+          return http.Response(loadFixture('tags_malformed_field.json'), 200);
+        });
+
+        expect(
+          () =>
+              getTags('test_token', 'https://example.com', client: mockClient),
+          throwsA(isA<FormatException>()),
+        );
+      },
+    );
+
+    test('getTags throws FormatException on malformed _count field', () async {
+      final mockClient = MockClient((request) async {
+        return http.Response(loadFixture('tags_malformed_count.json'), 200);
+      });
+
+      expect(
+        () => getTags('test_token', 'https://example.com', client: mockClient),
+        throwsA(isA<FormatException>()),
+      );
+    });
   });
 }

@@ -217,7 +217,7 @@ class _SelectTagsViewState extends State<SelectTagsView> {
     if (filterText == "") {
       return allTags ?? [];
     } else {
-      final query = filterText.toLowerCase();
+      final query = filterText.trim().toLowerCase();
       return (allTags ?? [])
           .where(
             (element) => element.name?.toLowerCase().contains(query) ?? false,
@@ -247,7 +247,7 @@ class _SelectTagsViewState extends State<SelectTagsView> {
     if (allTags!.isEmpty && !showCreateOption) {
       return const Padding(
         padding: EdgeInsets.all(16.0),
-        child: Text("No tags found. Create one below."),
+        child: Text("No tags yet."),
       );
     }
 

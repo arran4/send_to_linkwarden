@@ -1,0 +1,9 @@
+{
+  "data": {
+    "tags": [
+      {"id": 1, "name": 123}
+    ],
+    "nextCursor": null
+  },
+  "success": true
+}
