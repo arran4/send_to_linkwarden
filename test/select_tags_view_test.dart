@@ -315,5 +315,84 @@ void main() {
         expect(checkbox.value, isTrue);
       },
     );
+
+    testWidgets('whitespace in existing tag avoids duplication when searching', (
+      WidgetTester tester,
+    ) async {
+      final List<Tag> allTags = [Tag(name: ' existing ')];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: SelectTagsView(
+            arguments: SelectTagsViewArguments(allTags: allTags),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Enter a search string matching the existing tag's trimmed value
+      await tester.enterText(find.byType(TextField), 'existing');
+      await tester.pumpAndSettle();
+
+      // Ensure ' existing ' is visible
+      expect(
+        find.descendant(
+          of: find.byType(ListTile),
+          matching: find.text(' existing '),
+        ),
+        findsOneWidget,
+      );
+
+      // Ensure 'Create tag 'existing'' is NOT presented because of trim equivalence
+      expect(find.text("Create tag 'existing'"), findsNothing);
+
+      // Submit
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      // Ensure canonical tag gets checked
+      final Checkbox checkbox = tester.widget(find.byType(Checkbox));
+      expect(checkbox.value, isTrue);
+    });
+
+    testWidgets('unrelated tag exists and no-match search offers creation', (
+      WidgetTester tester,
+    ) async {
+      final List<Tag> allTags = [Tag(name: 'alpha')];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: SelectTagsView(
+            arguments: SelectTagsViewArguments(allTags: allTags),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Enter search that matches nothing
+      await tester.enterText(find.byType(TextField), 'beta');
+      await tester.pumpAndSettle();
+
+      // Should show no match text
+      expect(find.text("No tags match your search."), findsOneWidget);
+
+      // Should also show creation tile
+      expect(find.text("Create tag 'beta'"), findsOneWidget);
+
+      // Tap create
+      await tester.tap(find.text("Create tag 'beta'"));
+      await tester.pumpAndSettle();
+
+      // Now 'beta' exists and is checked
+      expect(
+        find.descendant(of: find.byType(ListTile), matching: find.text('beta')),
+        findsOneWidget,
+      );
+
+      // Alpha is still visible but unchecked
+      expect(find.text('alpha'), findsOneWidget);
+    });
   });
 }
