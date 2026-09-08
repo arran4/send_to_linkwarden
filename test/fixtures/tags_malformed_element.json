@@ -1,0 +1,10 @@
+{
+  "data": {
+    "tags": [
+      123,
+      456
+    ],
+    "nextCursor": null
+  },
+  "success": true
+}

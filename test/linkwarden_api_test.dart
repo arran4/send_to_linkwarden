@@ -119,31 +119,63 @@ void main() {
       },
     );
 
-    test('getTags breaks infinite loops caused by repeated cursor', () async {
+    test('getTags throws FormatException on top-level non-object', () async {
       final mockClient = MockClient((request) async {
-        // Always return cursor 1 to cause a loop
-        return http.Response(
-          json.encode({
-            "data": {
-              "tags": [
-                {"id": 1, "name": "loop"},
-              ],
-              "nextCursor": 1,
-            },
-          }),
-          200,
-        );
+        return http.Response(loadFixture('tags_malformed_top_level.json'), 200);
       });
 
-      final tags = await getTags(
-        'test_token',
-        'https://example.com',
-        client: mockClient,
+      expect(
+        () => getTags('test_token', 'https://example.com', client: mockClient),
+        throwsA(isA<FormatException>()),
       );
-
-      expect(tags, isNotNull);
-      // Since it detects loop on 2nd iteration, it returns the first page then stops
-      expect(tags!.length, 2);
     });
+
+    test('getTags throws FormatException on non-object tag elements', () async {
+      final mockClient = MockClient((request) async {
+        return http.Response(loadFixture('tags_malformed_element.json'), 200);
+      });
+
+      expect(
+        () => getTags('test_token', 'https://example.com', client: mockClient),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('getTags throws FormatException on wrong cursor type', () async {
+      final mockClient = MockClient((request) async {
+        return http.Response(loadFixture('tags_malformed_cursor.json'), 200);
+      });
+
+      expect(
+        () => getTags('test_token', 'https://example.com', client: mockClient),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test(
+      'getTags breaks infinite loops caused by repeated cursor and throws',
+      () async {
+        final mockClient = MockClient((request) async {
+          // Always return cursor 1 to cause a loop
+          return http.Response(
+            json.encode({
+              "data": {
+                "tags": [
+                  {"id": 1, "name": "loop"},
+                ],
+                "nextCursor": 1,
+              },
+            }),
+            200,
+          );
+        });
+
+        expect(
+          () =>
+              getTags('test_token', 'https://example.com', client: mockClient),
+          throwsA(isA<FormatException>()),
+        );
+      },
+    );
   });
 }

@@ -30,7 +30,7 @@ Future<List<Tag>?> getTags(
     do {
       if (nextCursor != null) {
         if (seenCursors.contains(nextCursor)) {
-          break; // Infinite loop detected
+          throw const FormatException('Repeated cursor');
         }
         seenCursors.add(nextCursor);
       }
@@ -45,28 +45,39 @@ Future<List<Tag>?> getTags(
         throw HttpException('Failed to load tags: ${response.statusCode}');
       }
 
-      final Map<String, dynamic> responseObject = json.decode(response.body);
+      final dynamic decoded = json.decode(response.body);
 
-      final data = responseObject['data'];
+      if (decoded is! Map<String, dynamic>) {
+        throw const FormatException('Invalid response structure');
+      }
+
+      final data = decoded['data'];
 
       if (data is Map<String, dynamic> && data['tags'] is List) {
         // Authoritative paginated response format
-        final List<Tag> tags = (data['tags'] as List)
-            .map((tagJson) => Tag.fromJson(tagJson as Map<String, dynamic>))
-            .toList();
+        final List<Tag> tags = [];
+        for (var tagJson in data['tags'] as List) {
+          if (tagJson is! Map<String, dynamic>) {
+            throw const FormatException('Invalid tag element structure');
+          }
+          tags.add(Tag.fromJson(tagJson));
+        }
         allTags.addAll(tags);
 
         final nextCursorValue = data['nextCursor'];
-        if (nextCursorValue is int) {
-          nextCursor = nextCursorValue;
-        } else {
-          nextCursor = null; // Terminal state
+        if (nextCursorValue != null && nextCursorValue is! int) {
+          throw const FormatException('Invalid nextCursor type');
         }
-      } else if (responseObject['response'] is List) {
+        nextCursor = nextCursorValue as int?;
+      } else if (decoded['response'] is List) {
         // Fallback to legacy top-level unpaginated list
-        final List<Tag> tags = (responseObject['response'] as List)
-            .map((tagJson) => Tag.fromJson(tagJson as Map<String, dynamic>))
-            .toList();
+        final List<Tag> tags = [];
+        for (var tagJson in decoded['response'] as List) {
+          if (tagJson is! Map<String, dynamic>) {
+            throw const FormatException('Invalid tag element structure');
+          }
+          tags.add(Tag.fromJson(tagJson));
+        }
         allTags.addAll(tags);
         break; // No pagination in legacy
       } else {
@@ -75,7 +86,7 @@ Future<List<Tag>?> getTags(
 
       loopCount++;
       if (loopCount >= maxLoops) {
-        break; // Stop iteration safely
+        throw const HttpException('Max pages exceeded');
       }
     } while (nextCursor != null);
   } finally {

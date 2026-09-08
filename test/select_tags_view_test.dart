@@ -101,7 +101,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // List should still say no tags found
-      expect(find.text('No tags found'), findsOneWidget);
+      expect(find.text('No tags found. Create one below.'), findsOneWidget);
     });
 
     testWidgets(
@@ -196,13 +196,35 @@ void main() {
       expect(checkbox.value, isFalse);
     });
 
-    testWidgets('large tag set scales without flex overflow', (
+    testWidgets('no results empty state is distinct from no tags', (
+      WidgetTester tester,
+    ) async {
+      final List<Tag> allTags = [Tag(name: 'existing')];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: SelectTagsView(
+            arguments: SelectTagsViewArguments(allTags: allTags),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // Enter search that matches nothing
+      await tester.enterText(find.byType(TextField), 'nomatch');
+      await tester.pumpAndSettle();
+
+      // Should show no match text
+      expect(find.text("No tags match your search."), findsOneWidget);
+    });
+
+    testWidgets('large tag set scales and scrolls natively', (
       WidgetTester tester,
     ) async {
       // 200 tags
       final List<Tag> allTags = List.generate(200, (i) => Tag(name: 'tag_$i'));
 
-      // Simulate narrow viewport
       tester.view.physicalSize = const Size(400, 800);
       tester.view.devicePixelRatio = 1.0;
 
@@ -216,14 +238,40 @@ void main() {
 
       await tester.pumpAndSettle();
 
-      // If it throws an overflow exception, this test will fail
       expect(find.text('tag_0'), findsOneWidget);
 
+      await tester.drag(find.byType(ListView), const Offset(0, -500));
+      await tester.pumpAndSettle();
+      expect(find.text('tag_0'), findsNothing);
       // Reset view
       addTearDown(() {
         tester.view.resetPhysicalSize();
         tester.view.resetDevicePixelRatio();
       });
+    });
+
+    testWidgets('preselected tags normalize to canonical casing', (
+      WidgetTester tester,
+    ) async {
+      final List<Tag> allTags = [Tag(name: 'CanonicalCase')];
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: SelectTagsView(
+            arguments: SelectTagsViewArguments(
+              allTags: allTags,
+              selectedTags: ['canonicalcase'],
+            ),
+          ),
+        ),
+      );
+
+      await tester.pumpAndSettle();
+
+      // The checkbox next to the canonical tag should be checked
+      expect(find.text('CanonicalCase'), findsOneWidget);
+      final Checkbox checkbox = tester.widget(find.byType(Checkbox));
+      expect(checkbox.value, isTrue);
     });
   });
 }
