@@ -16,6 +16,11 @@ class AddEditUserInstanceView extends StatefulWidget {
 
   const AddEditUserInstanceView({this.arguments, super.key});
 
+  static const instanceUrlFieldKey = ValueKey('instance-url-field');
+  static const apiTokenFieldKey = ValueKey('api-token-field');
+  static const usernameFieldKey = ValueKey('username-field');
+  static const passwordFieldKey = ValueKey('password-field');
+
   @override
   State<AddEditUserInstanceView> createState() =>
       _AddEditUserInstanceViewState();
@@ -99,6 +104,7 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
   final TextEditingController urlTextController = TextEditingController();
   Widget _instanceUrlInput(BuildContext context) {
     return TextFormField(
+      key: AddEditUserInstanceView.instanceUrlFieldKey,
       controller: urlTextController,
       onChanged: (value) {
         setState(() {});
@@ -146,6 +152,7 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
   final TextEditingController usernameTextController = TextEditingController();
   Widget _usernameEmailInput(BuildContext context) {
     return TextFormField(
+      key: AddEditUserInstanceView.usernameFieldKey,
       controller: usernameTextController,
       validator: (value) {
         if (value == null || value == "") {
@@ -181,6 +188,7 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
   bool _obscurePassword = true;
   Widget _passwordInput(BuildContext context) {
     return TextFormField(
+      key: AddEditUserInstanceView.passwordFieldKey,
       controller: passwordTextController,
       validator: (value) {
         if (value == null || value == "") {
@@ -211,6 +219,7 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
   bool _obscureApiToken = true;
   Widget _apiTokenInput(BuildContext context) {
     return TextFormField(
+      key: AddEditUserInstanceView.apiTokenFieldKey,
       controller: apiTokenTextController,
       validator: (value) {
         if (value == null || value == "") {
