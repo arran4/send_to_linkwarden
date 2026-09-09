@@ -1,6 +1,7 @@
 import 'dart:async' show unawaited;
 
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:send_to_linkwarden/model/user_instance.dart';
 import 'package:send_to_linkwarden/api/linkwarden.dart';
 import 'package:send_to_linkwarden/state/user_instance_replayer.dart';
@@ -75,7 +76,7 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
                             const Padding(
                               padding: EdgeInsets.only(bottom: 16.0),
                               child: Text(
-                                "A Linkwarden instance URL is the web address where your bookmarks are hosted. You can authenticate either by providing an API token or your username and password.",
+                                "A Linkwarden instance URL is the web address where your bookmarks are hosted. This is usually https://cloud.linkwarden.app or your own self-hosted server address. You can authenticate either by providing an API token or your username and password.",
                                 style: TextStyle(fontSize: 14),
                               ),
                             ),
@@ -101,11 +102,24 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
     );
   }
 
+  String _normalizeUrl(String value) {
+    String normalized = value.trim();
+    while (normalized.endsWith('/')) {
+      normalized = normalized.substring(0, normalized.length - 1);
+    }
+    if (!normalized.startsWith('http://') &&
+        !normalized.startsWith('https://')) {
+      normalized = 'https://$normalized';
+    }
+    return normalized;
+  }
+
   final TextEditingController urlTextController = TextEditingController();
   Widget _instanceUrlInput(BuildContext context) {
     return TextFormField(
       key: AddEditUserInstanceView.instanceUrlFieldKey,
       controller: urlTextController,
+      autofillHints: const [AutofillHints.url],
       onChanged: (value) {
         setState(() {});
       },
@@ -113,11 +127,7 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
         if (value == null || value.trim().isEmpty) {
           return "Please enter a value";
         }
-        String normalized = value.trim();
-        if (!normalized.startsWith('http://') &&
-            !normalized.startsWith('https://')) {
-          normalized = 'https://$normalized';
-        }
+        String normalized = _normalizeUrl(value);
         Uri? url = Uri.tryParse(normalized);
         if (url == null || url.host.isEmpty) {
           return "Not a valid URL";
@@ -140,13 +150,7 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
 
   bool _showHttpWarning() {
     String value = urlTextController.text.trim();
-    if (value.startsWith('http://')) {
-      Uri? url = Uri.tryParse(value);
-      if (url != null && url.host != 'localhost' && url.host != '127.0.0.1') {
-        return true;
-      }
-    }
-    return false;
+    return value.startsWith('http://');
   }
 
   final TextEditingController usernameTextController = TextEditingController();
@@ -154,6 +158,7 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
     return TextFormField(
       key: AddEditUserInstanceView.usernameFieldKey,
       controller: usernameTextController,
+      autofillHints: const [AutofillHints.username],
       validator: (value) {
         if (value == null || value == "") {
           return "Please enter a value";
@@ -190,6 +195,9 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
     return TextFormField(
       key: AddEditUserInstanceView.passwordFieldKey,
       controller: passwordTextController,
+      autofillHints: const [AutofillHints.password],
+      enableSuggestions: false,
+      autocorrect: false,
       validator: (value) {
         if (value == null || value == "") {
           return "Please enter a value";
@@ -221,6 +229,8 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
     return TextFormField(
       key: AddEditUserInstanceView.apiTokenFieldKey,
       controller: apiTokenTextController,
+      enableSuggestions: false,
+      autocorrect: false,
       validator: (value) {
         if (value == null || value == "") {
           return "Please enter a value";
@@ -259,16 +269,12 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
         TextButton(
           onPressed: () async {
             if (formState.currentState!.validate()) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text('Processing Data')));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Verifying connection...')),
+              );
               String? token = apiTokenTextController.text;
 
-              String rawUrl = urlTextController.text.trim();
-              if (!rawUrl.startsWith('http://') &&
-                  !rawUrl.startsWith('https://')) {
-                rawUrl = 'https://$rawUrl';
-              }
+              String rawUrl = _normalizeUrl(urlTextController.text);
 
               if (_method == 'username') {
                 try {
@@ -277,12 +283,19 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
                     usernameTextController.text,
                     passwordTextController.text,
                   );
+                } on HttpException catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text(e.message)));
+                  }
+                  return;
                 } catch (e) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
+                      const SnackBar(
                         content: Text(
-                          e.toString().replaceAll('HttpException: ', ''),
+                          'Connection failed. Please check the server address and try again.',
                         ),
                       ),
                     );
@@ -292,12 +305,19 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
               } else {
                 try {
                   await verifyConnection(token, rawUrl);
+                } on HttpException catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text(e.message)));
+                  }
+                  return;
                 } catch (e) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
+                      const SnackBar(
                         content: Text(
-                          e.toString().replaceAll('HttpException: ', ''),
+                          'Connection failed. Please check the server address and try again.',
                         ),
                       ),
                     );
@@ -317,7 +337,11 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
               );
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Validation errors')),
+                const SnackBar(
+                  content: Text(
+                    'Please correct the validation errors before saving.',
+                  ),
+                ),
               );
             }
           },

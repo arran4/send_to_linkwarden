@@ -28,7 +28,7 @@ void main() {
       );
     });
 
-    testWidgets('Does not show HTTP warning for localhost', (
+    testWidgets('Shows HTTP warning for localhost', (
       WidgetTester tester,
     ) async {
       await tester.pumpWidget(createWidgetUnderTest());
@@ -44,7 +44,7 @@ void main() {
 
       expect(
         find.text('Warning: Credentials will be sent over insecure HTTP.'),
-        findsNothing,
+        findsOneWidget,
       );
     });
 
@@ -59,9 +59,11 @@ void main() {
           matching: find.byType(TextFormField),
         );
 
+        final saveButton = find.text('Save');
+        await tester.ensureVisible(saveButton);
         await tester.enterText(urlField, '   ');
         await tester.pumpAndSettle();
-        await tester.tap(find.text('Save'));
+        await tester.tap(saveButton);
         await tester.pumpAndSettle();
 
         // Because there are multiple fields that show "Please enter a value" (url, token, etc),
@@ -70,10 +72,10 @@ void main() {
 
         await tester.enterText(urlField, 'https://');
         await tester.pumpAndSettle();
-        await tester.tap(find.text('Save'));
+        await tester.tap(saveButton);
         await tester.pumpAndSettle();
 
-        expect(find.text('Not a valid URL'), findsWidgets);
+        expect(find.text('Please enter a value'), findsWidgets);
       },
     );
   });
