@@ -104,12 +104,12 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
 
   String _normalizeUrl(String value) {
     String normalized = value.trim();
-    while (normalized.endsWith('/')) {
-      normalized = normalized.substring(0, normalized.length - 1);
-    }
     if (!normalized.startsWith('http://') &&
         !normalized.startsWith('https://')) {
       normalized = 'https://$normalized';
+    }
+    while (normalized.endsWith('/') && normalized.length > 9) {
+      normalized = normalized.substring(0, normalized.length - 1);
     }
     return normalized;
   }
@@ -285,6 +285,7 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
                   );
                 } on HttpException catch (e) {
                   if (context.mounted) {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
                     ScaffoldMessenger.of(
                       context,
                     ).showSnackBar(SnackBar(content: Text(e.message)));
@@ -292,6 +293,7 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
                   return;
                 } catch (e) {
                   if (context.mounted) {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text(
@@ -307,6 +309,7 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
                   await verifyConnection(token, rawUrl);
                 } on HttpException catch (e) {
                   if (context.mounted) {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
                     ScaffoldMessenger.of(
                       context,
                     ).showSnackBar(SnackBar(content: Text(e.message)));
@@ -314,6 +317,7 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
                   return;
                 } catch (e) {
                   if (context.mounted) {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text(
@@ -327,6 +331,7 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
               }
 
               if (!context.mounted) return;
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
               Navigator.pop(
                 context,
                 userInstance

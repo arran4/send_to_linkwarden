@@ -79,7 +79,7 @@ void main() {
         await tester.tap(saveButton);
         await tester.pumpAndSettle();
 
-        expect(find.text('Please enter a value'), findsWidgets);
+        expect(find.text('Not a valid URL'), findsWidgets);
 
         await tester.enterText(urlField, 'https://example.com///');
         await tester.pumpAndSettle();

@@ -214,5 +214,82 @@ void main() {
         }, () => mockClient);
       },
     );
+
+    testWidgets('API token verification failure (401)', (
+      WidgetTester tester,
+    ) async {
+      final mockClient = MockClient((request) async {
+        return http.Response('{"error": "Unauthorized"}', 401);
+      });
+
+      await http.runWithClient(() async {
+        await tester.pumpWidget(createWidgetWithNavigation(null));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Open Form'));
+        await tester.pumpAndSettle();
+
+        final dropdown = find.byType(DropdownButtonFormField<String>);
+        await tester.tap(dropdown);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('API token').last);
+        await tester.pumpAndSettle();
+
+        await tester.enterText(
+          find.byKey(AddEditUserInstanceView.instanceUrlFieldKey),
+          'https://example.com',
+        );
+        await tester.enterText(
+          find.byKey(AddEditUserInstanceView.apiTokenFieldKey),
+          'bad_token',
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Save'));
+        await tester.pump();
+
+        // Let snackbar show
+        await tester.pump(const Duration(seconds: 1));
+
+        // It should NOT navigate back
+        expect(find.byType(AddEditUserInstanceView), findsOneWidget);
+        expect(
+          find.text('Authentication failed: Invalid token or credentials.'),
+          findsOneWidget,
+        );
+      }, () => mockClient);
+    });
+
+    testWidgets(
+      'Editing existing legacy instance drops password on Save using API token',
+      (WidgetTester tester) async {
+        final mockClient = MockClient((request) async {
+          return http.Response('{"response": []}', 200);
+        });
+
+        await http.runWithClient(() async {
+          final legacyInstance = UserInstance(
+            server: 'https://example.com',
+            apiToken: 'some_token',
+            password: 'old_legacy_password',
+          );
+
+          await tester.pumpWidget(createWidgetWithNavigation(legacyInstance));
+          await tester.pumpAndSettle();
+
+          await tester.tap(find.text('Open Form'));
+          await tester.pumpAndSettle();
+
+          // The form is pre-filled, just hit Save
+          await tester.tap(find.text('Save'));
+          await tester.pumpAndSettle();
+
+          expect(find.byType(AddEditUserInstanceView), findsNothing);
+          expect(savedInstance, isNotNull);
+          expect(savedInstance!.apiToken, 'some_token');
+          expect(savedInstance!.password, isNull); // Password was dropped
+        }, () => mockClient);
+      },
+    );
   });
 }

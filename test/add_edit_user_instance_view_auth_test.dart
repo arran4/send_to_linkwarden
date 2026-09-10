@@ -23,7 +23,31 @@ void main() {
       await tester.tap(find.text('Username/Password').last);
       await tester.pumpAndSettle();
 
-      expect(find.byIcon(Icons.visibility), findsWidgets);
+      final passwordFieldFinder = find.byKey(
+        AddEditUserInstanceView.passwordFieldKey,
+      );
+      expect(passwordFieldFinder, findsOneWidget);
+      TextField textField = tester.widget(
+        find.descendant(
+          of: passwordFieldFinder,
+          matching: find.byType(TextField),
+        ),
+      );
+      expect(textField.obscureText, isTrue);
+
+      final visibilityIcon = find.byIcon(Icons.visibility);
+      expect(visibilityIcon, findsWidgets);
+
+      await tester.tap(visibilityIcon.first);
+      await tester.pumpAndSettle();
+
+      textField = tester.widget(
+        find.descendant(
+          of: passwordFieldFinder,
+          matching: find.byType(TextField),
+        ),
+      );
+      expect(textField.obscureText, isFalse);
     });
   });
 }
