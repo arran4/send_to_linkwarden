@@ -81,6 +81,12 @@ void main() {
 
         expect(find.text('Not a valid URL'), findsWidgets);
 
+        await tester.enterText(urlField, 'http://a/');
+        await tester.pumpAndSettle();
+        await tester.tap(saveButton);
+        await tester.pumpAndSettle();
+        expect(find.text('Not a valid URL'), findsNothing);
+
         await tester.enterText(urlField, 'https://example.com///');
         await tester.pumpAndSettle();
         await tester.tap(saveButton);

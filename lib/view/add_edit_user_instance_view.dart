@@ -108,7 +108,9 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
         !normalized.startsWith('https://')) {
       normalized = 'https://$normalized';
     }
-    while (normalized.endsWith('/') && normalized.length > 9) {
+    while (normalized.endsWith('/') &&
+        normalized != 'http://' &&
+        normalized != 'https://') {
       normalized = normalized.substring(0, normalized.length - 1);
     }
     return normalized;

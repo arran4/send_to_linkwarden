@@ -86,7 +86,7 @@ void main() {
 
         await tester.enterText(
           find.byKey(AddEditUserInstanceView.instanceUrlFieldKey),
-          'https://example.com',
+          'https://example.com///',
         );
         await tester.pump();
 
@@ -102,7 +102,7 @@ void main() {
             tester,
             AddEditUserInstanceView.instanceUrlFieldKey,
           ).controller.text,
-          'https://example.com',
+          'https://example.com///',
         );
         expect(
           editableFor(
