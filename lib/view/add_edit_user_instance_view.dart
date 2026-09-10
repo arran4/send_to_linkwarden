@@ -1,6 +1,7 @@
 import 'dart:async' show unawaited;
 
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:send_to_linkwarden/model/user_instance.dart';
 import 'package:send_to_linkwarden/api/linkwarden.dart';
 import 'package:send_to_linkwarden/state/user_instance_replayer.dart';
@@ -15,6 +16,11 @@ class AddEditUserInstanceView extends StatefulWidget {
   final AddEditUserInstanceViewArguments? arguments;
 
   const AddEditUserInstanceView({this.arguments, super.key});
+
+  static const instanceUrlFieldKey = ValueKey('instance-url-field');
+  static const apiTokenFieldKey = ValueKey('api-token-field');
+  static const usernameFieldKey = ValueKey('username-field');
+  static const passwordFieldKey = ValueKey('password-field');
 
   @override
   State<AddEditUserInstanceView> createState() =>
@@ -57,33 +63,35 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
                   padding: const EdgeInsets.all(16.0),
                   child: StreamBuilder(
                     stream: userInstanceValueReplayer.subscribe(),
-                    builder:
-                        (context, AsyncSnapshot<List<UserInstance>> snapshot) {
-                          if (snapshot.hasError) {
-                            return Center(
-                              child: Text("Error: ${snapshot.error}"),
-                            );
-                          }
-                          var instances = snapshot.data ?? [];
-                          return Form(
-                            key: formState,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: <Widget>[
-                                _instanceSelector(context, instances),
-                                _instanceUrlInput(context),
-                                _methodSelection(context),
-                                if (_method == 'apiKey')
-                                  _apiTokenInput(context),
-                                if (_method == 'username')
-                                  _usernameEmailInput(context),
-                                if (_method == 'username')
-                                  _passwordInput(context),
-                                _actionButtons(context),
-                              ],
+                    builder: (context, AsyncSnapshot<List<UserInstance>> snapshot) {
+                      if (snapshot.hasError) {
+                        return Center(child: Text("Error: ${snapshot.error}"));
+                      }
+                      var instances = snapshot.data ?? [];
+                      return Form(
+                        key: formState,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            const Padding(
+                              padding: EdgeInsets.only(bottom: 16.0),
+                              child: Text(
+                                "A Linkwarden instance URL is the web address where your bookmarks are hosted. This is usually https://cloud.linkwarden.app or your own self-hosted server address. You can authenticate either by providing an API token or your username and password.",
+                                style: TextStyle(fontSize: 14),
+                              ),
                             ),
-                          );
-                        },
+                            _instanceSelector(context, instances),
+                            _instanceUrlInput(context),
+                            _methodSelection(context),
+                            if (_method == 'apiKey') _apiTokenInput(context),
+                            if (_method == 'username')
+                              _usernameEmailInput(context),
+                            if (_method == 'username') _passwordInput(context),
+                            _actionButtons(context),
+                          ],
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),
@@ -94,35 +102,65 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
     );
   }
 
+  String _normalizeUrl(String value) {
+    String normalized = value.trim();
+    if (!normalized.startsWith('http://') &&
+        !normalized.startsWith('https://')) {
+      normalized = 'https://$normalized';
+    }
+    while (normalized.endsWith('/') &&
+        normalized != 'http://' &&
+        normalized != 'https://') {
+      normalized = normalized.substring(0, normalized.length - 1);
+    }
+    return normalized;
+  }
+
   final TextEditingController urlTextController = TextEditingController();
   Widget _instanceUrlInput(BuildContext context) {
     return TextFormField(
+      key: AddEditUserInstanceView.instanceUrlFieldKey,
       controller: urlTextController,
+      autofillHints: const [AutofillHints.url],
+      onChanged: (value) {
+        setState(() {});
+      },
       validator: (value) {
-        if (value == null) {
+        if (value == null || value.trim().isEmpty) {
           return "Please enter a value";
         }
-        Uri? url = Uri.tryParse(value);
-        if (url == null) {
-          return "Not valid";
+        String normalized = _normalizeUrl(value);
+        Uri? url = Uri.tryParse(normalized);
+        if (url == null || url.host.isEmpty) {
+          return "Not a valid URL";
         }
         if (!url.isScheme("https") && !url.isScheme("http")) {
           return "Must be http or https";
         }
         return null;
       },
-      decoration: const InputDecoration(
+      decoration: InputDecoration(
         labelText: "URL",
         hintText: "https://cloud.linkwarden.app",
         helperText: "The address of your Linkwarden instance.",
+        errorText: _showHttpWarning()
+            ? "Warning: Credentials will be sent over insecure HTTP."
+            : null,
       ),
     );
+  }
+
+  bool _showHttpWarning() {
+    String value = urlTextController.text.trim();
+    return value.startsWith('http://');
   }
 
   final TextEditingController usernameTextController = TextEditingController();
   Widget _usernameEmailInput(BuildContext context) {
     return TextFormField(
+      key: AddEditUserInstanceView.usernameFieldKey,
       controller: usernameTextController,
+      autofillHints: const [AutofillHints.username],
       validator: (value) {
         if (value == null || value == "") {
           return "Please enter a value";
@@ -142,7 +180,7 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
       decoration: const InputDecoration(labelText: 'Authentication Method'),
       initialValue: _method,
       items: const [
-        DropdownMenuItem(value: 'apiKey', child: Text('API Key')),
+        DropdownMenuItem(value: 'apiKey', child: Text('API token')),
         DropdownMenuItem(value: 'username', child: Text('Username/Password')),
       ],
       onChanged: (value) {
@@ -154,40 +192,69 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
   }
 
   final TextEditingController passwordTextController = TextEditingController();
+  bool _obscurePassword = true;
   Widget _passwordInput(BuildContext context) {
     return TextFormField(
+      key: AddEditUserInstanceView.passwordFieldKey,
       controller: passwordTextController,
+      autofillHints: const [AutofillHints.password],
+      enableSuggestions: false,
+      autocorrect: false,
       validator: (value) {
         if (value == null || value == "") {
           return "Please enter a value";
         }
         return null;
       },
-      decoration: const InputDecoration(
+      decoration: InputDecoration(
         labelText: "Password",
         helperText: "Password for your Linkwarden account.",
         hintText: "Password",
+        suffixIcon: IconButton(
+          icon: Icon(
+            _obscurePassword ? Icons.visibility : Icons.visibility_off,
+          ),
+          onPressed: () {
+            setState(() {
+              _obscurePassword = !_obscurePassword;
+            });
+          },
+        ),
       ),
-      obscureText: true,
+      obscureText: _obscurePassword,
     );
   }
 
   final TextEditingController apiTokenTextController = TextEditingController();
+  bool _obscureApiToken = true;
   Widget _apiTokenInput(BuildContext context) {
     return TextFormField(
+      key: AddEditUserInstanceView.apiTokenFieldKey,
       controller: apiTokenTextController,
+      enableSuggestions: false,
+      autocorrect: false,
       validator: (value) {
         if (value == null || value == "") {
           return "Please enter a value";
         }
         return null;
       },
-      decoration: const InputDecoration(
-        labelText: "ApiToken",
-        helperText: "ApiToken for your Linkwarden account.",
-        hintText: "ApiToken",
+      decoration: InputDecoration(
+        labelText: "API token",
+        helperText: "API token for your Linkwarden account.",
+        hintText: "API token",
+        suffixIcon: IconButton(
+          icon: Icon(
+            _obscureApiToken ? Icons.visibility : Icons.visibility_off,
+          ),
+          onPressed: () {
+            setState(() {
+              _obscureApiToken = !_obscureApiToken;
+            });
+          },
+        ),
       ),
-      obscureText: true,
+      obscureText: _obscureApiToken,
     );
   }
 
@@ -204,21 +271,61 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
         TextButton(
           onPressed: () async {
             if (formState.currentState!.validate()) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text('Processing Data')));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Verifying connection...')),
+              );
               String? token = apiTokenTextController.text;
+
+              String rawUrl = _normalizeUrl(urlTextController.text);
+
               if (_method == 'username') {
                 try {
                   token = await createSession(
-                    urlTextController.text,
+                    rawUrl,
                     usernameTextController.text,
                     passwordTextController.text,
                   );
+                } on HttpException catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text(e.message)));
+                  }
+                  return;
                 } catch (e) {
                   if (context.mounted) {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Login failed: ${e.toString()}')),
+                      const SnackBar(
+                        content: Text(
+                          'Connection failed. Please check the server address and try again.',
+                        ),
+                      ),
+                    );
+                  }
+                  return;
+                }
+              } else {
+                try {
+                  await verifyConnection(token, rawUrl);
+                } on HttpException catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text(e.message)));
+                  }
+                  return;
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Connection failed. Please check the server address and try again.',
+                        ),
+                      ),
                     );
                   }
                   return;
@@ -226,19 +333,22 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
               }
 
               if (!context.mounted) return;
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
               Navigator.pop(
                 context,
                 userInstance
                   ..user = usernameTextController.text
-                  ..server = urlTextController.text
-                  ..password = _method == 'username'
-                      ? passwordTextController.text
-                      : null
+                  ..server = rawUrl
+                  ..password = null
                   ..apiToken = token,
               );
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Validation errors')),
+                const SnackBar(
+                  content: Text(
+                    'Please correct the validation errors before saving.',
+                  ),
+                ),
               );
             }
           },
@@ -260,7 +370,11 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
               for (var inst in instances)
                 DropdownMenuItem(
                   value: inst,
-                  child: Text(inst.server ?? 'Unknown URL'),
+                  child: Text(
+                    inst.user != null && inst.user!.isNotEmpty
+                        ? '${inst.user} @ ${inst.server ?? 'Unknown URL'}'
+                        : inst.server ?? 'Unknown URL',
+                  ),
                 ),
               const DropdownMenuItem(value: null, child: Text('New Instance')),
             ],

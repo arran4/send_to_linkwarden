@@ -106,6 +106,34 @@ Future<List<Tag>?> getTags(
   return allTags;
 }
 
+Future<void> verifyConnection(String token, String baseUrl) async {
+  try {
+    await getCollections(token, baseUrl);
+  } on SocketException {
+    throw const HttpException(
+      'Network error: unable to connect to the server. Please check the URL and your connection.',
+    );
+  } on HttpException catch (e) {
+    if (e.message.contains('401') || e.message.contains('403')) {
+      throw const HttpException(
+        'Authentication failed: Invalid token or credentials.',
+      );
+    }
+    if (e.message.contains('404')) {
+      throw const HttpException(
+        'Not found: Is this a valid Linkwarden instance?',
+      );
+    }
+    rethrow;
+  } on FormatException {
+    throw const HttpException(
+      'Invalid response: The server did not return valid Linkwarden data.',
+    );
+  } catch (e) {
+    throw HttpException('Connection failed: Please check the server address.');
+  }
+}
+
 Future<List<Collection>?> getCollections(String token, String baseUrl) async {
   final url = Uri.parse('$baseUrl/api/v1/collections');
 
@@ -229,17 +257,47 @@ Future<String> createSession(
     'sessionName': 'Send To Linkwarden App',
   });
 
-  final response = await http.post(url, headers: headers, body: body);
-
-  if (response.statusCode < 200 || response.statusCode > 299) {
-    throw HttpException('Failed to login: ${response.statusCode}');
+  http.Response response;
+  try {
+    response = await http.post(url, headers: headers, body: body);
+  } on SocketException {
+    throw const HttpException(
+      'Network error: unable to connect to the server. Please check the URL and your connection.',
+    );
+  } catch (e) {
+    throw HttpException('Connection failed: Please check the server address.');
   }
 
-  final Map<String, dynamic> responseObject = json.decode(response.body);
+  if (response.statusCode < 200 || response.statusCode > 299) {
+    if (response.statusCode == 401 || response.statusCode == 403) {
+      throw const HttpException(
+        'Authentication failed: Invalid username or password.',
+      );
+    }
+    if (response.statusCode == 404) {
+      throw const HttpException(
+        'Not found: Is this a valid Linkwarden instance?',
+      );
+    }
+    throw HttpException(
+      'Failed to login: Server returned ${response.statusCode}',
+    );
+  }
+
+  Map<String, dynamic> responseObject;
+  try {
+    responseObject = json.decode(response.body);
+  } catch (e) {
+    throw const HttpException(
+      'Invalid response: The server did not return valid JSON.',
+    );
+  }
 
   if (responseObject['response'] == null ||
       responseObject['response']['token'] == null) {
-    throw const FormatException('Invalid response structure');
+    throw const HttpException(
+      'Invalid response: The server did not return a valid session token.',
+    );
   }
 
   return responseObject['response']['token'];

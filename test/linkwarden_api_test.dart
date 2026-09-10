@@ -204,4 +204,162 @@ void main() {
       );
     });
   });
+
+  group('Linkwarden API - Connection Verification', () {
+    test('verifyConnection handles valid token', () async {
+      final mockClient = MockClient((request) async {
+        return http.Response('{"response": []}', 200);
+      });
+
+      await expectLater(
+        http.runWithClient(
+          () => verifyConnection('token', 'https://example.com'),
+          () => mockClient,
+        ),
+        completes,
+      );
+    });
+
+    test('verifyConnection throws on 401 Unauthorized', () async {
+      final mockClient = MockClient((request) async {
+        return http.Response('Unauthorized', 401);
+      });
+
+      await expectLater(
+        http.runWithClient(
+          () => verifyConnection('bad', 'https://example.com'),
+          () => mockClient,
+        ),
+        throwsA(
+          isA<HttpException>().having(
+            (e) => e.message,
+            'message',
+            contains('Authentication failed'),
+          ),
+        ),
+      );
+    });
+
+    test('verifyConnection throws on 404 Not Found', () async {
+      final mockClient = MockClient((request) async {
+        return http.Response('Not Found', 404);
+      });
+
+      await expectLater(
+        http.runWithClient(
+          () => verifyConnection('token', 'https://example.com'),
+          () => mockClient,
+        ),
+        throwsA(
+          isA<HttpException>().having(
+            (e) => e.message,
+            'message',
+            contains('Not found'),
+          ),
+        ),
+      );
+    });
+
+    test('verifyConnection throws on socket exception', () async {
+      final mockClient = MockClient((request) async {
+        throw const SocketException('failed to connect');
+      });
+
+      await expectLater(
+        http.runWithClient(
+          () => verifyConnection('token', 'https://example.com'),
+          () => mockClient,
+        ),
+        throwsA(
+          isA<HttpException>().having(
+            (e) => e.message,
+            'message',
+            contains('Network error'),
+          ),
+        ),
+      );
+    });
+
+    test('verifyConnection throws on invalid json', () async {
+      final mockClient = MockClient((request) async {
+        return http.Response('<html><body>Not json</body></html>', 200);
+      });
+
+      await expectLater(
+        http.runWithClient(
+          () => verifyConnection('token', 'https://example.com'),
+          () => mockClient,
+        ),
+        throwsA(
+          isA<HttpException>().having(
+            (e) => e.message,
+            'message',
+            contains('Invalid response'),
+          ),
+        ),
+      );
+    });
+  });
+
+  group('Linkwarden API - Session Creation', () {
+    test('createSession throws user-friendly exception on 401', () async {
+      final mockClient = MockClient((request) async {
+        return http.Response('Unauthorized', 401);
+      });
+
+      await expectLater(
+        http.runWithClient(
+          () => createSession('https://example.com', 'user', 'pass'),
+          () => mockClient,
+        ),
+        throwsA(
+          isA<HttpException>().having(
+            (e) => e.message,
+            'message',
+            contains('Authentication failed'),
+          ),
+        ),
+      );
+    });
+
+    test('createSession throws on 404', () async {
+      final mockClient = MockClient((request) async {
+        return http.Response('Not found', 404);
+      });
+
+      await expectLater(
+        http.runWithClient(
+          () => createSession('https://example.com', 'user', 'pass'),
+          () => mockClient,
+        ),
+        throwsA(
+          isA<HttpException>().having(
+            (e) => e.message,
+            'message',
+            contains('Not found'),
+          ),
+        ),
+      );
+    });
+
+    test('createSession handles invalid json gracefully', () async {
+      final mockClient = MockClient((request) async {
+        return http.Response('Bad json', 200);
+      });
+
+      await expectLater(
+        http.runWithClient(
+          () => createSession('https://example.com', 'user', 'pass'),
+          () => mockClient,
+        ),
+        throwsA(
+          isA<HttpException>().having(
+            (e) => e.message,
+            'message',
+            contains('Invalid response'),
+          ),
+        ),
+      );
+    });
+  });
 }
