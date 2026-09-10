@@ -66,9 +66,13 @@ void main() {
         await tester.tap(saveButton);
         await tester.pumpAndSettle();
 
-        // Because there are multiple fields that show "Please enter a value" (url, token, etc),
-        // we check for at least one.
         expect(find.text('Please enter a value'), findsWidgets);
+
+        await tester.enterText(urlField, 'https://example.com///');
+        await tester.pumpAndSettle();
+        await tester.tap(saveButton);
+        await tester.pumpAndSettle();
+        expect(find.text('Not a valid URL'), findsNothing);
 
         await tester.enterText(urlField, 'https://');
         await tester.pumpAndSettle();
@@ -76,9 +80,13 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('Please enter a value'), findsWidgets);
+
+        await tester.enterText(urlField, 'https://example.com///');
+        await tester.pumpAndSettle();
+        await tester.tap(saveButton);
+        await tester.pumpAndSettle();
+        expect(find.text('Not a valid URL'), findsNothing);
       },
     );
   });
 }
-
-// Wait, I need to setup an HTTP Mock for this. Let's use `HttpOverrides` or mock `http.Client`.
