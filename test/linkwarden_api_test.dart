@@ -366,22 +366,25 @@ void main() {
     test(
       'resolves relative og:image URLs against target page URL dynamically safely',
       () async {
-        final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
-        final baseUrl = 'http://${server.address.address}:${server.port}';
+        HttpServer? server;
+        try {
+          server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+          final baseUrl = 'http://${server.address.address}:${server.port}';
 
-        server.listen((HttpRequest request) {
-          request.response.headers.contentType = ContentType.html;
-          request.response.write(
-            '<html><head><title>Relative</title><meta property="og:image" content="/assets/relative.png" /></head><body></body></html>',
-          );
-          request.response.close();
-        });
+          server.listen((HttpRequest request) {
+            request.response.headers.contentType = ContentType.html;
+            request.response.write(
+              '<html><head><title>Relative</title><meta property="og:image" content="/assets/relative.png" /></head><body></body></html>',
+            );
+            request.response.close();
+          });
 
-        final result = await fetchPreview('$baseUrl/page/test');
-        expect(result['title'], 'Relative');
-        expect(result['image'], '$baseUrl/assets/relative.png');
-
-        await server.close(force: true);
+          final result = await fetchPreview('$baseUrl/page/test');
+          expect(result['title'], 'Relative');
+          expect(result['image'], '$baseUrl/assets/relative.png');
+        } finally {
+          await server?.close(force: true);
+        }
       },
     );
   });
