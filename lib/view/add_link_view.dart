@@ -297,6 +297,15 @@ class _AddLinkViewState extends State<AddLinkView> {
       return;
     }
 
+    if (result == null) {
+      setState(() {
+        _submitState = _SubmitState.error;
+        _submitError =
+            "Failed to submit link. Please check your connection and try again.";
+      });
+      return;
+    }
+
     setState(() {
       _submitState = _SubmitState.success;
     });

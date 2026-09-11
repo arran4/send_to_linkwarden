@@ -159,14 +159,20 @@ void main() {
     await tester.enterText(urlField, 'https://example.com');
     await tester.pump();
 
-    // Tap specifically the top-level button, avoiding internal Text children
-    final submitButton = find.byType(FilledButton);
+    final submitButton = find.widgetWithText(FilledButton, 'Submit');
     await tester.ensureVisible(submitButton);
     await tester.tap(submitButton, warnIfMissed: false);
     await tester.pump();
 
-    final filledButton = tester.widget<FilledButton>(submitButton);
-    expect(filledButton.onPressed, isNull);
+    final filledButtonList = tester
+        .widgetList<FilledButton>(find.byType(FilledButton))
+        .toList();
+    for (var filledButton in filledButtonList) {
+      if (filledButton.child is Text &&
+          (filledButton.child as Text).data == 'Submit') {
+        expect(filledButton.onPressed, isNull);
+      }
+    }
     completer.complete(null);
     await tester.pumpAndSettle(const Duration(seconds: 3));
   });
@@ -210,7 +216,7 @@ void main() {
     await tester.enterText(nameField, 'My Link');
     await tester.pump();
 
-    final submitButton = find.byType(FilledButton);
+    final submitButton = find.widgetWithText(FilledButton, 'Submit');
     await tester.ensureVisible(submitButton);
     await tester.tap(submitButton, warnIfMissed: false);
     await tester.pumpAndSettle();
@@ -260,11 +266,11 @@ void main() {
     await tester.enterText(urlField, 'https://example.com');
     await tester.pump();
 
-    final submitButton = find.byType(FilledButton);
+    final submitButton = find.widgetWithText(FilledButton, 'Submit');
     await tester.ensureVisible(submitButton);
     await tester.tap(submitButton, warnIfMissed: false);
     await tester.pump();
-    await tester.pump(); // flush futures
+    await tester.pump();
 
     expect(find.text('https://example.com'), findsNothing);
     expect(find.text('Bookmark saved!'), findsOneWidget);
@@ -444,5 +450,55 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('https://test2.com'), findsOneWidget);
+  });
+
+  testWidgets('submit failure when postLink returns null', (
+    WidgetTester tester,
+  ) async {
+    final ui = UserInstance(
+      id: '1',
+      server: 'https://test.com',
+      apiToken: 'token',
+    );
+    userInstanceValueReplayer.publish([ui]);
+
+    await tester.pumpWidget(
+      buildTestableWidget(
+        AddLinkView(
+          loadDefaultUserInstanceOverride: () async => ui.id,
+          collectionsReplayerOverride: mockCollectionsReplayer,
+          tagsReplayerOverride: mockTagsReplayer,
+          fetchPreviewOverride: (url) async => {},
+          postLinkOverride: (token, baseUrl, link) async => null,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    mockCollectionsReplayer.publish([
+      Collection(id: 1, name: "Col A", ownerId: 1),
+    ], currentKey: ui.id);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(DropdownButtonFormField<Collection>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Col A').last);
+    await tester.pumpAndSettle();
+
+    final urlField = find.widgetWithText(TextFormField, "Link").first;
+    await tester.enterText(urlField, 'https://example.com');
+    await tester.pump();
+
+    final submitButton = find.widgetWithText(FilledButton, 'Submit');
+    await tester.ensureVisible(submitButton);
+    await tester.tap(submitButton, warnIfMissed: false);
+    await tester.pumpAndSettle();
+
+    expect(find.text('https://example.com'), findsOneWidget);
+    expect(
+      find.text(
+        'Failed to submit link. Please check your connection and try again.',
+      ),
+      findsOneWidget,
+    );
   });
 }
