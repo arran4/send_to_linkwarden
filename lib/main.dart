@@ -57,9 +57,13 @@ class _SendToLinkwardenAppState extends State<SendToLinkwardenApp> {
         onError: (err) {
           if (navigatorKey.currentContext != null &&
               navigatorKey.currentContext!.mounted) {
-            ScaffoldMessenger.of(
-              navigatorKey.currentContext!,
-            ).showSnackBar(SnackBar(content: Text('Media share error $err')));
+            ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Error receiving shared media. Please try again.',
+                ),
+              ),
+            );
           }
         },
       );

@@ -311,7 +311,7 @@ Future<Map<String, String?>> fetchPreview(String url) async {
       ..headers[HttpHeaders.rangeHeader] = 'bytes=0-102399';
     final response = await client
         .send(request)
-        .timeout(const Duration(seconds: 1));
+        .timeout(const Duration(seconds: 5));
 
     if (response.statusCode < 200 || response.statusCode > 299) {
       throw HttpException('Failed to load preview: ${response.statusCode}');
@@ -331,13 +331,18 @@ Future<Map<String, String?>> fetchPreview(String url) async {
       }
     }
 
-    return await compute(_parsePreviewFromBytes, Uint8List.fromList(bytes));
+    return await compute(_parsePreviewFromBytes, [
+      Uint8List.fromList(bytes),
+      url,
+    ]);
   } finally {
     client.close();
   }
 }
 
-Map<String, String?> _parsePreviewFromBytes(Uint8List bytes) {
+Map<String, String?> _parsePreviewFromBytes(List<dynamic> args) {
+  final bytes = args[0] as Uint8List;
+  final url = args[1] as String;
   final document = html.parse(utf8.decode(bytes));
   String? title = document.querySelector('title')?.text;
   title ??= document
@@ -363,6 +368,12 @@ Map<String, String?> _parsePreviewFromBytes(Uint8List bytes) {
   image ??= document
       .querySelector('meta[name="twitter:image"]')
       ?.attributes['content'];
+
+  if (image != null) {
+    try {
+      image = Uri.parse(url).resolve(image).toString();
+    } catch (_) {}
+  }
 
   return {'title': title, 'description': description, 'image': image};
 }

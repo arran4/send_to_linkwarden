@@ -29,11 +29,29 @@ class AddLinkViewArguments {
 
 class AddLinkView extends StatefulWidget {
   final AddLinkViewArguments? arguments;
-  const AddLinkView({super.key, this.arguments});
+  final Future<Map<String, String?>> Function(String url)? fetchPreviewOverride;
+  final Future<Link?> Function(String token, String baseUrl, Link link)?
+  postLinkOverride;
+  final IndividualKeyedPubSubReplay<String?, List<Collection>?>?
+  collectionsReplayerOverride;
+  final IndividualKeyedPubSubReplay<String?, List<Tag>?>? tagsReplayerOverride;
+  final Future<String?> Function()? loadDefaultUserInstanceOverride;
+
+  const AddLinkView({
+    super.key,
+    this.arguments,
+    this.fetchPreviewOverride,
+    this.postLinkOverride,
+    this.collectionsReplayerOverride,
+    this.tagsReplayerOverride,
+    this.loadDefaultUserInstanceOverride,
+  });
 
   @override
   State<AddLinkView> createState() => _AddLinkViewState();
 }
+
+enum _SubmitState { idle, submitting, success, error }
 
 class _AddLinkViewState extends State<AddLinkView> {
   GlobalKey<FormState> formState = GlobalKey<FormState>();
@@ -47,10 +65,19 @@ class _AddLinkViewState extends State<AddLinkView> {
   TextEditingController descriptionTextController = TextEditingController();
   TextEditingController linkTextController = TextEditingController();
   String? previewImageUrl;
+  bool previewLoading = false;
+  bool previewError = false;
+  _SubmitState _submitState = _SubmitState.idle;
+  String? _submitError;
 
   Future<void> _fetchPreview() async {
+    setState(() {
+      previewLoading = true;
+      previewError = false;
+    });
     try {
-      final preview = await fetchPreview(linkTextController.text);
+      final fetch = widget.fetchPreviewOverride ?? fetchPreview;
+      final preview = await fetch(linkTextController.text);
       if (preview['title'] != null && nameTextController.text.isEmpty) {
         nameTextController.text = preview['title']!;
       }
@@ -60,8 +87,15 @@ class _AddLinkViewState extends State<AddLinkView> {
       }
       setState(() {
         previewImageUrl = preview['image'];
+        previewLoading = false;
       });
-    } catch (_) {}
+    } catch (_) {
+      setState(() {
+        previewLoading = false;
+        previewError = true;
+        previewImageUrl = null;
+      });
+    }
   }
 
   @override
@@ -122,7 +156,8 @@ class _AddLinkViewState extends State<AddLinkView> {
   void initState() {
     super.initState();
     tags = [];
-    collectionsStream = collectionsReplayer.subscribe(initialKey: null);
+    final cReplayer = widget.collectionsReplayerOverride ?? collectionsReplayer;
+    collectionsStream = cReplayer.subscribe(initialKey: null);
     if (widget.arguments?.link != null) {
       linkTextController.text = widget.arguments!.link!;
       unawaited(_fetchPreview());
@@ -166,70 +201,125 @@ class _AddLinkViewState extends State<AddLinkView> {
   Widget _submitButton(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16),
-      child: FilledButton(
-        onPressed: () async {
-          if (!formState.currentState!.validate()) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(const SnackBar(content: Text('Validation errors')));
-            return;
-          }
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Submitting Link')));
-          List<Tag>? allTags = await tagsReplayer
-              .subscribe(initialKey: selectedUserInstance!.id)
-              .first;
-          Map<String, Tag> tagLookup = Map<String, Tag>.fromIterable(
-            allTags ?? [],
-            key: (element) => element.name ?? "Untitled",
-          );
-          Link? result;
-          try {
-            result = await postLink(
-              selectedUserInstance!.apiToken!,
-              selectedUserInstance!.server!,
-              Link(
-                name: nameTextController.text,
-                description: descriptionTextController.text,
-                url: linkTextController.text,
-                collection: selectedCollection,
-                tags: tags.map((tagName) {
-                  if (tagLookup.containsKey(tagName) &&
-                      tagLookup[tagName] != null) {
-                    return tagLookup[tagName]!;
-                  }
-                  return Tag(name: tagName);
-                }).toList(),
+      child: Column(
+        children: [
+          if (_submitState == _SubmitState.error)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: Text(
+                _submitError ?? 'An error occurred',
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+                textAlign: TextAlign.center,
               ),
-            );
-          } catch (e) {
-            if (!context.mounted) {
-              return;
-            }
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error submitting link ${e.toString()}')),
-            );
-            return;
-          }
-          _resetForm();
-          if (!context.mounted) {
-            return;
-          }
-          if (result == null) {
-            return;
-          }
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Link ${result.id} created')));
-          if (widget.arguments != null) {
-            Navigator.pop(context, result);
-          }
-          return;
-        },
-        child: const Text('Submit'),
+            ),
+          FilledButton(
+            onPressed: _submitState == _SubmitState.submitting ? null : _submit,
+            child: _submitState == _SubmitState.submitting
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Text('Submit'),
+          ),
+        ],
       ),
     );
+  }
+
+  Future<void> _submit() async {
+    if (!formState.currentState!.validate()) {
+      return;
+    }
+
+    if (selectedUserInstance?.apiToken == null ||
+        selectedUserInstance?.server == null) {
+      setState(() {
+        _submitState = _SubmitState.error;
+        _submitError = "Please select a valid user instance.";
+      });
+      return;
+    }
+
+    setState(() {
+      _submitState = _SubmitState.submitting;
+      _submitError = null;
+    });
+
+    List<Tag>? allTags;
+    try {
+      final tReplayer = widget.tagsReplayerOverride ?? tagsReplayer;
+      allTags = await tReplayer
+          .subscribe(initialKey: selectedUserInstance!.id)
+          .first;
+    } catch (_) {
+      // ignore
+    }
+    Map<String, Tag> tagLookup = Map<String, Tag>.fromIterable(
+      allTags ?? [],
+      key: (element) => element.name ?? "Untitled",
+    );
+    Link? result;
+    try {
+      final submitLink = widget.postLinkOverride ?? postLink;
+      result = await submitLink(
+        selectedUserInstance!.apiToken!,
+        selectedUserInstance!.server!,
+        Link(
+          name: nameTextController.text,
+          description: descriptionTextController.text,
+          url: linkTextController.text,
+          collection: selectedCollection,
+          tags: tags.map((tagName) {
+            if (tagLookup.containsKey(tagName) && tagLookup[tagName] != null) {
+              return tagLookup[tagName]!;
+            }
+            return Tag(name: tagName);
+          }).toList(),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _submitState = _SubmitState.error;
+        _submitError =
+            "Failed to submit link. Please check your connection and try again.";
+      });
+      return;
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _submitState = _SubmitState.success;
+    });
+
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Bookmark saved!')));
+
+    _resetForm();
+
+    if (widget.arguments != null) {
+      Navigator.pop(context, result);
+    }
+
+    // reset success state after a short delay so user sees form again
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        setState(() {
+          _submitState = _SubmitState.idle;
+        });
+      }
+    });
   }
 
   void _resetForm() {
@@ -244,8 +334,10 @@ class _AddLinkViewState extends State<AddLinkView> {
   }
 
   Widget _userAndInstanceSelection(BuildContext context) {
+    final loadDef =
+        widget.loadDefaultUserInstanceOverride ?? loadDefaultUserInstance;
     return FutureBuilder(
-      future: loadDefaultUserInstance(),
+      future: loadDef(),
       builder: (context, defaultValueLoaded) {
         if (defaultValueLoaded.hasError) {
           return Center(
@@ -372,6 +464,12 @@ class _AddLinkViewState extends State<AddLinkView> {
     UserInstance? result, {
     bool makeDefault = false,
   }) {
+    if (selectedUserInstance?.id != result?.id) {
+      setState(() {
+        selectedCollection = null;
+        tags = [];
+      });
+    }
     setState(() {
       selectedUserInstance = result;
     });
@@ -449,7 +547,9 @@ class _AddLinkViewState extends State<AddLinkView> {
             IconButton(
               onPressed: () async {
                 if (selectedUserInstance?.id != null) {
-                  collectionsReplayer.reset(selectedUserInstance!.id);
+                  final cReplayer =
+                      widget.collectionsReplayerOverride ?? collectionsReplayer;
+                  cReplayer.reset(selectedUserInstance!.id);
                 }
               },
               icon: const Icon(Icons.refresh),
@@ -491,7 +591,9 @@ class _AddLinkViewState extends State<AddLinkView> {
                   if (collection == null) {
                     return;
                   }
-                  collectionsReplayer.publish([
+                  final cReplayer =
+                      widget.collectionsReplayerOverride ?? collectionsReplayer;
+                  cReplayer.publish([
                     ...collections.data ?? [],
                     collection,
                   ], currentKey: selectedUserInstance?.id);
@@ -612,12 +714,39 @@ class _AddLinkViewState extends State<AddLinkView> {
   }
 
   Widget _previewCard() {
+    if (previewLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8.0),
+        child: CircularProgressIndicator(),
+      );
+    }
+    if (previewError) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8.0),
+        child: Text(
+          "Could not load preview",
+          style: TextStyle(color: Colors.red),
+        ),
+      );
+    }
     if (previewImageUrl == null) {
       return const SizedBox.shrink();
     }
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Image.network(previewImageUrl!, height: 100),
+      child: Image.network(
+        previewImageUrl!,
+        height: 100,
+        errorBuilder: (context, error, stackTrace) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8.0),
+            child: Text(
+              "Failed to load image",
+              style: TextStyle(color: Colors.red),
+            ),
+          );
+        },
+      ),
     );
   }
 }
