@@ -20,7 +20,8 @@ void main() {
   Widget createTestWidget({AddLinkViewArguments? arguments}) {
     return MaterialApp(
       routes: {
-        'userInstance/newEdit': (context) => const Scaffold(body: Text('New User Instance Mock')),
+        'userInstance/newEdit': (context) =>
+            const Scaffold(body: Text('New User Instance Mock')),
       },
       home: Scaffold(body: AddLinkView(arguments: arguments)),
     );
@@ -33,7 +34,7 @@ void main() {
           id: "1",
           server: "https://example.com",
           apiToken: "token123",
-        )
+        ),
       ]);
       await setDefaultUserInstance("1");
 
@@ -49,16 +50,30 @@ void main() {
       expect(find.text('Validation errors'), findsOneWidget);
     });
 
-    testWidgets('instance A -> B clears collection and tags', (WidgetTester tester) async {
-      final instanceA = UserInstance(id: "A", server: "https://a.com", apiToken: "tokA");
-      final instanceB = UserInstance(id: "B", server: "https://b.com", apiToken: "tokB");
+    testWidgets('instance A -> B clears collection and tags', (
+      WidgetTester tester,
+    ) async {
+      final instanceA = UserInstance(
+        id: "A",
+        server: "https://a.com",
+        apiToken: "tokA",
+      );
+      final instanceB = UserInstance(
+        id: "B",
+        server: "https://b.com",
+        apiToken: "tokB",
+      );
 
       userInstanceValueReplayer.publish([instanceA, instanceB]);
       await setDefaultUserInstance("A");
 
-      collectionsReplayer.publish([Collection(id: 1, name: "ColA")], currentKey: "A");
+      collectionsReplayer.publish([
+        Collection(id: 1, name: "ColA"),
+      ], currentKey: "A");
       tagsReplayer.publish([], currentKey: "A");
-      collectionsReplayer.publish([Collection(id: 2, name: "ColB")], currentKey: "B");
+      collectionsReplayer.publish([
+        Collection(id: 2, name: "ColB"),
+      ], currentKey: "B");
       tagsReplayer.publish([], currentKey: "B");
 
       await tester.pumpWidget(createTestWidget());
@@ -76,14 +91,22 @@ void main() {
 
     testWidgets('preview timeout/failure', (WidgetTester tester) async {
       userInstanceValueReplayer.publish([
-        UserInstance(id: "1", server: "https://example.com", apiToken: "token123")
+        UserInstance(
+          id: "1",
+          server: "https://example.com",
+          apiToken: "token123",
+        ),
       ]);
       await setDefaultUserInstance("1");
 
       collectionsReplayer.publish([], currentKey: "1");
       tagsReplayer.publish([], currentKey: "1");
 
-      await tester.pumpWidget(createTestWidget(arguments: AddLinkViewArguments(link: "http://bad.url")));
+      await tester.pumpWidget(
+        createTestWidget(
+          arguments: AddLinkViewArguments(link: "http://bad.url"),
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('Preview unavailable or failed'), findsOneWidget);
@@ -92,11 +115,17 @@ void main() {
 
     testWidgets('duplicate-click prevention', (WidgetTester tester) async {
       userInstanceValueReplayer.publish([
-        UserInstance(id: "1", server: "https://example.com", apiToken: "token123")
+        UserInstance(
+          id: "1",
+          server: "https://example.com",
+          apiToken: "token123",
+        ),
       ]);
       await setDefaultUserInstance("1");
 
-      collectionsReplayer.publish([Collection(id: 1, name: "ColA")], currentKey: "1");
+      collectionsReplayer.publish([
+        Collection(id: 1, name: "ColA"),
+      ], currentKey: "1");
       tagsReplayer.publish([], currentKey: "1");
 
       await tester.pumpWidget(createTestWidget());

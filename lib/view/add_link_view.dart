@@ -276,7 +276,9 @@ class _AddLinkViewState extends State<AddLinkView> {
                 if (result == null) {
                   ScaffoldMessenger.of(context).hideCurrentSnackBar();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Error submitting link. Please try again.')),
+                    const SnackBar(
+                      content: Text('Error submitting link. Please try again.'),
+                    ),
                   );
                   return;
                 }
@@ -546,7 +548,9 @@ class _AddLinkViewState extends State<AddLinkView> {
                     ScaffoldMessenger.of(context).hideCurrentSnackBar();
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Missing credentials. Please select or create an instance first.'),
+                        content: Text(
+                          'Missing credentials. Please select or create an instance first.',
+                        ),
                       ),
                     );
                   }
@@ -595,7 +599,9 @@ class _AddLinkViewState extends State<AddLinkView> {
                     ScaffoldMessenger.of(context).hideCurrentSnackBar();
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Error creating collection. Please try again.'),
+                        content: Text(
+                          'Error creating collection. Please try again.',
+                        ),
                       ),
                     );
                   }
