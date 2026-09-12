@@ -269,14 +269,19 @@ class _AddLinkViewState extends State<AddLinkView> {
                 setState(() {
                   isSubmitting = false;
                 });
-                _resetForm();
 
                 if (!context.mounted) {
                   return;
                 }
                 if (result == null) {
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Error submitting link. Please try again.')),
+                  );
                   return;
                 }
+
+                _resetForm();
 
                 ScaffoldMessenger.of(context).hideCurrentSnackBar();
                 ScaffoldMessenger.of(
@@ -318,13 +323,13 @@ class _AddLinkViewState extends State<AddLinkView> {
       future: loadDefaultUserInstance(),
       builder: (context, defaultValueLoaded) {
         if (defaultValueLoaded.hasError) {
-          return Center(
+          return const Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  "Error loading default user instance: ${defaultValueLoaded.error}",
-                  style: const TextStyle(color: Colors.red),
+                  "Error loading user instances. Please try again.",
+                  style: TextStyle(color: Colors.red),
                 ),
               ],
             ),
@@ -337,13 +342,13 @@ class _AddLinkViewState extends State<AddLinkView> {
           stream: userInstanceValueReplayer.subscribe(),
           builder: (BuildContext context, AsyncSnapshot<List<UserInstance>> list) {
             if (list.hasError) {
-              return Center(
+              return const Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      "Error loading user instances: ${list.error}",
-                      style: const TextStyle(color: Colors.red),
+                      "Error loading user instances. Please try again.",
+                      style: TextStyle(color: Colors.red),
                     ),
                   ],
                 ),
@@ -465,13 +470,13 @@ class _AddLinkViewState extends State<AddLinkView> {
       stream: collectionsStream,
       builder: (context, collections) {
         if (collections.hasError) {
-          return Center(
+          return const Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  "Error loading user instances: ${collections.error}",
-                  style: const TextStyle(color: Colors.red),
+                  "Error loading collections. Please try again.",
+                  style: TextStyle(color: Colors.red),
                 ),
               ],
             ),
@@ -537,6 +542,14 @@ class _AddLinkViewState extends State<AddLinkView> {
               onPressed: () async {
                 if (selectedUserInstance?.apiToken == null ||
                     selectedUserInstance?.server == null) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Missing credentials. Please select or create an instance first.'),
+                      ),
+                    );
+                  }
                   return;
                 }
                 var result = await Navigator.pushNamed(
@@ -579,11 +592,10 @@ class _AddLinkViewState extends State<AddLinkView> {
                   });
                 } catch (e) {
                   if (context.mounted) {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Error creating collection: ${e.toString()}',
-                        ),
+                      const SnackBar(
+                        content: Text('Error creating collection. Please try again.'),
                       ),
                     );
                   }
