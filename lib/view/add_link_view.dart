@@ -223,16 +223,16 @@ class _AddLinkViewState extends State<AddLinkView> {
                   const SnackBar(content: Text('Submitting Link...')),
                 );
 
-                List<Tag>? allTags = await tagsReplayer
-                    .subscribe(initialKey: selectedUserInstance!.id)
-                    .first;
-                Map<String, Tag> tagLookup = Map<String, Tag>.fromIterable(
-                  allTags ?? [],
-                  key: (element) => element.name ?? "Untitled",
-                );
-
                 Link? result;
                 try {
+                  List<Tag>? allTags = await tagsReplayer
+                      .subscribe(initialKey: selectedUserInstance!.id)
+                      .first;
+                  Map<String, Tag> tagLookup = Map<String, Tag>.fromIterable(
+                    allTags ?? [],
+                    key: (element) => element.name ?? "Untitled",
+                  );
+
                   result = await postLink(
                     selectedUserInstance!.apiToken!,
                     selectedUserInstance!.server!,
@@ -254,9 +254,6 @@ class _AddLinkViewState extends State<AddLinkView> {
                   if (!context.mounted) {
                     return;
                   }
-                  setState(() {
-                    isSubmitting = false;
-                  });
                   ScaffoldMessenger.of(context).hideCurrentSnackBar();
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -264,11 +261,13 @@ class _AddLinkViewState extends State<AddLinkView> {
                     ),
                   );
                   return;
+                } finally {
+                  if (context.mounted) {
+                    setState(() {
+                      isSubmitting = false;
+                    });
+                  }
                 }
-
-                setState(() {
-                  isSubmitting = false;
-                });
 
                 if (!context.mounted) {
                   return;
