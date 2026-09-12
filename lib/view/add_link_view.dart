@@ -63,9 +63,11 @@ class _AddLinkViewState extends State<AddLinkView> {
       final preview = await fetchPreview(linkTextController.text);
 
       if (preview.isEmpty) {
-        setState(() {
-          previewFailed = true;
-        });
+        if (mounted) {
+          setState(() {
+            previewFailed = true;
+          });
+        }
       } else {
         if (preview['title'] != null && nameTextController.text.isEmpty) {
           nameTextController.text = preview['title']!;
@@ -74,18 +76,24 @@ class _AddLinkViewState extends State<AddLinkView> {
             descriptionTextController.text.isEmpty) {
           descriptionTextController.text = preview['description']!;
         }
-        setState(() {
-          previewImageUrl = preview['image'];
-        });
+        if (mounted) {
+          setState(() {
+            previewImageUrl = preview['image'];
+          });
+        }
       }
     } catch (_) {
-      setState(() {
-        previewFailed = true;
-      });
+      if (mounted) {
+        setState(() {
+          previewFailed = true;
+        });
+      }
     } finally {
-      setState(() {
-        isPreviewLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          isPreviewLoading = false;
+        });
+      }
     }
   }
 
