@@ -397,5 +397,19 @@ void main() {
 
       expect(result.isEmpty, isTrue);
     });
+
+    test('throws HttpException on failure status code', () async {
+      final mockClient = MockClient((request) async {
+        return http.Response('Not Found', 404);
+      });
+
+      await expectLater(
+        http.runWithClient(
+          () => fetchPreview('https://example.com/not-found'),
+          () => mockClient,
+        ),
+        throwsA(isA<HttpException>()),
+      );
+    });
   });
 }

@@ -514,6 +514,15 @@ class _AddLinkViewState extends State<AddLinkView> {
               onPressed: () async {
                 if (selectedUserInstance?.apiToken == null ||
                     selectedUserInstance?.server == null) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Cannot create collection: Please select a valid Linkwarden instance first.',
+                        ),
+                      ),
+                    );
+                  }
                   return;
                 }
                 var result = await Navigator.pushNamed(
@@ -525,19 +534,6 @@ class _AddLinkViewState extends State<AddLinkView> {
                 }
                 assert(result is Collection);
                 if (result is! Collection) {
-                  return;
-                }
-                if (selectedUserInstance?.apiToken == null ||
-                    selectedUserInstance?.server == null) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Cannot create collection: Please select a valid Linkwarden instance first.',
-                        ),
-                      ),
-                    );
-                  }
                   return;
                 }
                 try {
