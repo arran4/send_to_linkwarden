@@ -47,8 +47,16 @@ class _AddLinkViewState extends State<AddLinkView> {
   TextEditingController descriptionTextController = TextEditingController();
   TextEditingController linkTextController = TextEditingController();
   String? previewImageUrl;
+  bool isSubmitting = false;
+  bool isPreviewLoading = false;
+  bool previewFailed = false;
 
   Future<void> _fetchPreview() async {
+    setState(() {
+      isPreviewLoading = true;
+      previewFailed = false;
+      previewImageUrl = null;
+    });
     try {
       final preview = await fetchPreview(linkTextController.text);
       if (preview['title'] != null && nameTextController.text.isEmpty) {
@@ -58,10 +66,20 @@ class _AddLinkViewState extends State<AddLinkView> {
           descriptionTextController.text.isEmpty) {
         descriptionTextController.text = preview['description']!;
       }
-      setState(() {
-        previewImageUrl = preview['image'];
-      });
-    } catch (_) {}
+      if (mounted) {
+        setState(() {
+          previewImageUrl = preview['image'];
+          isPreviewLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          previewFailed = true;
+          isPreviewLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -167,67 +185,101 @@ class _AddLinkViewState extends State<AddLinkView> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16),
       child: FilledButton(
-        onPressed: () async {
-          if (!formState.currentState!.validate()) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(const SnackBar(content: Text('Validation errors')));
-            return;
-          }
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Submitting Link')));
-          List<Tag>? allTags = await tagsReplayer
-              .subscribe(initialKey: selectedUserInstance!.id)
-              .first;
-          Map<String, Tag> tagLookup = Map<String, Tag>.fromIterable(
-            allTags ?? [],
-            key: (element) => element.name ?? "Untitled",
-          );
-          Link? result;
-          try {
-            result = await postLink(
-              selectedUserInstance!.apiToken!,
-              selectedUserInstance!.server!,
-              Link(
-                name: nameTextController.text,
-                description: descriptionTextController.text,
-                url: linkTextController.text,
-                collection: selectedCollection,
-                tags: tags.map((tagName) {
-                  if (tagLookup.containsKey(tagName) &&
-                      tagLookup[tagName] != null) {
-                    return tagLookup[tagName]!;
+        onPressed: isSubmitting
+            ? null
+            : () async {
+                if (!formState.currentState!.validate()) {
+                  ScaffoldMessenger.of(context)
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(
+                      const SnackBar(content: Text('Validation errors')),
+                    );
+                  return;
+                }
+                setState(() {
+                  isSubmitting = true;
+                });
+                ScaffoldMessenger.of(context)
+                  ..hideCurrentSnackBar()
+                  ..showSnackBar(
+                    const SnackBar(content: Text('Submitting Link')),
+                  );
+                List<Tag>? allTags = await tagsReplayer
+                    .subscribe(initialKey: selectedUserInstance!.id)
+                    .first;
+                Map<String, Tag> tagLookup = Map<String, Tag>.fromIterable(
+                  allTags ?? [],
+                  key: (element) => element.name ?? "Untitled",
+                );
+                Link? result;
+                try {
+                  result = await postLink(
+                    selectedUserInstance!.apiToken!,
+                    selectedUserInstance!.server!,
+                    Link(
+                      name: nameTextController.text,
+                      description: descriptionTextController.text,
+                      url: linkTextController.text,
+                      collection: selectedCollection,
+                      tags: tags.map((tagName) {
+                        if (tagLookup.containsKey(tagName) &&
+                            tagLookup[tagName] != null) {
+                          return tagLookup[tagName]!;
+                        }
+                        return Tag(name: tagName);
+                      }).toList(),
+                    ),
+                  );
+                } catch (e) {
+                  if (!context.mounted) {
+                    return;
                   }
-                  return Tag(name: tagName);
-                }).toList(),
-              ),
-            );
-          } catch (e) {
-            if (!context.mounted) {
-              return;
-            }
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error submitting link ${e.toString()}')),
-            );
-            return;
-          }
-          _resetForm();
-          if (!context.mounted) {
-            return;
-          }
-          if (result == null) {
-            return;
-          }
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Link ${result.id} created')));
-          if (widget.arguments != null) {
-            Navigator.pop(context, result);
-          }
-          return;
-        },
-        child: const Text('Submit'),
+                  setState(() {
+                    isSubmitting = false;
+                  });
+                  ScaffoldMessenger.of(context)
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Failed to submit bookmark. Please check your connection and try again.',
+                        ),
+                      ),
+                    );
+                  return;
+                }
+                _resetForm();
+                setState(() {
+                  isSubmitting = false;
+                });
+                if (!context.mounted) {
+                  return;
+                }
+                if (result == null) {
+                  return;
+                }
+                ScaffoldMessenger.of(context)
+                  ..hideCurrentSnackBar()
+                  ..showSnackBar(
+                    const SnackBar(
+                      content: Text('Bookmark saved successfully'),
+                    ),
+                  );
+                if (widget.arguments != null) {
+                  Navigator.pop(context, result);
+                }
+                return;
+              },
+        child: isSubmitting
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              )
+            : const Text('Submit'),
       ),
     );
   }
@@ -373,6 +425,10 @@ class _AddLinkViewState extends State<AddLinkView> {
     bool makeDefault = false,
   }) {
     setState(() {
+      if (selectedUserInstance?.id != result?.id) {
+        selectedCollection = null;
+        tags = [];
+      }
       selectedUserInstance = result;
     });
     collectionsStream.currentKey = selectedUserInstance?.id;
@@ -440,7 +496,7 @@ class _AddLinkViewState extends State<AddLinkView> {
                 },
                 validator: (value) {
                   if (value == null) {
-                    return "Please select a category";
+                    return "Please select a collection";
                   }
                   return null;
                 },
@@ -612,12 +668,52 @@ class _AddLinkViewState extends State<AddLinkView> {
   }
 
   Widget _previewCard() {
+    if (isPreviewLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8.0),
+        child: CircularProgressIndicator(),
+      );
+    }
+    if (previewFailed) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8.0),
+        child: Text(
+          "Preview unavailable",
+          style: TextStyle(color: Colors.grey),
+        ),
+      );
+    }
     if (previewImageUrl == null) {
       return const SizedBox.shrink();
     }
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Image.network(previewImageUrl!, height: 100),
+      child: Image.network(
+        previewImageUrl!,
+        height: 100,
+        loadingBuilder:
+            (
+              BuildContext context,
+              Widget child,
+              ImageChunkEvent? loadingProgress,
+            ) {
+              if (loadingProgress == null) return child;
+              return Center(
+                child: CircularProgressIndicator(
+                  value: loadingProgress.expectedTotalBytes != null
+                      ? loadingProgress.cumulativeBytesLoaded /
+                            loadingProgress.expectedTotalBytes!
+                      : null,
+                ),
+              );
+            },
+        errorBuilder: (context, error, stackTrace) {
+          return const Text(
+            "Preview image failed to load",
+            style: TextStyle(color: Colors.grey),
+          );
+        },
+      ),
     );
   }
 }

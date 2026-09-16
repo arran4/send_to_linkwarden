@@ -362,4 +362,40 @@ void main() {
       );
     });
   });
+
+  group('fetchPreview', () {
+    test('resolves relative image URLs', () async {
+      final mockClient = MockClient((request) async {
+        return http.Response(
+          '<html><head><meta property="og:image" content="/img/foo.png" /></head><body></body></html>',
+          200,
+          headers: {'content-type': 'text/html'},
+        );
+      });
+
+      final result = await http.runWithClient(
+        () => fetchPreview('https://example.com/some/path'),
+        () => mockClient,
+      );
+
+      expect(result['image'], equals('https://example.com/img/foo.png'));
+    });
+
+    test('ignores non-html content types', () async {
+      final mockClient = MockClient((request) async {
+        return http.Response(
+          '{}',
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      });
+
+      final result = await http.runWithClient(
+        () => fetchPreview('https://example.com/api/data'),
+        () => mockClient,
+      );
+
+      expect(result.isEmpty, isTrue);
+    });
+  });
 }

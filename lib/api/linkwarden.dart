@@ -311,7 +311,7 @@ Future<Map<String, String?>> fetchPreview(String url) async {
       ..headers[HttpHeaders.rangeHeader] = 'bytes=0-102399';
     final response = await client
         .send(request)
-        .timeout(const Duration(seconds: 1));
+        .timeout(const Duration(seconds: 10));
 
     if (response.statusCode < 200 || response.statusCode > 299) {
       throw HttpException('Failed to load preview: ${response.statusCode}');
@@ -331,7 +331,17 @@ Future<Map<String, String?>> fetchPreview(String url) async {
       }
     }
 
-    return await compute(_parsePreviewFromBytes, Uint8List.fromList(bytes));
+    final result = await compute(
+      _parsePreviewFromBytes,
+      Uint8List.fromList(bytes),
+    );
+    if (result['image'] != null) {
+      try {
+        final imageUri = Uri.parse(result['image']!);
+        result['image'] = uri.resolveUri(imageUri).toString();
+      } catch (_) {}
+    }
+    return result;
   } finally {
     client.close();
   }
