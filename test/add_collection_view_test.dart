@@ -6,12 +6,10 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
 void main() {
   group('AddCollectionView', () {
-    testWidgets('validation prevents saving empty name', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: AddCollectionView(),
-        ),
-      );
+    testWidgets('validation prevents saving empty name', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(const MaterialApp(home: AddCollectionView()));
 
       await tester.pumpAndSettle();
 
@@ -24,12 +22,10 @@ void main() {
       expect(find.text('Validation errors'), findsOneWidget); // Snackbar
     });
 
-    testWidgets('color picker cancel preserves original color', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: AddCollectionView(),
-        ),
-      );
+    testWidgets('color picker cancel preserves original color', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(const MaterialApp(home: AddCollectionView()));
 
       await tester.pumpAndSettle();
 
@@ -54,12 +50,10 @@ void main() {
       expect(find.text(initialColorHex), findsOneWidget);
     });
 
-    testWidgets('color picker apply updates color', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: AddCollectionView(),
-        ),
-      );
+    testWidgets('color picker apply updates color', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(const MaterialApp(home: AddCollectionView()));
 
       await tester.pumpAndSettle();
 
@@ -78,7 +72,9 @@ void main() {
       expect(find.byType(ColorPicker), findsNothing);
     });
 
-    testWidgets('successful save returns populated Collection', (WidgetTester tester) async {
+    testWidgets('successful save returns populated Collection', (
+      WidgetTester tester,
+    ) async {
       Collection? resultCollection;
 
       await tester.pumpWidget(
@@ -109,8 +105,14 @@ void main() {
       await tester.pumpAndSettle();
 
       // Fill in details
-      await tester.enterText(find.byType(TextFormField).first, 'Test Collection');
-      await tester.enterText(find.byType(TextFormField).last, 'Test Description');
+      await tester.enterText(
+        find.byType(TextFormField).first,
+        'Test Collection',
+      );
+      await tester.enterText(
+        find.byType(TextFormField).last,
+        'Test Description',
+      );
       await tester.pumpAndSettle();
 
       // Tap Save

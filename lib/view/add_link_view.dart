@@ -542,7 +542,8 @@ class _AddLinkViewState extends State<AddLinkView> {
             Tooltip(
               message: "Refresh collections",
               child: IconButton(
-                onPressed: selectedUserInstance?.id != null && !isCreatingCollection
+                onPressed:
+                    selectedUserInstance?.id != null && !isCreatingCollection
                     ? () async {
                         collectionsReplayer.reset(selectedUserInstance!.id);
                       }
@@ -563,7 +564,8 @@ class _AddLinkViewState extends State<AddLinkView> {
                     )
                   : IconButton(
                       key: AddLinkView.addCollectionButtonKey,
-                      onPressed: selectedUserInstance?.apiToken != null &&
+                      onPressed:
+                          selectedUserInstance?.apiToken != null &&
                               selectedUserInstance?.server != null
                           ? () async {
                               var result = await Navigator.pushNamed(

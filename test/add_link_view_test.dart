@@ -318,7 +318,9 @@ void main() {
       },
     );
 
-    testWidgets('collection creation success updates state and shows message', (WidgetTester tester) async {
+    testWidgets('collection creation success updates state and shows message', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(
         buildTestWidget(
           createCollectionOverride: (token, baseUrl, collection) async {
@@ -355,29 +357,37 @@ void main() {
       expect(find.text('NewCol'), findsWidgets);
     });
 
-    testWidgets('collection creation failure shows error and clears loading state', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        buildTestWidget(
-          createCollectionOverride: (token, baseUrl, collection) async {
-            throw Exception('Network error');
-          },
-        ),
-      );
-      await tester.pumpAndSettle();
+    testWidgets(
+      'collection creation failure shows error and clears loading state',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildTestWidget(
+            createCollectionOverride: (token, baseUrl, collection) async {
+              throw Exception('Network error');
+            },
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      // Tap to trigger collection creation
-      await tester.tap(find.byKey(AddLinkView.addCollectionButtonKey));
-      await tester.pumpAndSettle();
+        // Tap to trigger collection creation
+        await tester.tap(find.byKey(AddLinkView.addCollectionButtonKey));
+        await tester.pumpAndSettle();
 
-      // Tap mock 'NewCol'
-      await tester.tap(find.text('NewCol'));
+        // Tap mock 'NewCol'
+        await tester.tap(find.text('NewCol'));
 
-      await tester.pumpAndSettle();
+        await tester.pumpAndSettle();
 
-      expect(find.text('Failed to create collection. Please verify your connection and permissions.'), findsOneWidget);
-      // Spinner gone
-      expect(find.byType(CircularProgressIndicator), findsNothing);
-    });
+        expect(
+          find.text(
+            'Failed to create collection. Please verify your connection and permissions.',
+          ),
+          findsOneWidget,
+        );
+        // Spinner gone
+        expect(find.byType(CircularProgressIndicator), findsNothing);
+      },
+    );
 
     testWidgets('create-collection-then-switch coverage', (
       WidgetTester tester,
