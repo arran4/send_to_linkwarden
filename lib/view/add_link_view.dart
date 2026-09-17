@@ -28,8 +28,29 @@ class AddLinkViewArguments {
 }
 
 class AddLinkView extends StatefulWidget {
+  static const Key instanceDropdownKey = Key('AddLinkView_instanceDropdown');
+  static const Key collectionDropdownKey = Key(
+    'AddLinkView_collectionDropdown',
+  );
+  static const Key addCollectionButtonKey = Key(
+    'AddLinkView_addCollectionButton',
+  );
+  static const Key editTagsButtonKey = Key('AddLinkView_editTagsButton');
+  static const Key submitButtonKey = Key('AddLinkView_submitButton');
+
   final AddLinkViewArguments? arguments;
-  const AddLinkView({super.key, this.arguments});
+
+  // Dependency injection seams for testing
+  final Future<Link?> Function(String token, String baseUrl, Link link)?
+  postLinkOverride;
+  final Future<Map<String, String?>> Function(String url)? fetchPreviewOverride;
+
+  const AddLinkView({
+    super.key,
+    this.arguments,
+    this.postLinkOverride,
+    this.fetchPreviewOverride,
+  });
 
   @override
   State<AddLinkView> createState() => _AddLinkViewState();
@@ -58,7 +79,8 @@ class _AddLinkViewState extends State<AddLinkView> {
       previewImageUrl = null;
     });
     try {
-      final preview = await fetchPreview(linkTextController.text);
+      final fetchFn = widget.fetchPreviewOverride ?? fetchPreview;
+      final preview = await fetchFn(linkTextController.text);
       if (preview['title'] != null && nameTextController.text.isEmpty) {
         nameTextController.text = preview['title']!;
       }
@@ -185,6 +207,7 @@ class _AddLinkViewState extends State<AddLinkView> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16),
       child: FilledButton(
+        key: AddLinkView.submitButtonKey,
         onPressed: isSubmitting
             ? null
             : () async {
@@ -213,7 +236,8 @@ class _AddLinkViewState extends State<AddLinkView> {
                 );
                 Link? result;
                 try {
-                  result = await postLink(
+                  final postFn = widget.postLinkOverride ?? postLink;
+                  result = await postFn(
                     selectedUserInstance!.apiToken!,
                     selectedUserInstance!.server!,
                     Link(
@@ -359,6 +383,7 @@ class _AddLinkViewState extends State<AddLinkView> {
               children: [
                 Flexible(
                   child: DropdownButtonFormField(
+                    key: AddLinkView.instanceDropdownKey,
                     decoration: const InputDecoration(
                       labelText: 'Select User And Linkwarden Instance',
                     ),
@@ -463,6 +488,7 @@ class _AddLinkViewState extends State<AddLinkView> {
           children: [
             Flexible(
               child: DropdownButtonFormField(
+                key: AddLinkView.collectionDropdownKey,
                 decoration: const InputDecoration(labelText: 'Collection'),
                 initialValue: selectedCollection,
                 items: [
@@ -511,6 +537,7 @@ class _AddLinkViewState extends State<AddLinkView> {
               icon: const Icon(Icons.refresh),
             ),
             IconButton(
+              key: AddLinkView.addCollectionButtonKey,
               onPressed: () async {
                 if (selectedUserInstance?.apiToken == null ||
                     selectedUserInstance?.server == null) {
@@ -585,6 +612,7 @@ class _AddLinkViewState extends State<AddLinkView> {
         children: [
           Wrap(children: [for (String tag in tags) Chip(label: Text(tag))]),
           IconButton(
+            key: AddLinkView.editTagsButtonKey,
             onPressed: () async {
               var result = await Navigator.pushNamed(
                 context,
