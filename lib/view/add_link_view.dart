@@ -28,8 +28,36 @@ class AddLinkViewArguments {
 }
 
 class AddLinkView extends StatefulWidget {
+  static const Key instanceDropdownKey = Key('AddLinkView_instanceDropdown');
+  static const Key collectionDropdownKey = Key(
+    'AddLinkView_collectionDropdown',
+  );
+  static const Key addCollectionButtonKey = Key(
+    'AddLinkView_addCollectionButton',
+  );
+  static const Key editTagsButtonKey = Key('AddLinkView_editTagsButton');
+  static const Key submitButtonKey = Key('AddLinkView_submitButton');
+
   final AddLinkViewArguments? arguments;
-  const AddLinkView({super.key, this.arguments});
+
+  // Dependency injection seams for testing
+  final Future<Link?> Function(String token, String baseUrl, Link link)?
+  postLinkOverride;
+  final Future<Map<String, String?>> Function(String url)? fetchPreviewOverride;
+  final Future<Collection?> Function(
+    String token,
+    String baseUrl,
+    Collection collection,
+  )?
+  createCollectionOverride;
+
+  const AddLinkView({
+    super.key,
+    this.arguments,
+    this.postLinkOverride,
+    this.fetchPreviewOverride,
+    this.createCollectionOverride,
+  });
 
   @override
   State<AddLinkView> createState() => _AddLinkViewState();
@@ -47,10 +75,19 @@ class _AddLinkViewState extends State<AddLinkView> {
   TextEditingController descriptionTextController = TextEditingController();
   TextEditingController linkTextController = TextEditingController();
   String? previewImageUrl;
+  bool isSubmitting = false;
+  bool isPreviewLoading = false;
+  bool previewFailed = false;
 
   Future<void> _fetchPreview() async {
+    setState(() {
+      isPreviewLoading = true;
+      previewFailed = false;
+      previewImageUrl = null;
+    });
     try {
-      final preview = await fetchPreview(linkTextController.text);
+      final fetchFn = widget.fetchPreviewOverride ?? fetchPreview;
+      final preview = await fetchFn(linkTextController.text);
       if (preview['title'] != null && nameTextController.text.isEmpty) {
         nameTextController.text = preview['title']!;
       }
@@ -58,10 +95,20 @@ class _AddLinkViewState extends State<AddLinkView> {
           descriptionTextController.text.isEmpty) {
         descriptionTextController.text = preview['description']!;
       }
-      setState(() {
-        previewImageUrl = preview['image'];
-      });
-    } catch (_) {}
+      if (mounted) {
+        setState(() {
+          previewImageUrl = preview['image'];
+          isPreviewLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          previewFailed = true;
+          isPreviewLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -167,67 +214,103 @@ class _AddLinkViewState extends State<AddLinkView> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16),
       child: FilledButton(
-        onPressed: () async {
-          if (!formState.currentState!.validate()) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(const SnackBar(content: Text('Validation errors')));
-            return;
-          }
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Submitting Link')));
-          List<Tag>? allTags = await tagsReplayer
-              .subscribe(initialKey: selectedUserInstance!.id)
-              .first;
-          Map<String, Tag> tagLookup = Map<String, Tag>.fromIterable(
-            allTags ?? [],
-            key: (element) => element.name ?? "Untitled",
-          );
-          Link? result;
-          try {
-            result = await postLink(
-              selectedUserInstance!.apiToken!,
-              selectedUserInstance!.server!,
-              Link(
-                name: nameTextController.text,
-                description: descriptionTextController.text,
-                url: linkTextController.text,
-                collection: selectedCollection,
-                tags: tags.map((tagName) {
-                  if (tagLookup.containsKey(tagName) &&
-                      tagLookup[tagName] != null) {
-                    return tagLookup[tagName]!;
+        key: AddLinkView.submitButtonKey,
+        onPressed: isSubmitting
+            ? null
+            : () async {
+                if (!formState.currentState!.validate()) {
+                  ScaffoldMessenger.of(context)
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(
+                      const SnackBar(content: Text('Validation errors')),
+                    );
+                  return;
+                }
+                setState(() {
+                  isSubmitting = true;
+                });
+                ScaffoldMessenger.of(context)
+                  ..hideCurrentSnackBar()
+                  ..showSnackBar(
+                    const SnackBar(content: Text('Submitting Link')),
+                  );
+                List<Tag>? allTags = await tagsReplayer
+                    .subscribe(initialKey: selectedUserInstance!.id)
+                    .first;
+                Map<String, Tag> tagLookup = Map<String, Tag>.fromIterable(
+                  allTags ?? [],
+                  key: (element) => element.name ?? "Untitled",
+                );
+                Link? result;
+                try {
+                  final postFn = widget.postLinkOverride ?? postLink;
+                  result = await postFn(
+                    selectedUserInstance!.apiToken!,
+                    selectedUserInstance!.server!,
+                    Link(
+                      name: nameTextController.text,
+                      description: descriptionTextController.text,
+                      url: linkTextController.text,
+                      collection: selectedCollection,
+                      tags: tags.map((tagName) {
+                        if (tagLookup.containsKey(tagName) &&
+                            tagLookup[tagName] != null) {
+                          return tagLookup[tagName]!;
+                        }
+                        return Tag(name: tagName);
+                      }).toList(),
+                    ),
+                  );
+                } catch (e) {
+                  if (!context.mounted) {
+                    return;
                   }
-                  return Tag(name: tagName);
-                }).toList(),
-              ),
-            );
-          } catch (e) {
-            if (!context.mounted) {
-              return;
-            }
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error submitting link ${e.toString()}')),
-            );
-            return;
-          }
-          _resetForm();
-          if (!context.mounted) {
-            return;
-          }
-          if (result == null) {
-            return;
-          }
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Link ${result.id} created')));
-          if (widget.arguments != null) {
-            Navigator.pop(context, result);
-          }
-          return;
-        },
-        child: const Text('Submit'),
+                  setState(() {
+                    isSubmitting = false;
+                  });
+                  ScaffoldMessenger.of(context)
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Failed to submit bookmark. Please check your connection and try again.',
+                        ),
+                      ),
+                    );
+                  return;
+                }
+                setState(() {
+                  isSubmitting = false;
+                });
+                if (!context.mounted) {
+                  return;
+                }
+                if (result == null) {
+                  return;
+                }
+                _resetForm();
+                ScaffoldMessenger.of(context)
+                  ..hideCurrentSnackBar()
+                  ..showSnackBar(
+                    const SnackBar(
+                      content: Text('Bookmark saved successfully'),
+                    ),
+                  );
+                if (widget.arguments != null) {
+                  Navigator.pop(context, result);
+                }
+                return;
+              },
+        child: isSubmitting
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              )
+            : const Text('Submit'),
       ),
     );
   }
@@ -240,6 +323,7 @@ class _AddLinkViewState extends State<AddLinkView> {
     previewImageUrl = null;
     setState(() {
       tags = [];
+      selectedCollection = null;
     });
   }
 
@@ -248,13 +332,13 @@ class _AddLinkViewState extends State<AddLinkView> {
       future: loadDefaultUserInstance(),
       builder: (context, defaultValueLoaded) {
         if (defaultValueLoaded.hasError) {
-          return Center(
+          return const Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  "Error loading default user instance: ${defaultValueLoaded.error}",
-                  style: const TextStyle(color: Colors.red),
+                  "Failed to load default user instance. Please try again.",
+                  style: TextStyle(color: Colors.red),
                 ),
               ],
             ),
@@ -267,13 +351,13 @@ class _AddLinkViewState extends State<AddLinkView> {
           stream: userInstanceValueReplayer.subscribe(),
           builder: (BuildContext context, AsyncSnapshot<List<UserInstance>> list) {
             if (list.hasError) {
-              return Center(
+              return const Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      "Error loading user instances: ${list.error}",
-                      style: const TextStyle(color: Colors.red),
+                      "Failed to load user instances. Please check your connection.",
+                      style: TextStyle(color: Colors.red),
                     ),
                   ],
                 ),
@@ -307,6 +391,7 @@ class _AddLinkViewState extends State<AddLinkView> {
               children: [
                 Flexible(
                   child: DropdownButtonFormField(
+                    key: AddLinkView.instanceDropdownKey,
                     decoration: const InputDecoration(
                       labelText: 'Select User And Linkwarden Instance',
                     ),
@@ -373,6 +458,10 @@ class _AddLinkViewState extends State<AddLinkView> {
     bool makeDefault = false,
   }) {
     setState(() {
+      if (selectedUserInstance?.id != result?.id) {
+        selectedCollection = null;
+        tags = [];
+      }
       selectedUserInstance = result;
     });
     collectionsStream.currentKey = selectedUserInstance?.id;
@@ -386,13 +475,13 @@ class _AddLinkViewState extends State<AddLinkView> {
       stream: collectionsStream,
       builder: (context, collections) {
         if (collections.hasError) {
-          return Center(
+          return const Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  "Error loading user instances: ${collections.error}",
-                  style: const TextStyle(color: Colors.red),
+                  "Failed to load collections.",
+                  style: TextStyle(color: Colors.red),
                 ),
               ],
             ),
@@ -407,6 +496,7 @@ class _AddLinkViewState extends State<AddLinkView> {
           children: [
             Flexible(
               child: DropdownButtonFormField(
+                key: AddLinkView.collectionDropdownKey,
                 decoration: const InputDecoration(labelText: 'Collection'),
                 initialValue: selectedCollection,
                 items: [
@@ -440,7 +530,7 @@ class _AddLinkViewState extends State<AddLinkView> {
                 },
                 validator: (value) {
                   if (value == null) {
-                    return "Please select a category";
+                    return "Please select a collection";
                   }
                   return null;
                 },
@@ -455,9 +545,19 @@ class _AddLinkViewState extends State<AddLinkView> {
               icon: const Icon(Icons.refresh),
             ),
             IconButton(
+              key: AddLinkView.addCollectionButtonKey,
               onPressed: () async {
                 if (selectedUserInstance?.apiToken == null ||
                     selectedUserInstance?.server == null) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Cannot create collection: Please select a valid Linkwarden instance first.',
+                        ),
+                      ),
+                    );
+                  }
                   return;
                 }
                 var result = await Navigator.pushNamed(
@@ -471,19 +571,10 @@ class _AddLinkViewState extends State<AddLinkView> {
                 if (result is! Collection) {
                   return;
                 }
-                if (selectedUserInstance?.apiToken == null ||
-                    selectedUserInstance?.server == null) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Error creating collection'),
-                      ),
-                    );
-                  }
-                  return;
-                }
                 try {
-                  Collection? collection = await createCollection(
+                  final createFn =
+                      widget.createCollectionOverride ?? createCollection;
+                  Collection? collection = await createFn(
                     selectedUserInstance!.apiToken!,
                     selectedUserInstance!.server!,
                     result,
@@ -501,9 +592,9 @@ class _AddLinkViewState extends State<AddLinkView> {
                 } catch (e) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
+                      const SnackBar(
                         content: Text(
-                          'Error creating collection: ${e.toString()}',
+                          'Failed to create collection. Please verify your connection and permissions.',
                         ),
                       ),
                     );
@@ -531,6 +622,7 @@ class _AddLinkViewState extends State<AddLinkView> {
         children: [
           Wrap(children: [for (String tag in tags) Chip(label: Text(tag))]),
           IconButton(
+            key: AddLinkView.editTagsButtonKey,
             onPressed: () async {
               var result = await Navigator.pushNamed(
                 context,
@@ -612,12 +704,52 @@ class _AddLinkViewState extends State<AddLinkView> {
   }
 
   Widget _previewCard() {
+    if (isPreviewLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8.0),
+        child: CircularProgressIndicator(),
+      );
+    }
+    if (previewFailed) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8.0),
+        child: Text(
+          "Preview unavailable",
+          style: TextStyle(color: Colors.grey),
+        ),
+      );
+    }
     if (previewImageUrl == null) {
       return const SizedBox.shrink();
     }
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Image.network(previewImageUrl!, height: 100),
+      child: Image.network(
+        previewImageUrl!,
+        height: 100,
+        loadingBuilder:
+            (
+              BuildContext context,
+              Widget child,
+              ImageChunkEvent? loadingProgress,
+            ) {
+              if (loadingProgress == null) return child;
+              return Center(
+                child: CircularProgressIndicator(
+                  value: loadingProgress.expectedTotalBytes != null
+                      ? loadingProgress.cumulativeBytesLoaded /
+                            loadingProgress.expectedTotalBytes!
+                      : null,
+                ),
+              );
+            },
+        errorBuilder: (context, error, stackTrace) {
+          return const Text(
+            "Preview image failed to load",
+            style: TextStyle(color: Colors.grey),
+          );
+        },
+      ),
     );
   }
 }
