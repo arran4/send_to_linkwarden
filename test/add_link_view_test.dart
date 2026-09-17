@@ -123,11 +123,8 @@ void main() {
       await tester.tap(find.byKey(AddLinkView.submitButtonKey));
       await tester.pump();
 
-      // Wait for UI to switch to loading state
       await tester.pump(const Duration(milliseconds: 10));
 
-      // Because there are two CircularProgressIndicators on the screen during transition (e.g. from the stream builders or other layout elements, or button's inner sizing), find them properly.
-      // Wait, let's find the one inside the submit button.
       expect(
         find.descendant(
           of: find.byKey(AddLinkView.submitButtonKey),
@@ -231,13 +228,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Bookmark saved successfully'), findsOneWidget);
-      // Form reset -> empty field
+      // Form reset -> empty fields and cleared collection
       expect(find.text('https://example.com'), findsNothing);
-      // The collection value resets to null on successful submit since form resets
-      // The text "ColA" won't appear as a selected value, but it is an option. Wait, it only clears if it was cleared.
-      // Actually _resetForm() in AddLinkView does not reset selectedCollection.
-      // Ah! Let's check _resetForm() source code.
-      // We will assert URL is gone.
+      expect(find.text('ColA'), findsNothing);
     });
 
     testWidgets(
@@ -300,7 +293,15 @@ void main() {
         await tester.tap(find.text('ColA').last);
         await tester.pumpAndSettle();
 
+        // Select TagA
+        await tester.tap(find.byKey(AddLinkView.editTagsButtonKey));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('TagA'));
+        await tester.pumpAndSettle();
+        // The mock route pops automatically when TagA is tapped. No back button needed.
+
         expect(find.text('ColA'), findsWidgets);
+        expect(find.text('TagA'), findsWidgets);
 
         // Switch to New
         await tester.tap(find.byKey(AddLinkView.instanceDropdownKey));
@@ -310,8 +311,10 @@ void main() {
 
         // Draft survived
         expect(find.text('https://draft.com'), findsOneWidget);
-        // ColA cleared
+
+        // ColA and TagA cleared
         expect(find.text('ColA'), findsNothing);
+        expect(find.text('TagA'), findsNothing);
       },
     );
 
