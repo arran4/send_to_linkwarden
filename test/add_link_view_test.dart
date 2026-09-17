@@ -32,12 +32,19 @@ void main() {
     Future<Link?> Function(String token, String baseUrl, Link link)?
     postLinkOverride,
     Future<Map<String, String?>> Function(String url)? fetchPreviewOverride,
+    Future<Collection?> Function(
+      String token,
+      String baseUrl,
+      Collection collection,
+    )?
+    createCollectionOverride,
   }) {
     return MaterialApp(
       home: Scaffold(
         body: AddLinkView(
           postLinkOverride: postLinkOverride,
           fetchPreviewOverride: fetchPreviewOverride,
+          createCollectionOverride: createCollectionOverride,
         ),
       ),
       onGenerateRoute: (settings) {
@@ -311,7 +318,12 @@ void main() {
     testWidgets('create-collection-then-switch coverage', (
       WidgetTester tester,
     ) async {
-      await tester.pumpWidget(buildTestWidget());
+      await tester.pumpWidget(
+        buildTestWidget(
+          createCollectionOverride: (token, baseUrl, collection) =>
+              Future.value(collection),
+        ),
+      );
       await tester.pumpAndSettle();
 
       // Tap add collection, mock route pops a Collection obj
@@ -322,18 +334,8 @@ void main() {
       await tester.tap(find.text('NewCol'));
       await tester.pumpAndSettle();
 
-      // Should be selected
-      // Actually, when it returns, it tries to call API createCollection which will hit the network since postLink was mocked but not createCollection.
-      // Wait, we didn't mock createCollection API call. It's a top level function in lib/api/linkwarden.dart.
-      // The HTTP client inside getCollections/createCollection will fail since we did not provide mockClient.
-      // We should see a snackbar "Failed to create collection."
-      // Since creating collection failed, NewCol won't be selected.
-      // Let's assert it gracefully failed, and switch anyway.
-
-      expect(
-        find.textContaining('Failed to create collection'),
-        findsOneWidget,
-      );
+      // Should be selected visually
+      expect(find.text('NewCol'), findsWidgets);
 
       // Switch to B
       await tester.tap(find.byKey(AddLinkView.instanceDropdownKey));
@@ -343,6 +345,9 @@ void main() {
 
       // Ensure stable switch
       expect(find.text('http://b.com'), findsWidgets);
+
+      // Ensure NewCol is cleared
+      expect(find.text('NewCol'), findsNothing);
     });
 
     testWidgets('Preview timeout degrades gracefully', (

@@ -44,12 +44,19 @@ class AddLinkView extends StatefulWidget {
   final Future<Link?> Function(String token, String baseUrl, Link link)?
   postLinkOverride;
   final Future<Map<String, String?>> Function(String url)? fetchPreviewOverride;
+  final Future<Collection?> Function(
+    String token,
+    String baseUrl,
+    Collection collection,
+  )?
+  createCollectionOverride;
 
   const AddLinkView({
     super.key,
     this.arguments,
     this.postLinkOverride,
     this.fetchPreviewOverride,
+    this.createCollectionOverride,
   });
 
   @override
@@ -316,6 +323,7 @@ class _AddLinkViewState extends State<AddLinkView> {
     previewImageUrl = null;
     setState(() {
       tags = [];
+      selectedCollection = null;
     });
   }
 
@@ -564,7 +572,9 @@ class _AddLinkViewState extends State<AddLinkView> {
                   return;
                 }
                 try {
-                  Collection? collection = await createCollection(
+                  final createFn =
+                      widget.createCollectionOverride ?? createCollection;
+                  Collection? collection = await createFn(
                     selectedUserInstance!.apiToken!,
                     selectedUserInstance!.server!,
                     result,
