@@ -96,12 +96,33 @@ class _AddCollectionViewState extends State<AddCollectionView> {
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Container(
-            decoration: BoxDecoration(
-              color: currentColor,
-              border: Border.all(),
-            ),
-            constraints: const BoxConstraints(maxHeight: 28, maxWidth: 140),
+          Row(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: currentColor,
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
+                ),
+                constraints: const BoxConstraints(
+                  minHeight: 28,
+                  minWidth: 28,
+                  maxHeight: 28,
+                  maxWidth: 140,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                colorToHex(
+                  currentColor,
+                  includeHashSign: true,
+                  enableAlpha: false,
+                  toUpperCase: true,
+                ),
+                style: const TextStyle(fontFamily: 'monospace'),
+              ),
+            ],
           ),
           TextButton(
             onPressed: () async {
@@ -120,8 +141,14 @@ class _AddCollectionViewState extends State<AddCollectionView> {
                       ),
                     ),
                     actions: <Widget>[
+                      TextButton(
+                        child: const Text('Cancel'),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
                       ElevatedButton(
-                        child: const Text('Got it'),
+                        child: const Text('Apply'),
                         onPressed: () {
                           Navigator.of(context).pop(pickerColor);
                         },
@@ -150,9 +177,7 @@ class _AddCollectionViewState extends State<AddCollectionView> {
         TextButton(
           onPressed: () {
             if (formState.currentState!.validate()) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text('Processing Data')));
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
               Navigator.pop(
                 context,
                 Collection()
@@ -166,9 +191,11 @@ class _AddCollectionViewState extends State<AddCollectionView> {
                   ),
               );
             } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Validation errors')),
-              );
+              ScaffoldMessenger.of(context)
+                ..hideCurrentSnackBar()
+                ..showSnackBar(
+                  const SnackBar(content: Text('Validation errors')),
+                );
             }
           },
           child: const Text("Save"),

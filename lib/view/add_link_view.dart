@@ -78,6 +78,7 @@ class _AddLinkViewState extends State<AddLinkView> {
   bool isSubmitting = false;
   bool isPreviewLoading = false;
   bool previewFailed = false;
+  bool isCreatingCollection = false;
 
   Future<void> _fetchPreview() async {
     setState(() {
@@ -279,9 +280,11 @@ class _AddLinkViewState extends State<AddLinkView> {
                     );
                   return;
                 }
-                setState(() {
-                  isSubmitting = false;
-                });
+                if (mounted) {
+                  setState(() {
+                    isSubmitting = false;
+                  });
+                }
                 if (!context.mounted) {
                   return;
                 }
@@ -536,72 +539,102 @@ class _AddLinkViewState extends State<AddLinkView> {
                 },
               ),
             ),
-            IconButton(
-              onPressed: () async {
-                if (selectedUserInstance?.id != null) {
-                  collectionsReplayer.reset(selectedUserInstance!.id);
-                }
-              },
-              icon: const Icon(Icons.refresh),
+            Tooltip(
+              message: "Refresh collections",
+              child: IconButton(
+                onPressed: selectedUserInstance?.id != null && !isCreatingCollection
+                    ? () async {
+                        collectionsReplayer.reset(selectedUserInstance!.id);
+                      }
+                    : null,
+                icon: const Icon(Icons.refresh),
+              ),
             ),
-            IconButton(
-              key: AddLinkView.addCollectionButtonKey,
-              onPressed: () async {
-                if (selectedUserInstance?.apiToken == null ||
-                    selectedUserInstance?.server == null) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Cannot create collection: Please select a valid Linkwarden instance first.',
-                        ),
+            Tooltip(
+              message: "Add collection",
+              child: isCreatingCollection
+                  ? const Padding(
+                      padding: EdgeInsets.all(12.0),
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2.0),
                       ),
-                    );
-                  }
-                  return;
-                }
-                var result = await Navigator.pushNamed(
-                  context,
-                  "collection/new",
-                );
-                if (result == null) {
-                  return;
-                }
-                assert(result is Collection);
-                if (result is! Collection) {
-                  return;
-                }
-                try {
-                  final createFn =
-                      widget.createCollectionOverride ?? createCollection;
-                  Collection? collection = await createFn(
-                    selectedUserInstance!.apiToken!,
-                    selectedUserInstance!.server!,
-                    result,
-                  );
-                  if (collection == null) {
-                    return;
-                  }
-                  collectionsReplayer.publish([
-                    ...collections.data ?? [],
-                    collection,
-                  ], currentKey: selectedUserInstance?.id);
-                  setState(() {
-                    selectedCollection = collection;
-                  });
-                } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Failed to create collection. Please verify your connection and permissions.',
-                        ),
-                      ),
-                    );
-                  }
-                }
-              },
-              icon: const Icon(Icons.add),
+                    )
+                  : IconButton(
+                      key: AddLinkView.addCollectionButtonKey,
+                      onPressed: selectedUserInstance?.apiToken != null &&
+                              selectedUserInstance?.server != null
+                          ? () async {
+                              var result = await Navigator.pushNamed(
+                                context,
+                                "collection/new",
+                              );
+                              if (result == null || result is! Collection) {
+                                return;
+                              }
+                              setState(() {
+                                isCreatingCollection = true;
+                              });
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context)
+                                  ..hideCurrentSnackBar()
+                                  ..showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Creating collection...'),
+                                    ),
+                                  );
+                              }
+                              try {
+                                final createFn =
+                                    widget.createCollectionOverride ??
+                                    createCollection;
+                                Collection? collection = await createFn(
+                                  selectedUserInstance!.apiToken!,
+                                  selectedUserInstance!.server!,
+                                  result,
+                                );
+                                if (collection != null) {
+                                  collectionsReplayer.publish([
+                                    ...collections.data ?? [],
+                                    collection,
+                                  ], currentKey: selectedUserInstance?.id);
+                                  if (context.mounted) {
+                                    setState(() {
+                                      selectedCollection = collection;
+                                    });
+                                    ScaffoldMessenger.of(context)
+                                      ..hideCurrentSnackBar()
+                                      ..showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Collection created'),
+                                        ),
+                                      );
+                                  }
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context)
+                                    ..hideCurrentSnackBar()
+                                    ..showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Failed to create collection. Please verify your connection and permissions.',
+                                        ),
+                                      ),
+                                    );
+                                }
+                              } finally {
+                                if (context.mounted) {
+                                  setState(() {
+                                    isCreatingCollection = false;
+                                  });
+                                }
+                              }
+                            }
+                          : null,
+                      icon: const Icon(Icons.add),
+                    ),
             ),
           ],
         );
@@ -639,9 +672,11 @@ class _AddLinkViewState extends State<AddLinkView> {
               if (result is! List<String>) {
                 return;
               }
-              setState(() {
-                tags = result;
-              });
+              if (mounted) {
+                setState(() {
+                  tags = result;
+                });
+              }
             },
             icon: const Icon(Icons.edit),
           ),

@@ -318,6 +318,67 @@ void main() {
       },
     );
 
+    testWidgets('collection creation success updates state and shows message', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        buildTestWidget(
+          createCollectionOverride: (token, baseUrl, collection) async {
+            // simulate a delay so we can see the loading state
+            await Future.delayed(const Duration(milliseconds: 100));
+            return collection;
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Ensure button is there
+      expect(find.byKey(AddLinkView.addCollectionButtonKey), findsOneWidget);
+
+      // Tap to trigger collection creation
+      await tester.tap(find.byKey(AddLinkView.addCollectionButtonKey));
+      await tester.pumpAndSettle();
+
+      // Tap mock 'NewCol'
+      await tester.tap(find.text('NewCol'));
+
+      await tester.pump();
+
+      // Spinner should be visible while creating
+      // Note: we might have two CircularProgressIndicators (e.g. from link preview fetching),
+      // so we use find.descendant or just check that it finds at least one.
+      expect(find.byType(CircularProgressIndicator), findsWidgets);
+      expect(find.text('Creating collection...'), findsWidgets);
+
+      // wait for completion
+      await tester.pumpAndSettle();
+
+      expect(find.text('Collection created'), findsWidgets);
+      expect(find.text('NewCol'), findsWidgets);
+    });
+
+    testWidgets('collection creation failure shows error and clears loading state', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        buildTestWidget(
+          createCollectionOverride: (token, baseUrl, collection) async {
+            throw Exception('Network error');
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Tap to trigger collection creation
+      await tester.tap(find.byKey(AddLinkView.addCollectionButtonKey));
+      await tester.pumpAndSettle();
+
+      // Tap mock 'NewCol'
+      await tester.tap(find.text('NewCol'));
+
+      await tester.pumpAndSettle();
+
+      expect(find.text('Failed to create collection. Please verify your connection and permissions.'), findsOneWidget);
+      // Spinner gone
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+    });
+
     testWidgets('create-collection-then-switch coverage', (
       WidgetTester tester,
     ) async {
