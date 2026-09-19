@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:send_to_linkwarden/model/collection.dart';
@@ -318,6 +319,77 @@ void main() {
       },
     );
 
+    testWidgets('collection creation success updates state and shows message', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        buildTestWidget(
+          createCollectionOverride: (token, baseUrl, collection) async {
+            // simulate a delay so we can see the loading state
+            await Future.delayed(const Duration(milliseconds: 100));
+            return collection;
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Ensure button is there
+      expect(find.byKey(AddLinkView.addCollectionButtonKey), findsOneWidget);
+
+      // Tap to trigger collection creation
+      await tester.tap(find.byKey(AddLinkView.addCollectionButtonKey));
+      await tester.pumpAndSettle();
+
+      // Tap mock 'NewCol'
+      await tester.tap(find.text('NewCol'));
+
+      await tester.pump();
+
+      // Spinner should be visible while creating
+      // Note: we might have two CircularProgressIndicators (e.g. from link preview fetching),
+      // so we use find.descendant or just check that it finds at least one.
+      expect(find.byType(CircularProgressIndicator), findsWidgets);
+      expect(find.text('Creating collection...'), findsWidgets);
+
+      // wait for completion
+      await tester.pumpAndSettle();
+
+      expect(find.text('Collection created'), findsWidgets);
+      expect(find.text('NewCol'), findsWidgets);
+    });
+
+    testWidgets(
+      'collection creation failure shows error and clears loading state',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          buildTestWidget(
+            createCollectionOverride: (token, baseUrl, collection) async {
+              throw Exception('Network error');
+            },
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Tap to trigger collection creation
+        await tester.tap(find.byKey(AddLinkView.addCollectionButtonKey));
+        await tester.pumpAndSettle();
+
+        // Tap mock 'NewCol'
+        await tester.tap(find.text('NewCol'));
+
+        await tester.pumpAndSettle();
+
+        expect(
+          find.text(
+            'Failed to create collection. Please verify your connection and permissions.',
+          ),
+          findsOneWidget,
+        );
+        // Spinner gone
+        expect(find.byType(CircularProgressIndicator), findsNothing);
+      },
+    );
+
     testWidgets('create-collection-then-switch coverage', (
       WidgetTester tester,
     ) async {
@@ -353,15 +425,100 @@ void main() {
       expect(find.text('NewCol'), findsNothing);
     });
 
+    testWidgets('collection creation remains with its originating instance', (
+      WidgetTester tester,
+    ) async {
+      final completer = Completer<Collection?>();
+      String? usedToken;
+      String? usedServer;
+      await tester.pumpWidget(
+        buildTestWidget(
+          createCollectionOverride: (token, baseUrl, collection) {
+            usedToken = token;
+            usedServer = baseUrl;
+            return completer.future;
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(AddLinkView.addCollectionButtonKey));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('NewCol'));
+      await tester.pump();
+
+      expect(usedToken, 'tokenA');
+      expect(usedServer, 'http://a.com');
+
+      await tester.tap(find.byKey(AddLinkView.instanceDropdownKey));
+      await tester.pump();
+      await tester.tap(find.text('http://b.com').last);
+      await tester.pump();
+
+      completer.complete(Collection(id: 3, name: 'NewCol'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(AddLinkView.collectionDropdownKey));
+      await tester.pumpAndSettle();
+      expect(find.text('ColB'), findsWidgets);
+      expect(find.text('NewCol'), findsNothing);
+      await tester.tap(find.text('ColB').last);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(AddLinkView.instanceDropdownKey));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('http://a.com').last);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(AddLinkView.collectionDropdownKey));
+      await tester.pumpAndSettle();
+      expect(find.text('ColA'), findsWidgets);
+      expect(find.text('NewCol'), findsWidgets);
+    });
+
+    testWidgets(
+      'collection actions explain why an invalid instance is disabled',
+      (WidgetTester tester) async {
+        userInstanceValueReplayer.publish([
+          UserInstance(id: 'instA', server: 'http://a.com'),
+        ]);
+        await tester.pumpWidget(buildTestWidget());
+        await tester.pumpAndSettle();
+
+        final addButton = tester.widget<IconButton>(
+          find.byKey(AddLinkView.addCollectionButtonKey),
+        );
+        final refreshButton = tester.widget<IconButton>(
+          find.descendant(
+            of: find.byTooltip(
+              'Select a valid Linkwarden instance to refresh collections',
+            ),
+            matching: find.byType(IconButton),
+          ),
+        );
+        expect(addButton.onPressed, isNull);
+        expect(refreshButton.onPressed, isNull);
+        expect(
+          find.byTooltip(
+            'Select a valid Linkwarden instance to add collections',
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.byTooltip(
+            'Select a valid Linkwarden instance to refresh collections',
+          ),
+          findsOneWidget,
+        );
+      },
+    );
+
     testWidgets('Preview timeout degrades gracefully', (
       WidgetTester tester,
     ) async {
+      final completer = Completer<Map<String, String?>>();
       await tester.pumpWidget(
-        buildTestWidget(
-          fetchPreviewOverride: (url) async {
-            throw TimeoutException('Timed out');
-          },
-        ),
+        buildTestWidget(fetchPreviewOverride: (url) => completer.future),
       );
       await tester.pumpAndSettle();
 
@@ -376,9 +533,9 @@ void main() {
       // Should show loading state initially
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
 
-      await tester.pumpAndSettle();
+      completer.completeError(TimeoutException('Timed out'));
+      await tester.pump();
 
-      // Should show error state gracefully
       expect(find.text('Preview unavailable'), findsOneWidget);
     });
   });

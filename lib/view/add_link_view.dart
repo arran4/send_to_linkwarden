@@ -78,6 +78,9 @@ class _AddLinkViewState extends State<AddLinkView> {
   bool isSubmitting = false;
   bool isPreviewLoading = false;
   bool previewFailed = false;
+  bool isCreatingCollection = false;
+  late Future<String?> _defaultUserInstanceFuture;
+  late Stream<List<UserInstance>> _userInstancesStream;
 
   Future<void> _fetchPreview() async {
     setState(() {
@@ -170,6 +173,8 @@ class _AddLinkViewState extends State<AddLinkView> {
     super.initState();
     tags = [];
     collectionsStream = collectionsReplayer.subscribe(initialKey: null);
+    _defaultUserInstanceFuture = loadDefaultUserInstance();
+    _userInstancesStream = userInstanceValueReplayer.subscribe();
     if (widget.arguments?.link != null) {
       linkTextController.text = widget.arguments!.link!;
       unawaited(_fetchPreview());
@@ -279,9 +284,11 @@ class _AddLinkViewState extends State<AddLinkView> {
                     );
                   return;
                 }
-                setState(() {
-                  isSubmitting = false;
-                });
+                if (mounted) {
+                  setState(() {
+                    isSubmitting = false;
+                  });
+                }
                 if (!context.mounted) {
                   return;
                 }
@@ -329,7 +336,7 @@ class _AddLinkViewState extends State<AddLinkView> {
 
   Widget _userAndInstanceSelection(BuildContext context) {
     return FutureBuilder(
-      future: loadDefaultUserInstance(),
+      future: _defaultUserInstanceFuture,
       builder: (context, defaultValueLoaded) {
         if (defaultValueLoaded.hasError) {
           return const Center(
@@ -348,7 +355,7 @@ class _AddLinkViewState extends State<AddLinkView> {
           return const Center(child: CircularProgressIndicator());
         }
         return StreamBuilder(
-          stream: userInstanceValueReplayer.subscribe(),
+          stream: _userInstancesStream,
           builder: (BuildContext context, AsyncSnapshot<List<UserInstance>> list) {
             if (list.hasError) {
               return const Center(
@@ -536,72 +543,124 @@ class _AddLinkViewState extends State<AddLinkView> {
                 },
               ),
             ),
-            IconButton(
-              onPressed: () async {
-                if (selectedUserInstance?.id != null) {
-                  collectionsReplayer.reset(selectedUserInstance!.id);
-                }
-              },
-              icon: const Icon(Icons.refresh),
+            Tooltip(
+              message: selectedUserInstance?.valid == true
+                  ? 'Refresh collections'
+                  : 'Select a valid Linkwarden instance to refresh collections',
+              child: IconButton(
+                onPressed:
+                    selectedUserInstance?.valid == true && !isCreatingCollection
+                    ? () async {
+                        collectionsReplayer.reset(selectedUserInstance!.id);
+                      }
+                    : null,
+                icon: const Icon(Icons.refresh),
+              ),
             ),
-            IconButton(
-              key: AddLinkView.addCollectionButtonKey,
-              onPressed: () async {
-                if (selectedUserInstance?.apiToken == null ||
-                    selectedUserInstance?.server == null) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Cannot create collection: Please select a valid Linkwarden instance first.',
-                        ),
+            Tooltip(
+              message: selectedUserInstance?.valid == true
+                  ? 'Add collection'
+                  : 'Select a valid Linkwarden instance to add collections',
+              child: isCreatingCollection
+                  ? const Padding(
+                      padding: EdgeInsets.all(12.0),
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2.0),
                       ),
-                    );
-                  }
-                  return;
-                }
-                var result = await Navigator.pushNamed(
-                  context,
-                  "collection/new",
-                );
-                if (result == null) {
-                  return;
-                }
-                assert(result is Collection);
-                if (result is! Collection) {
-                  return;
-                }
-                try {
-                  final createFn =
-                      widget.createCollectionOverride ?? createCollection;
-                  Collection? collection = await createFn(
-                    selectedUserInstance!.apiToken!,
-                    selectedUserInstance!.server!,
-                    result,
-                  );
-                  if (collection == null) {
-                    return;
-                  }
-                  collectionsReplayer.publish([
-                    ...collections.data ?? [],
-                    collection,
-                  ], currentKey: selectedUserInstance?.id);
-                  setState(() {
-                    selectedCollection = collection;
-                  });
-                } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Failed to create collection. Please verify your connection and permissions.',
-                        ),
-                      ),
-                    );
-                  }
-                }
-              },
-              icon: const Icon(Icons.add),
+                    )
+                  : IconButton(
+                      key: AddLinkView.addCollectionButtonKey,
+                      onPressed: selectedUserInstance?.valid == true
+                          ? () async {
+                              var result = await Navigator.pushNamed(
+                                context,
+                                "collection/new",
+                              );
+                              if (result == null || result is! Collection) {
+                                return;
+                              }
+                              final originatingInstance = selectedUserInstance;
+                              if (originatingInstance?.valid != true) {
+                                return;
+                              }
+                              final originatingInstanceId =
+                                  originatingInstance!.id;
+                              final originatingToken =
+                                  originatingInstance.apiToken!;
+                              final originatingServer =
+                                  originatingInstance.server!;
+                              setState(() {
+                                isCreatingCollection = true;
+                              });
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context)
+                                  ..hideCurrentSnackBar()
+                                  ..showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Creating collection...'),
+                                    ),
+                                  );
+                              }
+                              try {
+                                final createFn =
+                                    widget.createCollectionOverride ??
+                                    createCollection;
+                                Collection? collection = await createFn(
+                                  originatingToken,
+                                  originatingServer,
+                                  result,
+                                );
+                                if (collection != null) {
+                                  final originatingCollections =
+                                      await collectionsReplayer
+                                          .subscribe(
+                                            initialKey: originatingInstanceId,
+                                          )
+                                          .first;
+                                  collectionsReplayer.publish([
+                                    ...originatingCollections ?? [],
+                                    collection,
+                                  ], currentKey: originatingInstanceId);
+                                  if (context.mounted &&
+                                      selectedUserInstance?.id ==
+                                          originatingInstanceId) {
+                                    setState(() {
+                                      selectedCollection = collection;
+                                    });
+                                    ScaffoldMessenger.of(context)
+                                      ..hideCurrentSnackBar()
+                                      ..showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Collection created'),
+                                        ),
+                                      );
+                                  }
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context)
+                                    ..hideCurrentSnackBar()
+                                    ..showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Failed to create collection. Please verify your connection and permissions.',
+                                        ),
+                                      ),
+                                    );
+                                }
+                              } finally {
+                                if (context.mounted) {
+                                  setState(() {
+                                    isCreatingCollection = false;
+                                  });
+                                }
+                              }
+                            }
+                          : null,
+                      icon: const Icon(Icons.add),
+                    ),
             ),
           ],
         );
@@ -639,9 +698,11 @@ class _AddLinkViewState extends State<AddLinkView> {
               if (result is! List<String>) {
                 return;
               }
-              setState(() {
-                tags = result;
-              });
+              if (mounted) {
+                setState(() {
+                  tags = result;
+                });
+              }
             },
             icon: const Icon(Icons.edit),
           ),
