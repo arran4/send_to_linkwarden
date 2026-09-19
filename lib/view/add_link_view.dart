@@ -79,6 +79,8 @@ class _AddLinkViewState extends State<AddLinkView> {
   bool isPreviewLoading = false;
   bool previewFailed = false;
   bool isCreatingCollection = false;
+  late Future<String?> _defaultUserInstanceFuture;
+  late Stream<List<UserInstance>> _userInstancesStream;
 
   Future<void> _fetchPreview() async {
     setState(() {
@@ -171,6 +173,8 @@ class _AddLinkViewState extends State<AddLinkView> {
     super.initState();
     tags = [];
     collectionsStream = collectionsReplayer.subscribe(initialKey: null);
+    _defaultUserInstanceFuture = loadDefaultUserInstance();
+    _userInstancesStream = userInstanceValueReplayer.subscribe();
     if (widget.arguments?.link != null) {
       linkTextController.text = widget.arguments!.link!;
       unawaited(_fetchPreview());
@@ -332,7 +336,7 @@ class _AddLinkViewState extends State<AddLinkView> {
 
   Widget _userAndInstanceSelection(BuildContext context) {
     return FutureBuilder(
-      future: loadDefaultUserInstance(),
+      future: _defaultUserInstanceFuture,
       builder: (context, defaultValueLoaded) {
         if (defaultValueLoaded.hasError) {
           return const Center(
@@ -351,7 +355,7 @@ class _AddLinkViewState extends State<AddLinkView> {
           return const Center(child: CircularProgressIndicator());
         }
         return StreamBuilder(
-          stream: userInstanceValueReplayer.subscribe(),
+          stream: _userInstancesStream,
           builder: (BuildContext context, AsyncSnapshot<List<UserInstance>> list) {
             if (list.hasError) {
               return const Center(
@@ -540,10 +544,12 @@ class _AddLinkViewState extends State<AddLinkView> {
               ),
             ),
             Tooltip(
-              message: "Refresh collections",
+              message: selectedUserInstance?.valid == true
+                  ? 'Refresh collections'
+                  : 'Select a valid Linkwarden instance to refresh collections',
               child: IconButton(
                 onPressed:
-                    selectedUserInstance?.id != null && !isCreatingCollection
+                    selectedUserInstance?.valid == true && !isCreatingCollection
                     ? () async {
                         collectionsReplayer.reset(selectedUserInstance!.id);
                       }
@@ -552,7 +558,9 @@ class _AddLinkViewState extends State<AddLinkView> {
               ),
             ),
             Tooltip(
-              message: "Add collection",
+              message: selectedUserInstance?.valid == true
+                  ? 'Add collection'
+                  : 'Select a valid Linkwarden instance to add collections',
               child: isCreatingCollection
                   ? const Padding(
                       padding: EdgeInsets.all(12.0),
@@ -564,9 +572,7 @@ class _AddLinkViewState extends State<AddLinkView> {
                     )
                   : IconButton(
                       key: AddLinkView.addCollectionButtonKey,
-                      onPressed:
-                          selectedUserInstance?.apiToken != null &&
-                              selectedUserInstance?.server != null
+                      onPressed: selectedUserInstance?.valid == true
                           ? () async {
                               var result = await Navigator.pushNamed(
                                 context,
@@ -575,6 +581,16 @@ class _AddLinkViewState extends State<AddLinkView> {
                               if (result == null || result is! Collection) {
                                 return;
                               }
+                              final originatingInstance = selectedUserInstance;
+                              if (originatingInstance?.valid != true) {
+                                return;
+                              }
+                              final originatingInstanceId =
+                                  originatingInstance!.id;
+                              final originatingToken =
+                                  originatingInstance.apiToken!;
+                              final originatingServer =
+                                  originatingInstance.server!;
                               setState(() {
                                 isCreatingCollection = true;
                               });
@@ -592,16 +608,24 @@ class _AddLinkViewState extends State<AddLinkView> {
                                     widget.createCollectionOverride ??
                                     createCollection;
                                 Collection? collection = await createFn(
-                                  selectedUserInstance!.apiToken!,
-                                  selectedUserInstance!.server!,
+                                  originatingToken,
+                                  originatingServer,
                                   result,
                                 );
                                 if (collection != null) {
+                                  final originatingCollections =
+                                      await collectionsReplayer
+                                          .subscribe(
+                                            initialKey: originatingInstanceId,
+                                          )
+                                          .first;
                                   collectionsReplayer.publish([
-                                    ...collections.data ?? [],
+                                    ...originatingCollections ?? [],
                                     collection,
-                                  ], currentKey: selectedUserInstance?.id);
-                                  if (context.mounted) {
+                                  ], currentKey: originatingInstanceId);
+                                  if (context.mounted &&
+                                      selectedUserInstance?.id ==
+                                          originatingInstanceId) {
                                     setState(() {
                                       selectedCollection = collection;
                                     });

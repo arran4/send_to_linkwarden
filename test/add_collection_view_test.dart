@@ -63,13 +63,14 @@ void main() {
 
       expect(find.byType(ColorPicker), findsOneWidget);
 
-      // Tap somewhere to change the color in ColorPicker
-      // A direct click on the hue slider/picker might be flaky, we can't reliably predict the exact color string returned
-      // However, we can assert that Apply closes the dialog and does not crash.
+      final picker = tester.widget<ColorPicker>(find.byType(ColorPicker));
+      picker.onColorChanged(const Color(0xffff0000));
+      await tester.pump();
       await tester.tap(find.text('Apply'));
       await tester.pumpAndSettle();
 
       expect(find.byType(ColorPicker), findsNothing);
+      expect(find.text('#FF0000'), findsOneWidget);
     });
 
     testWidgets('successful save returns populated Collection', (
@@ -113,6 +114,12 @@ void main() {
         find.byType(TextFormField).last,
         'Test Description',
       );
+      await tester.tap(find.text('Change'));
+      await tester.pumpAndSettle();
+      final picker = tester.widget<ColorPicker>(find.byType(ColorPicker));
+      picker.onColorChanged(const Color(0xffff0000));
+      await tester.pump();
+      await tester.tap(find.text('Apply'));
       await tester.pumpAndSettle();
 
       // Tap Save
@@ -122,7 +129,7 @@ void main() {
       expect(resultCollection, isNotNull);
       expect(resultCollection!.name, 'Test Collection');
       expect(resultCollection!.description, 'Test Description');
-      expect(resultCollection!.color, '#008080'); // the default color
+      expect(resultCollection!.color, '#ff0000');
     });
   });
 }
