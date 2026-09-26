@@ -42,23 +42,56 @@ class _ManageUserInstancesViewState extends State<ManageUserInstancesView> {
                       return const Center(child: CircularProgressIndicator());
                     }
                     var instances = snapshot.data ?? [];
+                    if (instances.isEmpty) {
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: Text(
+                              'No Linkwarden instances configured.',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                          ),
+                          ElevatedButton.icon(
+                            key: const ValueKey('add_empty'),
+                            icon: const Icon(Icons.add),
+                            label: const Text('Add Instance'),
+                            onPressed: () async {
+                              var result = await Navigator.pushNamed(
+                                context,
+                                'userInstance/newEdit',
+                                arguments:
+                                    const AddEditUserInstanceViewArguments(),
+                              );
+                              if (result is UserInstance) {
+                                upsertUserInstance(result);
+                              }
+                            },
+                          ),
+                        ],
+                      );
+                    }
+
                     return Column(
                       children: [
-                        ReorderableListView(
-                          shrinkWrap: true,
-                          onReorder: (oldIndex, newIndex) {
-                            reorderUserInstances(oldIndex, newIndex);
-                          },
-                          children: [
-                            for (UserInstance instance in instances)
-                              ListTile(
+                        Expanded(
+                          child: ReorderableListView.builder(
+                            itemCount: instances.length,
+                            onReorder: (oldIndex, newIndex) {
+                              reorderUserInstances(oldIndex, newIndex);
+                            },
+                            itemBuilder: (context, index) {
+                              final instance = instances[index];
+                              return ListTile(
                                 key: ValueKey(instance.id),
                                 title: Text(instance.server ?? 'Unknown URL'),
-                                subtitle: Text(instance.user ?? ''),
+                                subtitle: Text(instance.user ?? 'No User'),
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     IconButton(
+                                      tooltip: 'Edit instance',
                                       icon: const Icon(Icons.edit),
                                       onPressed: () async {
                                         var result = await Navigator.pushNamed(
@@ -75,6 +108,7 @@ class _ManageUserInstancesViewState extends State<ManageUserInstancesView> {
                                       },
                                     ),
                                     IconButton(
+                                      tooltip: 'Delete instance',
                                       icon: const Icon(Icons.delete),
                                       onPressed: () async {
                                         bool? confirm = await showDialog<bool>(
@@ -83,8 +117,8 @@ class _ManageUserInstancesViewState extends State<ManageUserInstancesView> {
                                             title: const Text(
                                               'Delete Instance',
                                             ),
-                                            content: const Text(
-                                              'Are you sure you want to delete this instance?',
+                                            content: Text(
+                                              'Are you sure you want to delete ${instance.server}?',
                                             ),
                                             actions: [
                                               TextButton(
@@ -95,6 +129,9 @@ class _ManageUserInstancesViewState extends State<ManageUserInstancesView> {
                                                 child: const Text('Cancel'),
                                               ),
                                               TextButton(
+                                                style: TextButton.styleFrom(
+                                                  foregroundColor: Colors.red,
+                                                ),
                                                 onPressed: () => Navigator.pop(
                                                   context,
                                                   true,
@@ -110,6 +147,9 @@ class _ManageUserInstancesViewState extends State<ManageUserInstancesView> {
                                             if (context.mounted) {
                                               ScaffoldMessenger.of(
                                                 context,
+                                              ).hideCurrentSnackBar();
+                                              ScaffoldMessenger.of(
+                                                context,
                                               ).showSnackBar(
                                                 const SnackBar(
                                                   content: Text(
@@ -122,10 +162,13 @@ class _ManageUserInstancesViewState extends State<ManageUserInstancesView> {
                                             if (context.mounted) {
                                               ScaffoldMessenger.of(
                                                 context,
+                                              ).hideCurrentSnackBar();
+                                              ScaffoldMessenger.of(
+                                                context,
                                               ).showSnackBar(
-                                                SnackBar(
+                                                const SnackBar(
                                                   content: Text(
-                                                    'Failed to delete instance: $error',
+                                                    'Failed to delete instance.',
                                                   ),
                                                 ),
                                               );
@@ -136,8 +179,9 @@ class _ManageUserInstancesViewState extends State<ManageUserInstancesView> {
                                     ),
                                   ],
                                 ),
-                              ),
-                          ],
+                              );
+                            },
+                          ),
                         ),
                         ListTile(
                           key: const ValueKey('add'),
