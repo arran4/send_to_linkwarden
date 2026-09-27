@@ -77,9 +77,19 @@ class _ManageUserInstancesViewState extends State<ManageUserInstancesView> {
                       children: [
                         Expanded(
                           child: ReorderableListView.builder(
+                            buildDefaultDragHandles: false,
                             itemCount: instances.length,
-                            onReorder: (oldIndex, newIndex) {
-                              reorderUserInstances(oldIndex, newIndex);
+                            onReorder: (oldIndex, newIndex) async {
+                              try {
+                                await reorderUserInstances(oldIndex, newIndex);
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Failed to reorder instances.')),
+                                  );
+                                }
+                              }
                             },
                             itemBuilder: (context, index) {
                               final instance = instances[index];
@@ -127,7 +137,15 @@ class _ManageUserInstancesViewState extends State<ManageUserInstancesView> {
                                               ),
                                         );
                                         if (result is UserInstance) {
-                                          upsertUserInstance(result);
+                                          try {
+                                            await upsertUserInstance(result);
+                                          } catch (e) {
+                                            if (context.mounted) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(content: Text('Failed to save instance.')),
+                                              );
+                                            }
+                                          }
                                         }
                                       },
                                     ),

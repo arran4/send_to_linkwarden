@@ -12,16 +12,20 @@ PubSubReplay<List<UserInstance>> userInstanceValueReplayer = PubSubReplay(
 );
 
 void loadUserInstances(PubSubReplay<List<UserInstance>?> queue) async {
-  final FlutterSecureStorage storage = getSecureStorage();
-  String? stored = await storage.read(key: "UserInstancesV1");
-  if (stored == null || stored == "" || stored == "{}" || stored == "[]") {
-    queue.publish([]);
-    return;
+  try {
+    final FlutterSecureStorage storage = getSecureStorage();
+    String? stored = await storage.read(key: "UserInstancesV1");
+    if (stored == null || stored == "" || stored == "{}" || stored == "[]") {
+      queue.publish([]);
+      return;
+    }
+    List<dynamic> unmarshalled = jsonDecode(stored);
+    queue.publish(
+      unmarshalled.map((each) => UserInstance.fromJson(each)).toList(),
+    );
+  } catch (e) {
+    queue.publishError(e);
   }
-  List<dynamic> unmarshalled = jsonDecode(stored);
-  queue.publish(
-    unmarshalled.map((each) => UserInstance.fromJson(each)).toList(),
-  );
 }
 
 Future<void> _saveUserInstances(List<UserInstance> userInstances) async {
@@ -51,21 +55,21 @@ Future<void> upsertUserInstance(UserInstance userInstances) async {
   } else {
     current[p] = userInstances;
   }
-  userInstanceValueReplayer.publish(current);
   await _saveUserInstances(current);
   await _ensureDefaultIsFirst(current);
+  userInstanceValueReplayer.publish(current);
 }
 
 Future<void> deleteUserInstance(UserInstance instance) async {
   var sub = userInstanceValueReplayer.subscribe();
   List<UserInstance> current = [...await sub.first];
   current.removeWhere((e) => e.id == instance.id);
-  userInstanceValueReplayer.publish(current);
   await _saveUserInstances(current);
   if ((await loadDefaultUserInstance()) == instance.id) {
     await setDefaultUserInstance(null);
   }
   await _ensureDefaultIsFirst(current);
+  userInstanceValueReplayer.publish(current);
 }
 
 Future<void> reorderUserInstances(int oldIndex, int newIndex) async {
@@ -76,7 +80,7 @@ Future<void> reorderUserInstances(int oldIndex, int newIndex) async {
   }
   final item = current.removeAt(oldIndex);
   current.insert(newIndex, item);
-  userInstanceValueReplayer.publish(current);
   await _saveUserInstances(current);
   await _ensureDefaultIsFirst(current);
+  userInstanceValueReplayer.publish(current);
 }
