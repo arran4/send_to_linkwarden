@@ -5,26 +5,65 @@ import 'package:send_to_linkwarden/view/main_drawer.dart';
 
 void main() {
   Widget createWidgetUnderTest() {
-    return const MaterialApp(
-      home: Scaffold(
+    return MaterialApp(
+      routes: {
+        'userInstance/manage': (context) =>
+            const Scaffold(body: Text('Manage Instances View')),
+      },
+      home: const Scaffold(
         drawer: MainDrawer(),
         body: Center(child: Text('Home')),
       ),
     );
   }
 
-  testWidgets('Drawer shows Linkwarden Settings header and Manage Instances', (
-    WidgetTester tester,
-  ) async {
-    await tester.pumpWidget(createWidgetUnderTest());
+  test('shouldShowQuit predicate', () {
+    expect(
+      shouldShowQuit(isWeb: true, platform: TargetPlatform.windows),
+      isFalse,
+    );
+    expect(
+      shouldShowQuit(isWeb: true, platform: TargetPlatform.android),
+      isFalse,
+    );
 
-    ScaffoldState scaffoldState = tester.firstState(find.byType(Scaffold));
-    scaffoldState.openDrawer();
-    await tester.pumpAndSettle();
+    expect(
+      shouldShowQuit(isWeb: false, platform: TargetPlatform.windows),
+      isTrue,
+    );
+    expect(
+      shouldShowQuit(isWeb: false, platform: TargetPlatform.linux),
+      isTrue,
+    );
+    expect(
+      shouldShowQuit(isWeb: false, platform: TargetPlatform.macOS),
+      isTrue,
+    );
 
-    expect(find.text('Linkwarden Settings'), findsOneWidget);
-    expect(find.text('Manage Instances'), findsOneWidget);
+    expect(
+      shouldShowQuit(isWeb: false, platform: TargetPlatform.android),
+      isFalse,
+    );
+    expect(shouldShowQuit(isWeb: false, platform: TargetPlatform.iOS), isFalse);
   });
+
+  testWidgets(
+    'Drawer shows Linkwarden Settings header and Manage Instances route navigates',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(createWidgetUnderTest());
+
+      ScaffoldState scaffoldState = tester.firstState(find.byType(Scaffold));
+      scaffoldState.openDrawer();
+      await tester.pumpAndSettle();
+
+      expect(find.text('Linkwarden Settings'), findsOneWidget);
+
+      await tester.tap(find.text('Manage Instances'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Manage Instances View'), findsOneWidget);
+    },
+  );
 
   testWidgets('Drawer Quit button is visible on Desktop Windows', (
     WidgetTester tester,
@@ -37,7 +76,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Quit'), findsOneWidget);
-
     debugDefaultTargetPlatformOverride = null;
   });
 
@@ -52,7 +90,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Quit'), findsOneWidget);
-
     debugDefaultTargetPlatformOverride = null;
   });
 
@@ -67,7 +104,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Quit'), findsOneWidget);
-
     debugDefaultTargetPlatformOverride = null;
   });
 
@@ -82,7 +118,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Quit'), findsNothing);
-
     debugDefaultTargetPlatformOverride = null;
   });
 
@@ -97,7 +132,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Quit'), findsNothing);
-
     debugDefaultTargetPlatformOverride = null;
   });
 }

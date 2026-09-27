@@ -2,6 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 
+bool shouldShowQuit({required bool isWeb, required TargetPlatform platform}) {
+  if (isWeb) return false;
+  return platform == TargetPlatform.windows ||
+      platform == TargetPlatform.linux ||
+      platform == TargetPlatform.macOS;
+}
+
 class MainDrawer extends StatelessWidget {
   const MainDrawer({super.key});
 
@@ -20,10 +27,7 @@ class MainDrawer extends StatelessWidget {
               Navigator.pushNamed(context, 'userInstance/manage');
             },
           ),
-          if (!kIsWeb &&
-              (defaultTargetPlatform == TargetPlatform.windows ||
-                  defaultTargetPlatform == TargetPlatform.linux ||
-                  defaultTargetPlatform == TargetPlatform.macOS))
+          if (shouldShowQuit(isWeb: kIsWeb, platform: defaultTargetPlatform))
             ListTile(
               leading: const Icon(Icons.exit_to_app),
               title: const Text('Quit'),
