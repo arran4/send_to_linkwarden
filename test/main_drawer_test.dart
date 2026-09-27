@@ -13,7 +13,7 @@ void main() {
     );
   }
 
-  testWidgets('Drawer shows Linkwarden Settings header', (
+  testWidgets('Drawer shows Linkwarden Settings header and Manage Instances', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(createWidgetUnderTest());
@@ -26,24 +26,78 @@ void main() {
     expect(find.text('Manage Instances'), findsOneWidget);
   });
 
-  testWidgets('Drawer Quit button visibility check', (
+  testWidgets('Drawer Quit button is visible on Desktop Windows', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(createWidgetUnderTest());
+    debugDefaultTargetPlatformOverride = TargetPlatform.windows;
 
+    await tester.pumpWidget(createWidgetUnderTest());
     ScaffoldState scaffoldState = tester.firstState(find.byType(Scaffold));
     scaffoldState.openDrawer();
     await tester.pumpAndSettle();
 
-    debugPrint('Test platform: \$defaultTargetPlatform, kIsWeb: \$kIsWeb');
+    expect(find.text('Quit'), findsOneWidget);
 
-    if (!kIsWeb &&
-        (defaultTargetPlatform == TargetPlatform.windows ||
-            defaultTargetPlatform == TargetPlatform.linux ||
-            defaultTargetPlatform == TargetPlatform.macOS)) {
-      expect(find.text('Quit'), findsOneWidget);
-    } else {
-      expect(find.text('Quit'), findsNothing);
-    }
+    debugDefaultTargetPlatformOverride = null;
+  });
+
+  testWidgets('Drawer Quit button is visible on Desktop Linux', (
+    WidgetTester tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+
+    await tester.pumpWidget(createWidgetUnderTest());
+    ScaffoldState scaffoldState = tester.firstState(find.byType(Scaffold));
+    scaffoldState.openDrawer();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Quit'), findsOneWidget);
+
+    debugDefaultTargetPlatformOverride = null;
+  });
+
+  testWidgets('Drawer Quit button is visible on Desktop macOS', (
+    WidgetTester tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+
+    await tester.pumpWidget(createWidgetUnderTest());
+    ScaffoldState scaffoldState = tester.firstState(find.byType(Scaffold));
+    scaffoldState.openDrawer();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Quit'), findsOneWidget);
+
+    debugDefaultTargetPlatformOverride = null;
+  });
+
+  testWidgets('Drawer Quit button is absent on Mobile Android', (
+    WidgetTester tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+
+    await tester.pumpWidget(createWidgetUnderTest());
+    ScaffoldState scaffoldState = tester.firstState(find.byType(Scaffold));
+    scaffoldState.openDrawer();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Quit'), findsNothing);
+
+    debugDefaultTargetPlatformOverride = null;
+  });
+
+  testWidgets('Drawer Quit button is absent on Mobile iOS', (
+    WidgetTester tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+
+    await tester.pumpWidget(createWidgetUnderTest());
+    ScaffoldState scaffoldState = tester.firstState(find.byType(Scaffold));
+    scaffoldState.openDrawer();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Quit'), findsNothing);
+
+    debugDefaultTargetPlatformOverride = null;
   });
 }
