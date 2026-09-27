@@ -32,9 +32,9 @@ class _ManageUserInstancesViewState extends State<ManageUserInstancesView> {
                   stream: userInstanceValueReplayer.subscribe(),
                   builder: (context, AsyncSnapshot<List<UserInstance>> snapshot) {
                     if (snapshot.hasError) {
-                      return Center(
+                      return const Center(
                         child: Text(
-                          'Error loading instances: ${snapshot.error}',
+                          'Failed to load instances. Please try again.',
                         ),
                       );
                     }
@@ -83,13 +83,37 @@ class _ManageUserInstancesViewState extends State<ManageUserInstancesView> {
                             },
                             itemBuilder: (context, index) {
                               final instance = instances[index];
+                              final isDefault = index == 0;
                               return ListTile(
                                 key: ValueKey(instance.id),
+                                leading: Tooltip(
+                                  message: isDefault
+                                      ? 'Default instance'
+                                      : 'Instance',
+                                  child: Icon(
+                                    isDefault ? Icons.star : Icons.dns,
+                                    color: isDefault ? Colors.amber : null,
+                                  ),
+                                ),
                                 title: Text(instance.server ?? 'Unknown URL'),
-                                subtitle: Text(instance.user ?? 'No User'),
+                                subtitle: Text(
+                                  (instance.user ?? 'No User') +
+                                      (isDefault ? ' (Default)' : ''),
+                                ),
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
+                                    ReorderableDragStartListener(
+                                      index: index,
+                                      child: const Tooltip(
+                                        message:
+                                            'Drag to reorder and set default',
+                                        child: Padding(
+                                          padding: EdgeInsets.all(8.0),
+                                          child: Icon(Icons.drag_handle),
+                                        ),
+                                      ),
+                                    ),
                                     IconButton(
                                       tooltip: 'Edit instance',
                                       icon: const Icon(Icons.edit),

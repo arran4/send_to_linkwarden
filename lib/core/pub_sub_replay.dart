@@ -8,6 +8,12 @@ class PubSubReplay<T> {
   PubSubReplay({void Function(PubSubReplay<T> queue)? onNoLastMessage})
     : _onNoLastMessage = onNoLastMessage;
 
+  void publishError(Object error) {
+    for (var subscriber in _subscribers) {
+      subscriber.addError(error);
+    }
+  }
+
   void publish(T message) {
     _lastMessage = message;
     for (var subscriber in _subscribers) {
