@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:send_to_linkwarden/state/user_instance_replayer.dart';
 import 'package:send_to_linkwarden/view/manage_user_instances_view.dart';
+import 'package:send_to_linkwarden/state/default_user_instance.dart';
 
 import 'package:send_to_linkwarden/view/add_edit_user_instance_view.dart';
 
@@ -281,6 +282,36 @@ void main() {
   });
 
   testWidgets(
+    'reorder upwards and downwards via ReorderableListView updates default',
+    (WidgetTester tester) async {
+      readSecureStorage = (key) async =>
+          '[{"id":"1","server":"https://1.com","user":"user1"},{"id":"2","server":"https://2.com","user":"user2"},{"id":"3","server":"https://3.com","user":"user3"}]';
+
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
+
+      expect(await loadDefaultUserInstance(), '1');
+      expect(find.text('user1 (Default)'), findsOneWidget);
+
+      final listFinder = find.byType(ReorderableListView);
+      expect(listFinder, findsOneWidget);
+
+      final ReorderableListView reorderableList = tester.widget(listFinder);
+      reorderableList.onReorder(1, 0);
+      await tester.pumpAndSettle();
+
+      expect(await loadDefaultUserInstance(), '2');
+      expect(find.text('user2 (Default)'), findsOneWidget);
+
+      reorderableList.onReorder(0, 3);
+      await tester.pumpAndSettle();
+
+      expect(await loadDefaultUserInstance(), '1');
+      expect(find.text('user1 (Default)'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
     'long lists at narrow and desktop widths scroll without overflow',
     (WidgetTester tester) async {
       String generateInstancesJson() {
@@ -297,7 +328,10 @@ void main() {
 
       tester.view.physicalSize = const Size(400, 800);
       tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
 
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
@@ -325,6 +359,30 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
+
+      // Reset back to top to ensure clean scroll evaluation
+      await tester.scrollUntilVisible(
+        find.text('https://0.com'),
+        -500,
+        scrollable: find.descendant(
+          of: find.byType(ReorderableListView),
+          matching: find.byType(Scrollable),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(lastItemText, findsNothing);
+
+      // Scroll down again under Desktop constraints
+      await tester.scrollUntilVisible(
+        lastItemText,
+        500,
+        scrollable: find.descendant(
+          of: find.byType(ReorderableListView),
+          matching: find.byType(Scrollable),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(lastItemText, findsOneWidget);
     },
   );
 }
