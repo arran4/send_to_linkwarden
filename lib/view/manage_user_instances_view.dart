@@ -12,6 +12,29 @@ class ManageUserInstancesView extends StatefulWidget {
 }
 
 class _ManageUserInstancesViewState extends State<ManageUserInstancesView> {
+  Future<void> _navigateAndSave(
+    BuildContext context, [
+    UserInstance? instance,
+  ]) async {
+    var result = await Navigator.pushNamed(
+      context,
+      'userInstance/newEdit',
+      arguments: AddEditUserInstanceViewArguments(userInstance: instance),
+    );
+    if (result is UserInstance) {
+      try {
+        await upsertUserInstance(result);
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to save instance.')),
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -84,9 +107,15 @@ class _ManageUserInstancesViewState extends State<ManageUserInstancesView> {
                                 await reorderUserInstances(oldIndex, newIndex);
                               } catch (e) {
                                 if (context.mounted) {
-                                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                                  ScaffoldMessenger.of(
+                                    context,
+                                  ).hideCurrentSnackBar();
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Failed to reorder instances.')),
+                                    const SnackBar(
+                                      content: Text(
+                                        'Failed to reorder instances.',
+                                      ),
+                                    ),
                                   );
                                 }
                               }
@@ -127,27 +156,8 @@ class _ManageUserInstancesViewState extends State<ManageUserInstancesView> {
                                     IconButton(
                                       tooltip: 'Edit instance',
                                       icon: const Icon(Icons.edit),
-                                      onPressed: () async {
-                                        var result = await Navigator.pushNamed(
-                                          context,
-                                          'userInstance/newEdit',
-                                          arguments:
-                                              AddEditUserInstanceViewArguments(
-                                                userInstance: instance,
-                                              ),
-                                        );
-                                        if (result is UserInstance) {
-                                          try {
-                                            await upsertUserInstance(result);
-                                          } catch (e) {
-                                            if (context.mounted) {
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                const SnackBar(content: Text('Failed to save instance.')),
-                                              );
-                                            }
-                                          }
-                                        }
-                                      },
+                                      onPressed: () =>
+                                          _navigateAndSave(context, instance),
                                     ),
                                     IconButton(
                                       tooltip: 'Delete instance',
@@ -160,7 +170,7 @@ class _ManageUserInstancesViewState extends State<ManageUserInstancesView> {
                                               'Delete Instance',
                                             ),
                                             content: Text(
-                                              'Are you sure you want to delete ${instance.server}?',
+                                              'Are you sure you want to delete ${instance.server ?? instance.user ?? 'this instance'}?',
                                             ),
                                             actions: [
                                               TextButton(
