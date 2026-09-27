@@ -5,7 +5,15 @@ import 'package:send_to_linkwarden/core/pub_sub_replay.dart';
 import 'package:send_to_linkwarden/integrations/secure_storage.dart';
 import 'package:send_to_linkwarden/model/user_instance.dart';
 import 'package:send_to_linkwarden/state/default_user_instance.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+Future<String?> Function(String key) readSecureStorage = (key) async {
+  return await getSecureStorage().read(key: key);
+};
+
+Future<void> Function(String key, String value) writeSecureStorage =
+    (key, value) async {
+      await getSecureStorage().write(key: key, value: value);
+    };
 
 PubSubReplay<List<UserInstance>> userInstanceValueReplayer = PubSubReplay(
   onNoLastMessage: loadUserInstances,
@@ -13,8 +21,7 @@ PubSubReplay<List<UserInstance>> userInstanceValueReplayer = PubSubReplay(
 
 void loadUserInstances(PubSubReplay<List<UserInstance>?> queue) async {
   try {
-    final FlutterSecureStorage storage = getSecureStorage();
-    String? stored = await storage.read(key: "UserInstancesV1");
+    String? stored = await readSecureStorage("UserInstancesV1");
     if (stored == null || stored == "" || stored == "{}" || stored == "[]") {
       queue.publish([]);
       return;
@@ -29,8 +36,7 @@ void loadUserInstances(PubSubReplay<List<UserInstance>?> queue) async {
 }
 
 Future<void> _saveUserInstances(List<UserInstance> userInstances) async {
-  late final FlutterSecureStorage storage = getSecureStorage();
-  await storage.write(key: "UserInstancesV1", value: jsonEncode(userInstances));
+  await writeSecureStorage("UserInstancesV1", jsonEncode(userInstances));
 }
 
 Future<void> _ensureDefaultIsFirst(List<UserInstance> userInstances) async {

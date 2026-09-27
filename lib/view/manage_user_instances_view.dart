@@ -80,17 +80,7 @@ class _ManageUserInstancesViewState extends State<ManageUserInstancesView> {
                             key: const ValueKey('add_empty'),
                             icon: const Icon(Icons.add),
                             label: const Text('Add Instance'),
-                            onPressed: () async {
-                              var result = await Navigator.pushNamed(
-                                context,
-                                'userInstance/newEdit',
-                                arguments:
-                                    const AddEditUserInstanceViewArguments(),
-                              );
-                              if (result is UserInstance) {
-                                upsertUserInstance(result);
-                              }
-                            },
+                            onPressed: () => _navigateAndSave(context),
                           ),
                         ],
                       );
@@ -239,17 +229,7 @@ class _ManageUserInstancesViewState extends State<ManageUserInstancesView> {
                           key: const ValueKey('add'),
                           leading: const Icon(Icons.add),
                           title: const Text('Add Instance'),
-                          onTap: () async {
-                            var result = await Navigator.pushNamed(
-                              context,
-                              'userInstance/newEdit',
-                              arguments:
-                                  const AddEditUserInstanceViewArguments(),
-                            );
-                            if (result is UserInstance) {
-                              upsertUserInstance(result);
-                            }
-                          },
+                          onTap: () => _navigateAndSave(context),
                         ),
                       ],
                     );
