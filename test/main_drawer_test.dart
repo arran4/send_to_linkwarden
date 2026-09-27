@@ -70,6 +70,7 @@ void main() {
   ) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.windows;
 
+
     await tester.pumpWidget(createWidgetUnderTest());
     ScaffoldState scaffoldState = tester.firstState(find.byType(Scaffold));
     scaffoldState.openDrawer();
@@ -83,6 +84,7 @@ void main() {
     WidgetTester tester,
   ) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+
 
     await tester.pumpWidget(createWidgetUnderTest());
     ScaffoldState scaffoldState = tester.firstState(find.byType(Scaffold));
@@ -98,6 +100,7 @@ void main() {
   ) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
 
+
     await tester.pumpWidget(createWidgetUnderTest());
     ScaffoldState scaffoldState = tester.firstState(find.byType(Scaffold));
     scaffoldState.openDrawer();
@@ -112,6 +115,7 @@ void main() {
   ) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.android;
 
+
     await tester.pumpWidget(createWidgetUnderTest());
     ScaffoldState scaffoldState = tester.firstState(find.byType(Scaffold));
     scaffoldState.openDrawer();
@@ -125,6 +129,7 @@ void main() {
     WidgetTester tester,
   ) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+
 
     await tester.pumpWidget(createWidgetUnderTest());
     ScaffoldState scaffoldState = tester.firstState(find.byType(Scaffold));
