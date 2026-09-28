@@ -137,9 +137,12 @@ class _ManageUserInstancesViewState extends State<ManageUserInstancesView> {
                                       child: const Tooltip(
                                         message:
                                             'Drag to reorder and set default',
-                                        child: Padding(
-                                          padding: EdgeInsets.all(8.0),
-                                          child: Icon(Icons.drag_handle),
+                                        child: SizedBox(
+                                          width: 48,
+                                          height: 48,
+                                          child: Center(
+                                            child: Icon(Icons.drag_handle),
+                                          ),
                                         ),
                                       ),
                                     ),
