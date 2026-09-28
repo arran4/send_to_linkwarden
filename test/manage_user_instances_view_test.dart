@@ -8,9 +8,11 @@ import 'package:send_to_linkwarden/view/manage_user_instances_view.dart';
 import 'package:send_to_linkwarden/state/default_user_instance.dart';
 
 import 'package:send_to_linkwarden/view/add_edit_user_instance_view.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   setUp(() {
+    SharedPreferences.setMockInitialValues({});
     // Reset test seams
     readSecureStorage = (key) async => null;
     writeSecureStorage = (key, value) async {};
@@ -287,6 +289,7 @@ void main() {
       readSecureStorage = (key) async =>
           '[{"id":"1","server":"https://1.com","user":"user1"},{"id":"2","server":"https://2.com","user":"user2"},{"id":"3","server":"https://3.com","user":"user3"}]';
 
+      await setDefaultUserInstance('1');
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
@@ -297,13 +300,15 @@ void main() {
       expect(listFinder, findsOneWidget);
 
       final ReorderableListView reorderableList = tester.widget(listFinder);
-      reorderableList.onReorder(1, 0);
+      final ReorderCallback onReorder = reorderableList.onReorder;
+
+      onReorder(1, 0);
       await tester.pumpAndSettle();
 
       expect(await loadDefaultUserInstance(), '2');
       expect(find.text('user2 (Default)'), findsOneWidget);
 
-      reorderableList.onReorder(0, 3);
+      onReorder(0, 3);
       await tester.pumpAndSettle();
 
       expect(await loadDefaultUserInstance(), '1');
@@ -341,13 +346,17 @@ void main() {
       final lastItemText = find.text('https://19.com');
       expect(lastItemText, findsNothing);
 
+      final firstItem = find.text('https://0.com');
+      expect(firstItem, findsOneWidget);
+
+      final itemContext = tester.element(firstItem);
+      final scrollableState = Scrollable.of(itemContext);
+      final scrollableFinder = find.byWidget(scrollableState.widget);
+
       await tester.scrollUntilVisible(
         lastItemText,
         500,
-        scrollable: find.descendant(
-          of: find.byType(ReorderableListView),
-          matching: find.byType(Scrollable),
-        ),
+        scrollable: scrollableFinder,
       );
       await tester.pumpAndSettle();
 
@@ -360,26 +369,36 @@ void main() {
 
       expect(tester.takeException(), isNull);
 
+      final desktopFirstItem = find.text('https://19.com');
+      final desktopScrollableState = Scrollable.of(
+        tester.element(desktopFirstItem),
+      );
+      final desktopScrollableFinder = find.byWidget(
+        desktopScrollableState.widget,
+      );
+
       // Reset back to top to ensure clean scroll evaluation
       await tester.scrollUntilVisible(
         find.text('https://0.com'),
         -500,
-        scrollable: find.descendant(
-          of: find.byType(ReorderableListView),
-          matching: find.byType(Scrollable),
-        ),
+        scrollable: desktopScrollableFinder,
       );
       await tester.pumpAndSettle();
       expect(lastItemText, findsNothing);
+
+      final newDesktopFirstItem = find.text('https://0.com');
+      final newDesktopScrollableState = Scrollable.of(
+        tester.element(newDesktopFirstItem),
+      );
+      final newDesktopScrollableFinder = find.byWidget(
+        newDesktopScrollableState.widget,
+      );
 
       // Scroll down again under Desktop constraints
       await tester.scrollUntilVisible(
         lastItemText,
         500,
-        scrollable: find.descendant(
-          of: find.byType(ReorderableListView),
-          matching: find.byType(Scrollable),
-        ),
+        scrollable: newDesktopScrollableFinder,
       );
       await tester.pumpAndSettle();
       expect(lastItemText, findsOneWidget);
