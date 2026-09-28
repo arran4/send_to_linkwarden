@@ -68,70 +68,95 @@ void main() {
   testWidgets('Drawer Quit button is visible on Desktop Windows', (
     WidgetTester tester,
   ) async {
-    debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+    try {
+      debugDefaultTargetPlatformOverride = TargetPlatform.windows;
 
-    await tester.pumpWidget(createWidgetUnderTest());
-    ScaffoldState scaffoldState = tester.firstState(find.byType(Scaffold));
-    scaffoldState.openDrawer();
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(createWidgetUnderTest());
+      final ScaffoldState scaffoldState = tester.firstState(
+        find.byType(Scaffold),
+      );
+      scaffoldState.openDrawer();
+      await tester.pumpAndSettle();
 
-    expect(find.text('Quit'), findsOneWidget);
-    debugDefaultTargetPlatformOverride = null;
+      expect(find.text('Quit'), findsOneWidget);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
   });
 
   testWidgets('Drawer Quit button is visible on Desktop Linux', (
     WidgetTester tester,
   ) async {
-    debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+    try {
+      debugDefaultTargetPlatformOverride = TargetPlatform.linux;
 
-    await tester.pumpWidget(createWidgetUnderTest());
-    ScaffoldState scaffoldState = tester.firstState(find.byType(Scaffold));
-    scaffoldState.openDrawer();
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(createWidgetUnderTest());
+      final ScaffoldState scaffoldState = tester.firstState(
+        find.byType(Scaffold),
+      );
+      scaffoldState.openDrawer();
+      await tester.pumpAndSettle();
 
-    expect(find.text('Quit'), findsOneWidget);
-    debugDefaultTargetPlatformOverride = null;
+      expect(find.text('Quit'), findsOneWidget);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
   });
 
   testWidgets('Drawer Quit button is visible on Desktop macOS', (
     WidgetTester tester,
   ) async {
-    debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
+    try {
+      debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
 
-    await tester.pumpWidget(createWidgetUnderTest());
-    ScaffoldState scaffoldState = tester.firstState(find.byType(Scaffold));
-    scaffoldState.openDrawer();
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(createWidgetUnderTest());
+      final ScaffoldState scaffoldState = tester.firstState(
+        find.byType(Scaffold),
+      );
+      scaffoldState.openDrawer();
+      await tester.pumpAndSettle();
 
-    expect(find.text('Quit'), findsOneWidget);
-    debugDefaultTargetPlatformOverride = null;
+      expect(find.text('Quit'), findsOneWidget);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
   });
 
   testWidgets('Drawer Quit button is absent on Mobile Android', (
     WidgetTester tester,
   ) async {
-    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    try {
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
 
-    await tester.pumpWidget(createWidgetUnderTest());
-    ScaffoldState scaffoldState = tester.firstState(find.byType(Scaffold));
-    scaffoldState.openDrawer();
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(createWidgetUnderTest());
+      final ScaffoldState scaffoldState = tester.firstState(
+        find.byType(Scaffold),
+      );
+      scaffoldState.openDrawer();
+      await tester.pumpAndSettle();
 
-    expect(find.text('Quit'), findsNothing);
-    debugDefaultTargetPlatformOverride = null;
+      expect(find.text('Quit'), findsNothing);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
   });
 
   testWidgets('Drawer Quit button is absent on Mobile iOS', (
     WidgetTester tester,
   ) async {
-    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    try {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
 
-    await tester.pumpWidget(createWidgetUnderTest());
-    ScaffoldState scaffoldState = tester.firstState(find.byType(Scaffold));
-    scaffoldState.openDrawer();
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(createWidgetUnderTest());
+      final ScaffoldState scaffoldState = tester.firstState(
+        find.byType(Scaffold),
+      );
+      scaffoldState.openDrawer();
+      await tester.pumpAndSettle();
 
-    expect(find.text('Quit'), findsNothing);
-    debugDefaultTargetPlatformOverride = null;
+      expect(find.text('Quit'), findsNothing);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
   });
 }
