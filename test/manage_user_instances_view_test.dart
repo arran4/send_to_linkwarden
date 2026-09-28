@@ -316,92 +316,93 @@ void main() {
     },
   );
 
-  testWidgets(
-    'long lists at narrow and desktop widths scroll without overflow',
-    (WidgetTester tester) async {
-      String generateInstancesJson() {
-        String json = '[';
-        for (int i = 0; i < 20; i++) {
-          json += '{"id":"$i","server":"https://$i.com","user":"user$i"}';
-          if (i < 19) json += ',';
-        }
-        json += ']';
-        return json;
+  Future<void> scrollListToEnd(
+    WidgetTester tester, {
+    required Finder visibleItem,
+    required Finder target,
+  }) async {
+    expect(visibleItem, findsOneWidget);
+    expect(target, findsNothing);
+
+    final scrollable = Scrollable.of(tester.element(visibleItem));
+
+    for (var i = 0; i < 4 && target.evaluate().isEmpty; i++) {
+      scrollable.position.jumpTo(scrollable.position.maxScrollExtent);
+      await tester.pump();
+    }
+
+    expect(target, findsOneWidget);
+  }
+
+  testWidgets('long lists at narrow width scroll without overflow', (
+    WidgetTester tester,
+  ) async {
+    String generateInstancesJson() {
+      String json = '[';
+      for (int i = 0; i < 20; i++) {
+        json += '{"id":"$i","server":"https://$i.com","user":"user$i"}';
+        if (i < 19) json += ',';
       }
+      json += ']';
+      return json;
+    }
 
-      readSecureStorage = (key) async => generateInstancesJson();
+    readSecureStorage = (key) async => generateInstancesJson();
 
-      tester.view.physicalSize = const Size(400, 800);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
+    tester.view.physicalSize = const Size(400, 800);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
 
-      await tester.pumpWidget(createWidgetUnderTest());
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(createWidgetUnderTest());
+    await tester.pumpAndSettle();
 
-      expect(tester.takeException(), isNull);
+    expect(tester.takeException(), isNull);
 
-      final lastItemText = find.text('https://19.com');
-      expect(lastItemText, findsNothing);
+    await scrollListToEnd(
+      tester,
+      visibleItem: find.text('https://0.com'),
+      target: find.text('https://19.com'),
+    );
 
-      final firstItem = find.text('https://0.com');
-      expect(firstItem, findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 
-      final itemContext = tester.element(firstItem);
-      final scrollableState = Scrollable.of(itemContext);
-      final scrollableFinder = find.byWidget(scrollableState.widget);
+  testWidgets('long lists at desktop width scroll without overflow', (
+    WidgetTester tester,
+  ) async {
+    String generateInstancesJson() {
+      String json = '[';
+      for (int i = 0; i < 20; i++) {
+        json += '{"id":"$i","server":"https://$i.com","user":"user$i"}';
+        if (i < 19) json += ',';
+      }
+      json += ']';
+      return json;
+    }
 
-      await tester.scrollUntilVisible(
-        lastItemText,
-        500,
-        scrollable: scrollableFinder,
-      );
-      await tester.pumpAndSettle();
+    readSecureStorage = (key) async => generateInstancesJson();
 
-      expect(lastItemText, findsOneWidget);
+    tester.view.physicalSize = const Size(1920, 1080);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
 
-      tester.view.physicalSize = const Size(1920, 1080);
-      tester.view.devicePixelRatio = 1.0;
-      await tester.pumpWidget(createWidgetUnderTest());
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(createWidgetUnderTest());
+    await tester.pumpAndSettle();
 
-      expect(tester.takeException(), isNull);
+    expect(tester.takeException(), isNull);
 
-      final desktopFirstItem = find.text('https://19.com');
-      final desktopScrollableState = Scrollable.of(
-        tester.element(desktopFirstItem),
-      );
-      final desktopScrollableFinder = find.byWidget(
-        desktopScrollableState.widget,
-      );
+    await scrollListToEnd(
+      tester,
+      visibleItem: find.text('https://0.com'),
+      target: find.text('https://19.com'),
+    );
 
-      // Reset back to top to ensure clean scroll evaluation
-      await tester.scrollUntilVisible(
-        find.text('https://0.com'),
-        -500,
-        scrollable: desktopScrollableFinder,
-      );
-      await tester.pumpAndSettle();
-      expect(lastItemText, findsNothing);
-
-      final newDesktopFirstItem = find.text('https://0.com');
-      final newDesktopScrollableState = Scrollable.of(
-        tester.element(newDesktopFirstItem),
-      );
-      final newDesktopScrollableFinder = find.byWidget(
-        newDesktopScrollableState.widget,
-      );
-
-      // Scroll down again under Desktop constraints
-      await tester.scrollUntilVisible(
-        lastItemText,
-        500,
-        scrollable: newDesktopScrollableFinder,
-      );
-      await tester.pumpAndSettle();
-      expect(lastItemText, findsOneWidget);
-    },
-  );
+    expect(tester.takeException(), isNull);
+  });
 }
