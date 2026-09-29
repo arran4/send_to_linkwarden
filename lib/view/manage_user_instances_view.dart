@@ -12,6 +12,29 @@ class ManageUserInstancesView extends StatefulWidget {
 }
 
 class _ManageUserInstancesViewState extends State<ManageUserInstancesView> {
+  Future<void> _navigateAndSave(
+    BuildContext context, [
+    UserInstance? instance,
+  ]) async {
+    var result = await Navigator.pushNamed(
+      context,
+      'userInstance/newEdit',
+      arguments: AddEditUserInstanceViewArguments(userInstance: instance),
+    );
+    if (result is UserInstance) {
+      try {
+        await upsertUserInstance(result);
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to save instance.')),
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -32,9 +55,9 @@ class _ManageUserInstancesViewState extends State<ManageUserInstancesView> {
                   stream: userInstanceValueReplayer.subscribe(),
                   builder: (context, AsyncSnapshot<List<UserInstance>> snapshot) {
                     if (snapshot.hasError) {
-                      return Center(
+                      return const Center(
                         child: Text(
-                          'Error loading instances: ${snapshot.error}',
+                          'Failed to load instances. Please try again.',
                         ),
                       );
                     }
@@ -42,39 +65,95 @@ class _ManageUserInstancesViewState extends State<ManageUserInstancesView> {
                       return const Center(child: CircularProgressIndicator());
                     }
                     var instances = snapshot.data ?? [];
+                    if (instances.isEmpty) {
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: Text(
+                              'No Linkwarden instances configured.',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                          ),
+                          ElevatedButton.icon(
+                            key: const ValueKey('add_empty'),
+                            icon: const Icon(Icons.add),
+                            label: const Text('Add Instance'),
+                            onPressed: () => _navigateAndSave(context),
+                          ),
+                        ],
+                      );
+                    }
+
                     return Column(
                       children: [
-                        ReorderableListView(
-                          shrinkWrap: true,
-                          onReorder: (oldIndex, newIndex) {
-                            reorderUserInstances(oldIndex, newIndex);
-                          },
-                          children: [
-                            for (UserInstance instance in instances)
-                              ListTile(
+                        Expanded(
+                          child: ReorderableListView.builder(
+                            buildDefaultDragHandles: false,
+                            itemCount: instances.length,
+                            onReorder: (oldIndex, newIndex) async {
+                              try {
+                                await reorderUserInstances(oldIndex, newIndex);
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(
+                                    context,
+                                  ).hideCurrentSnackBar();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Failed to reorder instances.',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+                            itemBuilder: (context, index) {
+                              final instance = instances[index];
+                              final isDefault = index == 0;
+                              return ListTile(
                                 key: ValueKey(instance.id),
+                                leading: Tooltip(
+                                  message: isDefault
+                                      ? 'Default instance'
+                                      : 'Instance',
+                                  child: Icon(
+                                    isDefault ? Icons.star : Icons.dns,
+                                    color: isDefault ? Colors.amber : null,
+                                  ),
+                                ),
                                 title: Text(instance.server ?? 'Unknown URL'),
-                                subtitle: Text(instance.user ?? ''),
+                                subtitle: Text(
+                                  (instance.user ?? 'No User') +
+                                      (isDefault ? ' (Default)' : ''),
+                                ),
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    IconButton(
-                                      icon: const Icon(Icons.edit),
-                                      onPressed: () async {
-                                        var result = await Navigator.pushNamed(
-                                          context,
-                                          'userInstance/newEdit',
-                                          arguments:
-                                              AddEditUserInstanceViewArguments(
-                                                userInstance: instance,
-                                              ),
-                                        );
-                                        if (result is UserInstance) {
-                                          upsertUserInstance(result);
-                                        }
-                                      },
+                                    ReorderableDragStartListener(
+                                      index: index,
+                                      child: const Tooltip(
+                                        message:
+                                            'Drag to reorder and set default',
+                                        child: SizedBox(
+                                          width: 48,
+                                          height: 48,
+                                          child: Center(
+                                            child: Icon(Icons.drag_handle),
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                     IconButton(
+                                      tooltip: 'Edit instance',
+                                      icon: const Icon(Icons.edit),
+                                      onPressed: () =>
+                                          _navigateAndSave(context, instance),
+                                    ),
+                                    IconButton(
+                                      tooltip: 'Delete instance',
                                       icon: const Icon(Icons.delete),
                                       onPressed: () async {
                                         bool? confirm = await showDialog<bool>(
@@ -83,8 +162,8 @@ class _ManageUserInstancesViewState extends State<ManageUserInstancesView> {
                                             title: const Text(
                                               'Delete Instance',
                                             ),
-                                            content: const Text(
-                                              'Are you sure you want to delete this instance?',
+                                            content: Text(
+                                              'Are you sure you want to delete ${instance.server ?? instance.user ?? 'this instance'}?',
                                             ),
                                             actions: [
                                               TextButton(
@@ -95,6 +174,9 @@ class _ManageUserInstancesViewState extends State<ManageUserInstancesView> {
                                                 child: const Text('Cancel'),
                                               ),
                                               TextButton(
+                                                style: TextButton.styleFrom(
+                                                  foregroundColor: Colors.red,
+                                                ),
                                                 onPressed: () => Navigator.pop(
                                                   context,
                                                   true,
@@ -110,6 +192,9 @@ class _ManageUserInstancesViewState extends State<ManageUserInstancesView> {
                                             if (context.mounted) {
                                               ScaffoldMessenger.of(
                                                 context,
+                                              ).hideCurrentSnackBar();
+                                              ScaffoldMessenger.of(
+                                                context,
                                               ).showSnackBar(
                                                 const SnackBar(
                                                   content: Text(
@@ -122,10 +207,13 @@ class _ManageUserInstancesViewState extends State<ManageUserInstancesView> {
                                             if (context.mounted) {
                                               ScaffoldMessenger.of(
                                                 context,
+                                              ).hideCurrentSnackBar();
+                                              ScaffoldMessenger.of(
+                                                context,
                                               ).showSnackBar(
-                                                SnackBar(
+                                                const SnackBar(
                                                   content: Text(
-                                                    'Failed to delete instance: $error',
+                                                    'Failed to delete instance.',
                                                   ),
                                                 ),
                                               );
@@ -136,24 +224,15 @@ class _ManageUserInstancesViewState extends State<ManageUserInstancesView> {
                                     ),
                                   ],
                                 ),
-                              ),
-                          ],
+                              );
+                            },
+                          ),
                         ),
                         ListTile(
                           key: const ValueKey('add'),
                           leading: const Icon(Icons.add),
                           title: const Text('Add Instance'),
-                          onTap: () async {
-                            var result = await Navigator.pushNamed(
-                              context,
-                              'userInstance/newEdit',
-                              arguments:
-                                  const AddEditUserInstanceViewArguments(),
-                            );
-                            if (result is UserInstance) {
-                              upsertUserInstance(result);
-                            }
-                          },
+                          onTap: () => _navigateAndSave(context),
                         ),
                       ],
                     );

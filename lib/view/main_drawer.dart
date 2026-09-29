@@ -1,5 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
+
+bool shouldShowQuit({required bool isWeb, required TargetPlatform platform}) {
+  if (isWeb) return false;
+  return platform == TargetPlatform.windows ||
+      platform == TargetPlatform.linux ||
+      platform == TargetPlatform.macOS;
+}
 
 class MainDrawer extends StatelessWidget {
   const MainDrawer({super.key});
@@ -10,7 +18,7 @@ class MainDrawer extends StatelessWidget {
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          const DrawerHeader(child: Text('Options')),
+          const DrawerHeader(child: Text('Linkwarden Settings')),
           ListTile(
             leading: const Icon(Icons.settings),
             title: const Text('Manage Instances'),
@@ -19,13 +27,14 @@ class MainDrawer extends StatelessWidget {
               Navigator.pushNamed(context, 'userInstance/manage');
             },
           ),
-          ListTile(
-            leading: const Icon(Icons.exit_to_app),
-            title: const Text('Quit'),
-            onTap: () {
-              SystemNavigator.pop();
-            },
-          ),
+          if (shouldShowQuit(isWeb: kIsWeb, platform: defaultTargetPlatform))
+            ListTile(
+              leading: const Icon(Icons.exit_to_app),
+              title: const Text('Quit'),
+              onTap: () {
+                SystemNavigator.pop();
+              },
+            ),
         ],
       ),
     );

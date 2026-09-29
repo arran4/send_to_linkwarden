@@ -1,39 +1,49 @@
-import 'dart:async' show unawaited;
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:send_to_linkwarden/core/pub_sub_replay.dart';
 import 'package:send_to_linkwarden/integrations/secure_storage.dart';
 import 'package:send_to_linkwarden/model/user_instance.dart';
 import 'package:send_to_linkwarden/state/default_user_instance.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+Future<String?> Function(String key) readSecureStorage = (key) async {
+  return await getSecureStorage().read(key: key);
+};
+
+Future<void> Function(String key, String value) writeSecureStorage =
+    (key, value) async {
+      await getSecureStorage().write(key: key, value: value);
+    };
 
 PubSubReplay<List<UserInstance>> userInstanceValueReplayer = PubSubReplay(
   onNoLastMessage: loadUserInstances,
 );
 
 void loadUserInstances(PubSubReplay<List<UserInstance>?> queue) async {
-  final FlutterSecureStorage storage = getSecureStorage();
-  String? stored = await storage.read(key: "UserInstancesV1");
-  if (stored == null || stored == "" || stored == "{}" || stored == "[]") {
-    queue.publish([]);
-    return;
+  try {
+    String? stored = await readSecureStorage("UserInstancesV1");
+    if (stored == null || stored == "" || stored == "{}" || stored == "[]") {
+      queue.publish([]);
+      return;
+    }
+    List<dynamic> unmarshalled = jsonDecode(stored);
+    queue.publish(
+      unmarshalled.map((each) => UserInstance.fromJson(each)).toList(),
+    );
+  } catch (e) {
+    queue.publishError(e);
   }
-  List<dynamic> unmarshalled = jsonDecode(stored);
-  queue.publish(
-    unmarshalled.map((each) => UserInstance.fromJson(each)).toList(),
-  );
 }
 
-void _saveUserInstances(List<UserInstance> userInstances) async {
-  late final FlutterSecureStorage storage = getSecureStorage();
-  await storage.write(key: "UserInstancesV1", value: jsonEncode(userInstances));
+Future<void> _saveUserInstances(List<UserInstance> userInstances) async {
+  await writeSecureStorage("UserInstancesV1", jsonEncode(userInstances));
 }
 
-void _ensureDefaultIsFirst(List<UserInstance> userInstances) {
+Future<void> _ensureDefaultIsFirst(List<UserInstance> userInstances) async {
   if (userInstances.isNotEmpty) {
-    unawaited(setDefaultUserInstance(userInstances.first.id));
+    await setDefaultUserInstance(userInstances.first.id);
   } else {
-    unawaited(setDefaultUserInstance(null));
+    await setDefaultUserInstance(null);
   }
 }
 
@@ -42,7 +52,7 @@ Future<UserInstance?> getUserInstanceById(String? id) async {
   return (await sub.first).firstWhere((e) => e.id == id);
 }
 
-void upsertUserInstance(UserInstance userInstances) async {
+Future<void> upsertUserInstance(UserInstance userInstances) async {
   var sub = userInstanceValueReplayer.subscribe();
   List<UserInstance> current = [...await sub.first];
   int p = current.indexOf(userInstances);
@@ -51,24 +61,24 @@ void upsertUserInstance(UserInstance userInstances) async {
   } else {
     current[p] = userInstances;
   }
+  await _saveUserInstances(current);
+  await _ensureDefaultIsFirst(current);
   userInstanceValueReplayer.publish(current);
-  _saveUserInstances(current);
-  _ensureDefaultIsFirst(current);
 }
 
 Future<void> deleteUserInstance(UserInstance instance) async {
   var sub = userInstanceValueReplayer.subscribe();
   List<UserInstance> current = [...await sub.first];
   current.removeWhere((e) => e.id == instance.id);
-  userInstanceValueReplayer.publish(current);
-  _saveUserInstances(current);
+  await _saveUserInstances(current);
   if ((await loadDefaultUserInstance()) == instance.id) {
     await setDefaultUserInstance(null);
   }
-  _ensureDefaultIsFirst(current);
+  await _ensureDefaultIsFirst(current);
+  userInstanceValueReplayer.publish(current);
 }
 
-void reorderUserInstances(int oldIndex, int newIndex) async {
+Future<void> reorderUserInstances(int oldIndex, int newIndex) async {
   var sub = userInstanceValueReplayer.subscribe();
   List<UserInstance> current = [...await sub.first];
   if (newIndex > oldIndex) {
@@ -76,7 +86,7 @@ void reorderUserInstances(int oldIndex, int newIndex) async {
   }
   final item = current.removeAt(oldIndex);
   current.insert(newIndex, item);
+  await _saveUserInstances(current);
+  await _ensureDefaultIsFirst(current);
   userInstanceValueReplayer.publish(current);
-  _saveUserInstances(current);
-  _ensureDefaultIsFirst(current);
 }
