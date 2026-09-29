@@ -192,6 +192,9 @@ class _AddLinkViewState extends State<AddLinkView> {
 
   @override
   void dispose() {
+    nameTextController.dispose();
+    descriptionTextController.dispose();
+    linkTextController.dispose();
     super.dispose();
   }
 
@@ -676,8 +679,6 @@ class _AddLinkViewState extends State<AddLinkView> {
       ),
       Flex(
         direction: Axis.horizontal,
-        // crossAxisAlignment: CrossAxisAlignment.center,
-        // mainAxisSize: MainAxisSize.min,
         children: [
           Wrap(children: [for (String tag in tags) Chip(label: Text(tag))]),
           IconButton(
