@@ -32,6 +32,19 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
   late UserInstance userInstance;
 
   String _method = 'apiKey';
+  final TextEditingController urlTextController = TextEditingController();
+  final TextEditingController usernameTextController = TextEditingController();
+  final TextEditingController passwordTextController = TextEditingController();
+  final TextEditingController apiTokenTextController = TextEditingController();
+
+  @override
+  void dispose() {
+    urlTextController.dispose();
+    usernameTextController.dispose();
+    passwordTextController.dispose();
+    apiTokenTextController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -116,7 +129,6 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
     return normalized;
   }
 
-  final TextEditingController urlTextController = TextEditingController();
   Widget _instanceUrlInput(BuildContext context) {
     return TextFormField(
       key: AddEditUserInstanceView.instanceUrlFieldKey,
@@ -155,7 +167,6 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
     return value.startsWith('http://');
   }
 
-  final TextEditingController usernameTextController = TextEditingController();
   Widget _usernameEmailInput(BuildContext context) {
     return TextFormField(
       key: AddEditUserInstanceView.usernameFieldKey,
@@ -191,7 +202,6 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
     );
   }
 
-  final TextEditingController passwordTextController = TextEditingController();
   bool _obscurePassword = true;
   Widget _passwordInput(BuildContext context) {
     return TextFormField(
@@ -225,7 +235,6 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
     );
   }
 
-  final TextEditingController apiTokenTextController = TextEditingController();
   bool _obscureApiToken = true;
   Widget _apiTokenInput(BuildContext context) {
     return TextFormField(

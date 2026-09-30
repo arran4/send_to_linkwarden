@@ -127,6 +127,8 @@ class _SelectTagsViewState extends State<SelectTagsView> {
 
   @override
   void dispose() {
+    searchAddTextController.dispose();
+    findOrAddFocusNode.dispose();
     final subscription = tagSubscription;
     tagSubscription = null;
     if (subscription != null) {

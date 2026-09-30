@@ -18,6 +18,15 @@ class AddCollectionView extends StatefulWidget {
 class _AddCollectionViewState extends State<AddCollectionView> {
   GlobalKey<FormState> formState = GlobalKey<FormState>();
   Color currentColor = const Color(0xff008080);
+  TextEditingController nameTextController = TextEditingController();
+  TextEditingController descriptionTextController = TextEditingController();
+
+  @override
+  void dispose() {
+    nameTextController.dispose();
+    descriptionTextController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +69,6 @@ class _AddCollectionViewState extends State<AddCollectionView> {
     );
   }
 
-  TextEditingController nameTextController = TextEditingController();
   Widget _collectionNameInput(BuildContext context) {
     return TextFormField(
       controller: nameTextController,
@@ -78,7 +86,6 @@ class _AddCollectionViewState extends State<AddCollectionView> {
     );
   }
 
-  TextEditingController descriptionTextController = TextEditingController();
   Widget _descriptionInput(BuildContext context) {
     return TextFormField(
       controller: descriptionTextController,
