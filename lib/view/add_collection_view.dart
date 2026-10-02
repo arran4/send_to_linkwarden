@@ -99,80 +99,86 @@ class _AddCollectionViewState extends State<AddCollectionView> {
 
   List<Widget> _colourInput(BuildContext context) {
     return [
-      const Row(children: [Text("Collection Color: ")]),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  color: currentColor,
-                  border: Border.all(
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
-                ),
-                constraints: const BoxConstraints(
-                  minHeight: 28,
-                  minWidth: 28,
-                  maxHeight: 28,
-                  maxWidth: 140,
+      const Align(
+        alignment: Alignment.centerLeft,
+        child: Padding(
+          padding: EdgeInsets.only(bottom: 8.0),
+          child: Text("Collection Color:"),
+        ),
+      ),
+      Align(
+        alignment: Alignment.centerLeft,
+        child: Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 8.0,
+          runSpacing: 8.0,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: currentColor,
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.outline,
                 ),
               ),
-              const SizedBox(width: 8),
-              Text(
-                colorToHex(
-                  currentColor,
-                  includeHashSign: true,
-                  enableAlpha: false,
-                  toUpperCase: true,
-                ),
-                style: const TextStyle(fontFamily: 'monospace'),
+              constraints: const BoxConstraints(
+                minHeight: 28,
+                minWidth: 28,
+                maxHeight: 28,
+                maxWidth: 140,
               ),
-            ],
-          ),
-          TextButton(
-            onPressed: () async {
-              var result = await showDialog(
-                context: context,
-                builder: (context) {
-                  Color pickerColor = currentColor;
-                  return AlertDialog(
-                    title: const Text('Pick a color!'),
-                    content: SingleChildScrollView(
-                      child: ColorPicker(
-                        pickerColor: pickerColor,
-                        onColorChanged: (value) {
-                          pickerColor = value;
-                        },
+            ),
+            Text(
+              colorToHex(
+                currentColor,
+                includeHashSign: true,
+                enableAlpha: false,
+                toUpperCase: true,
+              ),
+              style: const TextStyle(fontFamily: 'monospace'),
+            ),
+            TextButton(
+              onPressed: () async {
+                var result = await showDialog(
+                  context: context,
+                  builder: (context) {
+                    Color pickerColor = currentColor;
+                    return AlertDialog(
+                      title: const Text('Pick a color!'),
+                      content: SingleChildScrollView(
+                        child: ColorPicker(
+                          pickerColor: pickerColor,
+                          onColorChanged: (value) {
+                            pickerColor = value;
+                          },
+                        ),
                       ),
-                    ),
-                    actions: <Widget>[
-                      TextButton(
-                        child: const Text('Cancel'),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                      ElevatedButton(
-                        child: const Text('Apply'),
-                        onPressed: () {
-                          Navigator.of(context).pop(pickerColor);
-                        },
-                      ),
-                    ],
-                  );
-                },
-              );
-              if (result is Color) {
-                setState(() {
-                  currentColor = result;
-                });
-              }
-            },
-            child: const Text("Change"),
-          ),
-        ],
+                      actions: <Widget>[
+                        TextButton(
+                          child: const Text('Cancel'),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                        ElevatedButton(
+                          child: const Text('Apply'),
+                          onPressed: () {
+                            Navigator.of(context).pop(pickerColor);
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                );
+                if (result is Color) {
+                  setState(() {
+                    currentColor = result;
+                  });
+                }
+              },
+              child: const Text("Change"),
+            ),
+          ],
+        ),
       ),
     ];
   }
