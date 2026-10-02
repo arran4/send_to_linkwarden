@@ -27,6 +27,18 @@ void main() {
       },
     );
 
+    testWidgets(
+      'Responsive Layout at 1200px constrains form width to max 600',
+      (WidgetTester tester) async {
+        setViewportSize(tester, 1200, 800);
+        await tester.pumpWidget(const MaterialApp(home: AddCollectionView()));
+        await tester.pumpAndSettle();
+
+        final cardRect = tester.getRect(find.byType(Card).first);
+        expect(cardRect.width, lessThanOrEqualTo(600));
+      },
+    );
+
     testWidgets('validation prevents saving empty name', (
       WidgetTester tester,
     ) async {

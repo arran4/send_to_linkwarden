@@ -122,11 +122,14 @@ class _AddLinkViewState extends State<AddLinkView> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text("Add Bookmark - Send To Linkwarden"),
         actions: [
-          IconButton(
-            onPressed: () {
-              unawaited(_darkMode());
-            },
-            icon: const Icon(Icons.dark_mode),
+          Tooltip(
+            message: 'Toggle dark mode',
+            child: IconButton(
+              onPressed: () {
+                unawaited(_darkMode());
+              },
+              icon: const Icon(Icons.dark_mode),
+            ),
           ),
         ],
       ),
@@ -726,7 +729,9 @@ class _AddLinkViewState extends State<AddLinkView> {
   Widget _linkInput(BuildContext context) {
     return TextFormField(
       textInputAction: TextInputAction.next,
-      onFieldSubmitted: (_) => unawaited(_fetchPreview()),
+      onFieldSubmitted: (_) {
+        unawaited(_fetchPreview());
+      },
       decoration: InputDecoration(
         labelText: "Link",
         helper: const Text("e.g. http://example.com/"),
@@ -740,9 +745,6 @@ class _AddLinkViewState extends State<AddLinkView> {
           ),
         ),
       ),
-      onEditingComplete: () {
-        unawaited(_fetchPreview());
-      },
       validator: (value) {
         if (value == null) {
           return "Please enter a value";

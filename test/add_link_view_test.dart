@@ -114,10 +114,12 @@ void main() {
         await tester.pumpAndSettle();
 
         // Enter link to trigger tags wrap and fetch
-        await tester.enterText(
-          find.byType(TextFormField).first,
-          'http://example.com',
-        );
+        final linkField = find.byType(TextFormField).first;
+        await tester.enterText(linkField, 'http://example.com');
+        await tester.tap(linkField);
+        await tester.pumpAndSettle();
+
+        // Simulate "next" to trigger fetch Preview correctly through input action
         await tester.testTextInput.receiveAction(TextInputAction.next);
         await tester.pumpAndSettle();
 
@@ -128,6 +130,7 @@ void main() {
         expect(find.byTooltip('Fetch preview'), findsOneWidget);
         expect(find.byTooltip('Add collection'), findsOneWidget);
         expect(find.byTooltip('Edit tags'), findsOneWidget);
+        expect(find.byTooltip('Toggle dark mode'), findsOneWidget);
       },
     );
 
@@ -140,6 +143,17 @@ void main() {
 
       final cardRect = tester.getRect(find.byType(Card).first);
       // ConstrainedBox sets maxWidth to 600, Card might have margins, but its width will be <= 600
+      expect(cardRect.width, lessThanOrEqualTo(600));
+    });
+
+    testWidgets('Responsive Layout at 768px constraints card correctly', (
+      WidgetTester tester,
+    ) async {
+      setViewportSize(tester, 768, 1024);
+      await tester.pumpWidget(buildTestWidget());
+      await tester.pumpAndSettle();
+
+      final cardRect = tester.getRect(find.byType(Card).first);
       expect(cardRect.width, lessThanOrEqualTo(600));
     });
 

@@ -41,23 +41,26 @@ class _AddCollectionViewState extends State<AddCollectionView> {
           child: SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Form(
-                    key: formState,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        _collectionNameInput(context),
-                        _descriptionInput(context),
-                        ..._colourInput(context),
-                        _actionButtons(context),
-                      ],
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: Card(
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Form(
+                      key: formState,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          _collectionNameInput(context),
+                          _descriptionInput(context),
+                          ..._colourInput(context),
+                          _actionButtons(context),
+                        ],
+                      ),
                     ),
                   ),
                 ),
