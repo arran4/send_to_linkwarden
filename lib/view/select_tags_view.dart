@@ -172,9 +172,9 @@ class _SelectTagsViewState extends State<SelectTagsView> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
                         _findOrAddWidget(context),
                         Flexible(child: _listOfElements(context)),

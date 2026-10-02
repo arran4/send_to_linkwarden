@@ -144,24 +144,24 @@ class _AddLinkViewState extends State<AddLinkView> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Form(
-                    key: formState,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        _userAndInstanceSelection(context),
-                        _collectionSelection(context),
-                        _linkInput(context),
-                        _previewCard(),
-                        ..._tagsSelection(context),
-                        _nameInput(context),
-                        _descriptionInput(context),
-                        _submitButton(context),
-                      ],
+                    padding: const EdgeInsets.all(16.0),
+                    child: Form(
+                      key: formState,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          _userAndInstanceSelection(context),
+                          _collectionSelection(context),
+                          _linkInput(context),
+                          _previewCard(),
+                          ..._tagsSelection(context),
+                          _nameInput(context),
+                          _descriptionInput(context),
+                          _submitButton(context),
+                        ],
+                      ),
                     ),
                   ),
-                ),
                 ),
               ),
             ),

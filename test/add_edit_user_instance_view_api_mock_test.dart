@@ -201,6 +201,8 @@ void main() {
             'my_password',
           );
 
+          await tester.ensureVisible(find.text('Save'));
+          await tester.pumpAndSettle();
           await tester.tap(find.text('Save'));
           await tester.pumpAndSettle();
 

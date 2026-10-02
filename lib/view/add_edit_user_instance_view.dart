@@ -75,38 +75,47 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: StreamBuilder(
-                    stream: userInstanceValueReplayer.subscribe(),
-                    builder: (context, AsyncSnapshot<List<UserInstance>> snapshot) {
-                      if (snapshot.hasError) {
-                        return Center(child: Text("Error: ${snapshot.error}"));
-                      }
-                      var instances = snapshot.data ?? [];
-                      return Form(
-                        key: formState,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: <Widget>[
-                            const Padding(
-                              padding: EdgeInsets.only(bottom: 16.0),
-                              child: Text(
-                                "A Linkwarden instance URL is the web address where your bookmarks are hosted. This is usually https://cloud.linkwarden.app or your own self-hosted server address. You can authenticate either by providing an API token or your username and password.",
-                                style: TextStyle(fontSize: 14),
+                    padding: const EdgeInsets.all(16.0),
+                    child: StreamBuilder(
+                      stream: userInstanceValueReplayer.subscribe(),
+                      builder:
+                          (
+                            context,
+                            AsyncSnapshot<List<UserInstance>> snapshot,
+                          ) {
+                            if (snapshot.hasError) {
+                              return Center(
+                                child: Text("Error: ${snapshot.error}"),
+                              );
+                            }
+                            var instances = snapshot.data ?? [];
+                            return Form(
+                              key: formState,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: <Widget>[
+                                  const Padding(
+                                    padding: EdgeInsets.only(bottom: 16.0),
+                                    child: Text(
+                                      "A Linkwarden instance URL is the web address where your bookmarks are hosted. This is usually https://cloud.linkwarden.app or your own self-hosted server address. You can authenticate either by providing an API token or your username and password.",
+                                      style: TextStyle(fontSize: 14),
+                                    ),
+                                  ),
+                                  _instanceSelector(context, instances),
+                                  _instanceUrlInput(context),
+                                  _methodSelection(context),
+                                  if (_method == 'apiKey')
+                                    _apiTokenInput(context),
+                                  if (_method == 'username')
+                                    _usernameEmailInput(context),
+                                  if (_method == 'username')
+                                    _passwordInput(context),
+                                  _actionButtons(context),
+                                ],
                               ),
-                            ),
-                            _instanceSelector(context, instances),
-                            _instanceUrlInput(context),
-                            _methodSelection(context),
-                            if (_method == 'apiKey') _apiTokenInput(context),
-                            if (_method == 'username')
-                              _usernameEmailInput(context),
-                            if (_method == 'username') _passwordInput(context),
-                            _actionButtons(context),
-                          ],
-                        ),
-                      );
-                    },
+                            );
+                          },
+                    ),
                   ),
                 ),
               ),
@@ -114,7 +123,6 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
           ),
         ),
       ),
-    ),
     );
   }
 
@@ -293,19 +301,16 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
           },
           child: const Text("Reset"),
         ),
-        TextButton(
-          onPressed: _submitForm,
-          child: const Text("Save"),
-        ),
+        TextButton(onPressed: _submitForm, child: const Text("Save")),
       ],
     );
   }
 
   Future<void> _submitForm() async {
     if (formState.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Verifying connection...')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Verifying connection...')));
       String? token = apiTokenTextController.text;
 
       String rawUrl = _normalizeUrl(urlTextController.text);
@@ -373,9 +378,7 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Please correct the validation errors before saving.',
-          ),
+          content: Text('Please correct the validation errors before saving.'),
         ),
       );
     }
@@ -417,25 +420,25 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
             child: IconButton(
               icon: const Icon(Icons.delete),
               onPressed: () async {
-              bool? confirm = await showDialog<bool>(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Delete Instance'),
-                  content: const Text(
-                    'Are you sure you want to delete this instance?',
+                bool? confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Delete Instance'),
+                    content: const Text(
+                      'Are you sure you want to delete this instance?',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Delete'),
+                      ),
+                    ],
                   ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      child: const Text('Cancel'),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      child: const Text('Delete'),
-                    ),
-                  ],
-                ),
-              );
+                );
                 if (confirm == true) {
                   await deleteUserInstance(userInstance);
                   setState(() {

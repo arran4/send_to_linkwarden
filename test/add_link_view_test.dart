@@ -84,34 +84,56 @@ void main() {
   }
 
   group('AddLinkView Acceptance Criteria', () {
-    testWidgets('Responsive Layout at 320px handles long content and keyboard traversal without RenderFlex overflow', (WidgetTester tester) async {
-      setViewportSize(tester, 320, 800);
-      userInstanceValueReplayer.publish([
-        UserInstance(id: 'instA', server: 'http://very-long-linkwarden-server-url-that-exceeds-screen-width.com', apiToken: 'tokenA'),
-      ]);
-      collectionsReplayer.publish([
-        Collection(id: 1, name: 'Very Long Collection Name That Might Overflow Horizontally'),
-      ], currentKey: 'instA');
-      tagsReplayer.publish([Tag(id: 1, name: 'TagA'), Tag(id: 2, name: 'TagB'), Tag(id: 3, name: 'TagC'), Tag(id: 4, name: 'TagD'), Tag(id: 5, name: 'TagE')], currentKey: 'instA');
+    testWidgets(
+      'Responsive Layout at 320px handles long content and keyboard traversal without RenderFlex overflow',
+      (WidgetTester tester) async {
+        setViewportSize(tester, 320, 800);
+        userInstanceValueReplayer.publish([
+          UserInstance(
+            id: 'instA',
+            server:
+                'http://very-long-linkwarden-server-url-that-exceeds-screen-width.com',
+            apiToken: 'tokenA',
+          ),
+        ]);
+        collectionsReplayer.publish([
+          Collection(
+            id: 1,
+            name: 'Very Long Collection Name That Might Overflow Horizontally',
+          ),
+        ], currentKey: 'instA');
+        tagsReplayer.publish([
+          Tag(id: 1, name: 'TagA'),
+          Tag(id: 2, name: 'TagB'),
+          Tag(id: 3, name: 'TagC'),
+          Tag(id: 4, name: 'TagD'),
+          Tag(id: 5, name: 'TagE'),
+        ], currentKey: 'instA');
 
-      await tester.pumpWidget(buildTestWidget());
-      await tester.pumpAndSettle();
+        await tester.pumpWidget(buildTestWidget());
+        await tester.pumpAndSettle();
 
-      // Enter link to trigger tags wrap and fetch
-      await tester.enterText(find.byType(TextFormField).first, 'http://example.com');
-      await tester.testTextInput.receiveAction(TextInputAction.next);
-      await tester.pumpAndSettle();
+        // Enter link to trigger tags wrap and fetch
+        await tester.enterText(
+          find.byType(TextFormField).first,
+          'http://example.com',
+        );
+        await tester.testTextInput.receiveAction(TextInputAction.next);
+        await tester.pumpAndSettle();
 
-      expect(tester.takeException(), isNull); // Verify no RenderFlex overflow
+        expect(tester.takeException(), isNull); // Verify no RenderFlex overflow
 
-      // Verify tooltips
-      expect(find.byTooltip('Edit instance'), findsOneWidget);
-      expect(find.byTooltip('Fetch preview'), findsOneWidget);
-      expect(find.byTooltip('Add collection'), findsOneWidget);
-      expect(find.byTooltip('Edit tags'), findsOneWidget);
-    });
+        // Verify tooltips
+        expect(find.byTooltip('Edit instance'), findsOneWidget);
+        expect(find.byTooltip('Fetch preview'), findsOneWidget);
+        expect(find.byTooltip('Add collection'), findsOneWidget);
+        expect(find.byTooltip('Edit tags'), findsOneWidget);
+      },
+    );
 
-    testWidgets('Responsive Layout at 1200px constrains form width to max 600', (WidgetTester tester) async {
+    testWidgets('Responsive Layout at 1200px constrains form width to max 600', (
+      WidgetTester tester,
+    ) async {
       setViewportSize(tester, 1200, 800);
       await tester.pumpWidget(buildTestWidget());
       await tester.pumpAndSettle();

@@ -8,18 +8,24 @@ import 'test_helpers.dart';
 
 void main() {
   group('AddCollectionView', () {
-    testWidgets('responsive layout prevents RenderFlex overflow on narrow widths for colour Wrap', (WidgetTester tester) async {
-      setViewportSize(tester, 320, 800);
-      await tester.pumpWidget(const MaterialApp(home: AddCollectionView()));
-      await tester.pumpAndSettle();
+    testWidgets(
+      'responsive layout prevents RenderFlex overflow on narrow widths for colour Wrap',
+      (WidgetTester tester) async {
+        setViewportSize(tester, 320, 800);
+        await tester.pumpWidget(const MaterialApp(home: AddCollectionView()));
+        await tester.pumpAndSettle();
 
-      // Simulate input and keyboard traversal
-      await tester.enterText(find.byType(TextFormField).first, 'Test Collection Name');
-      await tester.testTextInput.receiveAction(TextInputAction.next);
-      await tester.pumpAndSettle();
+        // Simulate input and keyboard traversal
+        await tester.enterText(
+          find.byType(TextFormField).first,
+          'Test Collection Name',
+        );
+        await tester.testTextInput.receiveAction(TextInputAction.next);
+        await tester.pumpAndSettle();
 
-      expect(tester.takeException(), isNull); // Verify no RenderFlex overflow
-    });
+        expect(tester.takeException(), isNull); // Verify no RenderFlex overflow
+      },
+    );
 
     testWidgets('validation prevents saving empty name', (
       WidgetTester tester,
