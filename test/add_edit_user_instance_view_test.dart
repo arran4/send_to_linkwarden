@@ -49,11 +49,12 @@ void main() {
         // Verify tooltips
         expect(find.byTooltip('Delete instance'), findsOneWidget);
         expect(find.byTooltip('Show/Hide API token'), findsOneWidget);
-
       },
     );
 
-    testWidgets('Focus transitions correctly across Username/Password auth', (WidgetTester tester) async {
+    testWidgets('Focus transitions correctly across Username/Password auth', (
+      WidgetTester tester,
+    ) async {
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
 
@@ -64,8 +65,12 @@ void main() {
       await tester.tap(find.text('Username/Password').last);
       await tester.pumpAndSettle();
 
-      final usernameField = find.byKey(AddEditUserInstanceView.usernameFieldKey);
-      final passwordField = find.byKey(AddEditUserInstanceView.passwordFieldKey);
+      final usernameField = find.byKey(
+        AddEditUserInstanceView.usernameFieldKey,
+      );
+      final passwordField = find.byKey(
+        AddEditUserInstanceView.passwordFieldKey,
+      );
 
       await tester.enterText(usernameField, 'test@example.com');
       await tester.tap(usernameField);
@@ -74,25 +79,38 @@ void main() {
       await tester.testTextInput.receiveAction(TextInputAction.next);
       await tester.pumpAndSettle();
 
-      final FocusNode pwdFocusNode = FocusScope.of(tester.element(passwordField)).focusedChild!;
+      final FocusNode pwdFocusNode = tester
+          .widget<EditableText>(
+            find.descendant(
+              of: passwordField,
+              matching: find.byType(EditableText),
+            ),
+          )
+          .focusNode;
       expect(pwdFocusNode.hasFocus, isTrue);
     });
 
-    testWidgets('Done/activation works for validation-only path without hitting network', (WidgetTester tester) async {
-      await tester.pumpWidget(createWidgetUnderTest());
-      await tester.pumpAndSettle();
+    testWidgets(
+      'Done/activation works for validation-only path without hitting network',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.pumpAndSettle();
 
-      final tokenField = find.byType(TextFormField).last;
+        final tokenField = find.byType(TextFormField).last;
 
-      await tester.tap(tokenField);
-      await tester.pumpAndSettle();
+        await tester.tap(tokenField);
+        await tester.pumpAndSettle();
 
-      // Trigger submission with invalid URL setup to avoid network calls
-      await tester.testTextInput.receiveAction(TextInputAction.done);
-      await tester.pumpAndSettle();
+        // Trigger submission with invalid URL setup to avoid network calls
+        await tester.testTextInput.receiveAction(TextInputAction.done);
+        await tester.pumpAndSettle();
 
-      expect(find.text('Please correct the validation errors before saving.'), findsOneWidget);
-    });
+        expect(
+          find.text('Please correct the validation errors before saving.'),
+          findsOneWidget,
+        );
+      },
+    );
   });
 
   group('AddEditUserInstanceView - Validation and Normalization', () {

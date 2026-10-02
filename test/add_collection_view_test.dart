@@ -19,38 +19,45 @@ void main() {
         final nameField = find.byType(TextFormField).first;
         final descField = find.byType(TextFormField).last;
 
-        await tester.enterText(
-          nameField,
-          'Test Collection Name',
-        );
+        await tester.enterText(nameField, 'Test Collection Name');
         await tester.tap(nameField);
         await tester.pumpAndSettle();
         await tester.testTextInput.receiveAction(TextInputAction.next);
         await tester.pumpAndSettle();
 
         // Assert focus actually moved
-        final FocusNode descFocusNode = FocusScope.of(tester.element(descField)).focusedChild!;
+        final FocusNode descFocusNode = tester
+            .widget<EditableText>(
+              find.descendant(
+                of: descField,
+                matching: find.byType(EditableText),
+              ),
+            )
+            .focusNode;
         expect(descFocusNode.hasFocus, isTrue);
 
         expect(tester.takeException(), isNull); // Verify no RenderFlex overflow
       },
     );
 
-    testWidgets('multiline description field explicitly preserves newline behavior', (WidgetTester tester) async {
-      await tester.pumpWidget(const MaterialApp(home: AddCollectionView()));
-      await tester.pumpAndSettle();
+    testWidgets(
+      'multiline description field explicitly preserves newline behavior',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const MaterialApp(home: AddCollectionView()));
+        await tester.pumpAndSettle();
 
-      final descField = find.byType(TextFormField).last;
-      await tester.enterText(descField, 'First line');
-      await tester.tap(descField);
-      await tester.pumpAndSettle();
+        final descField = find.byType(TextFormField).last;
+        await tester.enterText(descField, 'First line');
+        await tester.tap(descField);
+        await tester.pumpAndSettle();
 
-      await tester.testTextInput.receiveAction(TextInputAction.newline);
-      await tester.pumpAndSettle();
+        await tester.testTextInput.receiveAction(TextInputAction.newline);
+        await tester.pumpAndSettle();
 
-      // Assert that we are still on the form and the form did not submit.
-      expect(find.byType(AddCollectionView), findsOneWidget);
-    });
+        // Assert that we are still on the form and the form did not submit.
+        expect(find.byType(AddCollectionView), findsOneWidget);
+      },
+    );
 
     testWidgets(
       'Responsive Layout at 1200px constrains form width to max 600',
