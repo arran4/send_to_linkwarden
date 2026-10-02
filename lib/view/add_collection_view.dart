@@ -74,6 +74,7 @@ class _AddCollectionViewState extends State<AddCollectionView> {
 
   Widget _collectionNameInput(BuildContext context) {
     return TextFormField(
+      textInputAction: TextInputAction.next,
       controller: nameTextController,
       decoration: const InputDecoration(
         labelText: "Collection Name",
@@ -91,6 +92,7 @@ class _AddCollectionViewState extends State<AddCollectionView> {
 
   Widget _descriptionInput(BuildContext context) {
     return TextFormField(
+      textInputAction: TextInputAction.newline,
       controller: descriptionTextController,
       decoration: const InputDecoration(
         labelText: "Description",

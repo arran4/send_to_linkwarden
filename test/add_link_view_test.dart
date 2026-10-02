@@ -119,11 +119,28 @@ void main() {
         await tester.tap(linkField);
         await tester.pumpAndSettle();
 
+        int callCount = 0;
+        await tester.pumpWidget(
+          buildTestWidget(
+            fetchPreviewOverride: (url) async {
+              callCount++;
+              return {};
+            },
+          ),
+        );
+        await tester.pumpAndSettle();
+
         // Simulate "next" to trigger fetch Preview correctly through input action
         await tester.testTextInput.receiveAction(TextInputAction.next);
         await tester.pumpAndSettle();
 
         expect(tester.takeException(), isNull); // Verify no RenderFlex overflow
+        expect(callCount, 1);
+
+        // Verify focus transitions to the next TextFormField (Name field)
+        final nameField = find.byType(TextFormField).at(1);
+        final FocusNode nameFocusNode = FocusScope.of(tester.element(nameField)).focusedChild!;
+        expect(nameFocusNode.hasFocus, isTrue);
 
         // Verify tooltips
         expect(find.byTooltip('Edit instance'), findsOneWidget);

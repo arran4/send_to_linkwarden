@@ -50,11 +50,49 @@ void main() {
         expect(find.byTooltip('Delete instance'), findsOneWidget);
         expect(find.byTooltip('Show/Hide API token'), findsOneWidget);
 
-        // We skip actual keyboard submission testing here due to test platform complexities with text input actions.
-        // The layout and overflow constraints are what matters for #40.
-        // The keyboard actions are verified manually in test execution and are set properly on the TextFormFields.
       },
     );
+
+    testWidgets('Focus transitions correctly across Username/Password auth', (WidgetTester tester) async {
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
+
+      // Switch to Username/Password method
+      final dropdown = find.byType(DropdownButtonFormField<String>);
+      await tester.tap(dropdown);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Username/Password').last);
+      await tester.pumpAndSettle();
+
+      final usernameField = find.byKey(AddEditUserInstanceView.usernameFieldKey);
+      final passwordField = find.byKey(AddEditUserInstanceView.passwordFieldKey);
+
+      await tester.enterText(usernameField, 'test@example.com');
+      await tester.tap(usernameField);
+      await tester.pumpAndSettle();
+
+      await tester.testTextInput.receiveAction(TextInputAction.next);
+      await tester.pumpAndSettle();
+
+      final FocusNode pwdFocusNode = FocusScope.of(tester.element(passwordField)).focusedChild!;
+      expect(pwdFocusNode.hasFocus, isTrue);
+    });
+
+    testWidgets('Done/activation works for validation-only path without hitting network', (WidgetTester tester) async {
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
+
+      final tokenField = find.byType(TextFormField).last;
+
+      await tester.tap(tokenField);
+      await tester.pumpAndSettle();
+
+      // Trigger submission with invalid URL setup to avoid network calls
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Please correct the validation errors before saving.'), findsOneWidget);
+    });
   });
 
   group('AddEditUserInstanceView - Validation and Normalization', () {
