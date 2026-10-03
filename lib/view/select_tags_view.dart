@@ -164,19 +164,22 @@ class _SelectTagsViewState extends State<SelectTagsView> {
               constraints: BoxConstraints(
                 maxHeight: MediaQuery.of(context).size.height * 0.8,
               ),
-              child: Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      _findOrAddWidget(context),
-                      Flexible(child: _listOfElements(context)),
-                    ],
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: Card(
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        _findOrAddWidget(context),
+                        Flexible(child: _listOfElements(context)),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -189,11 +192,12 @@ class _SelectTagsViewState extends State<SelectTagsView> {
 
   Widget _findOrAddWidget(BuildContext builder) {
     return TextField(
+      textInputAction: TextInputAction.done,
       decoration: InputDecoration(
         labelText: "Tag Name",
         helperText: "Filter or add",
         hintText: "...",
-        suffix: Tooltip(
+        suffixIcon: Tooltip(
           message: "Add tag",
           child: IconButton(
             onPressed: () {

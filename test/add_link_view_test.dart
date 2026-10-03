@@ -12,6 +12,8 @@ import 'package:send_to_linkwarden/state/user_instance_replayer.dart';
 import 'package:send_to_linkwarden/view/add_link_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'test_helpers.dart';
+
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({'defaultUserInstance': 'instA'});
@@ -82,6 +84,103 @@ void main() {
   }
 
   group('AddLinkView Acceptance Criteria', () {
+    testWidgets(
+      'Responsive Layout at 320px handles long content and keyboard traversal without RenderFlex overflow',
+      (WidgetTester tester) async {
+        setViewportSize(tester, 320, 800);
+        userInstanceValueReplayer.publish([
+          UserInstance(
+            id: 'instA',
+            server:
+                'http://very-long-linkwarden-server-url-that-exceeds-screen-width.com',
+            apiToken: 'tokenA',
+          ),
+        ]);
+        collectionsReplayer.publish([
+          Collection(
+            id: 1,
+            name: 'Very Long Collection Name That Might Overflow Horizontally',
+          ),
+        ], currentKey: 'instA');
+        tagsReplayer.publish([
+          Tag(id: 1, name: 'TagA'),
+          Tag(id: 2, name: 'TagB'),
+          Tag(id: 3, name: 'TagC'),
+          Tag(id: 4, name: 'TagD'),
+          Tag(id: 5, name: 'TagE'),
+        ], currentKey: 'instA');
+
+        await tester.pumpWidget(buildTestWidget());
+        await tester.pumpAndSettle();
+
+        // Enter link to trigger tags wrap and fetch
+        final linkField = find.byType(TextFormField).first;
+        await tester.enterText(linkField, 'http://example.com');
+        await tester.tap(linkField);
+        await tester.pumpAndSettle();
+
+        int callCount = 0;
+        await tester.pumpWidget(
+          buildTestWidget(
+            fetchPreviewOverride: (url) async {
+              callCount++;
+              return {};
+            },
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Simulate "next" to trigger fetch Preview correctly through input action
+        await tester.testTextInput.receiveAction(TextInputAction.next);
+        await tester.pumpAndSettle();
+
+        expect(tester.takeException(), isNull); // Verify no RenderFlex overflow
+        expect(callCount, 1);
+
+        // Verify focus transitions to the next TextFormField (Name field)
+        final nameField = find.byType(TextFormField).at(1);
+        final FocusNode nameFocusNode = tester
+            .widget<EditableText>(
+              find.descendant(
+                of: nameField,
+                matching: find.byType(EditableText),
+              ),
+            )
+            .focusNode;
+        expect(nameFocusNode.hasFocus, isTrue);
+
+        // Verify tooltips
+        expect(find.byTooltip('Edit instance'), findsOneWidget);
+        expect(find.byTooltip('Fetch preview'), findsOneWidget);
+        expect(find.byTooltip('Add collection'), findsOneWidget);
+        expect(find.byTooltip('Edit tags'), findsOneWidget);
+        expect(find.byTooltip('Toggle dark mode'), findsOneWidget);
+      },
+    );
+
+    testWidgets('Responsive Layout at 1200px constrains form width to max 600', (
+      WidgetTester tester,
+    ) async {
+      setViewportSize(tester, 1200, 800);
+      await tester.pumpWidget(buildTestWidget());
+      await tester.pumpAndSettle();
+
+      final cardRect = tester.getRect(find.byType(Card).first);
+      // ConstrainedBox sets maxWidth to 600, Card might have margins, but its width will be <= 600
+      expect(cardRect.width, lessThanOrEqualTo(600));
+    });
+
+    testWidgets('Responsive Layout at 768px constraints card correctly', (
+      WidgetTester tester,
+    ) async {
+      setViewportSize(tester, 768, 1024);
+      await tester.pumpWidget(buildTestWidget());
+      await tester.pumpAndSettle();
+
+      final cardRect = tester.getRect(find.byType(Card).first);
+      expect(cardRect.width, lessThanOrEqualTo(600));
+    });
+
     testWidgets(
       'Validation failure shows error snackbar and no progress indicator',
       (WidgetTester tester) async {

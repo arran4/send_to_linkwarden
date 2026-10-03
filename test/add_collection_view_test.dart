@@ -4,8 +4,78 @@ import 'package:send_to_linkwarden/model/collection.dart';
 import 'package:send_to_linkwarden/view/add_collection_view.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
+import 'test_helpers.dart';
+
 void main() {
   group('AddCollectionView', () {
+    testWidgets(
+      'responsive layout prevents RenderFlex overflow on narrow widths for colour Wrap',
+      (WidgetTester tester) async {
+        setViewportSize(tester, 320, 800);
+        await tester.pumpWidget(const MaterialApp(home: AddCollectionView()));
+        await tester.pumpAndSettle();
+
+        // Simulate input and keyboard traversal
+        final nameField = find.byType(TextFormField).first;
+        final descField = find.byType(TextFormField).last;
+
+        await tester.enterText(nameField, 'Test Collection Name');
+        await tester.tap(nameField);
+        await tester.pumpAndSettle();
+        await tester.testTextInput.receiveAction(TextInputAction.next);
+        await tester.pumpAndSettle();
+
+        // Assert focus actually moved
+        final FocusNode descFocusNode = tester
+            .widget<EditableText>(
+              find.descendant(
+                of: descField,
+                matching: find.byType(EditableText),
+              ),
+            )
+            .focusNode;
+        expect(descFocusNode.hasFocus, isTrue);
+
+        expect(tester.takeException(), isNull); // Verify no RenderFlex overflow
+      },
+    );
+
+    testWidgets(
+      'multiline description field explicitly preserves newline behavior',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(const MaterialApp(home: AddCollectionView()));
+        await tester.pumpAndSettle();
+
+        final descField = find.byType(TextFormField).last;
+        await tester.enterText(descField, 'First line\nSecond line');
+        await tester.tap(descField);
+        await tester.pumpAndSettle();
+
+        await tester.testTextInput.receiveAction(TextInputAction.newline);
+        await tester.pumpAndSettle();
+
+        final EditableText descEditableText = tester.widget<EditableText>(
+          find.descendant(of: descField, matching: find.byType(EditableText)),
+        );
+        expect(descEditableText.controller.text, 'First line\nSecond line');
+
+        // Assert that we are still on the form and the form did not submit.
+        expect(find.byType(AddCollectionView), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Responsive Layout at 1200px constrains form width to max 600',
+      (WidgetTester tester) async {
+        setViewportSize(tester, 1200, 800);
+        await tester.pumpWidget(const MaterialApp(home: AddCollectionView()));
+        await tester.pumpAndSettle();
+
+        final cardRect = tester.getRect(find.byType(Card).first);
+        expect(cardRect.width, lessThanOrEqualTo(600));
+      },
+    );
+
     testWidgets('validation prevents saving empty name', (
       WidgetTester tester,
     ) async {

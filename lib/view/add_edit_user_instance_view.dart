@@ -67,44 +67,55 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
           child: SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: StreamBuilder(
-                    stream: userInstanceValueReplayer.subscribe(),
-                    builder: (context, AsyncSnapshot<List<UserInstance>> snapshot) {
-                      if (snapshot.hasError) {
-                        return Center(child: Text("Error: ${snapshot.error}"));
-                      }
-                      var instances = snapshot.data ?? [];
-                      return Form(
-                        key: formState,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: <Widget>[
-                            const Padding(
-                              padding: EdgeInsets.only(bottom: 16.0),
-                              child: Text(
-                                "A Linkwarden instance URL is the web address where your bookmarks are hosted. This is usually https://cloud.linkwarden.app or your own self-hosted server address. You can authenticate either by providing an API token or your username and password.",
-                                style: TextStyle(fontSize: 14),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: Card(
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: StreamBuilder(
+                      stream: userInstanceValueReplayer.subscribe(),
+                      builder:
+                          (
+                            context,
+                            AsyncSnapshot<List<UserInstance>> snapshot,
+                          ) {
+                            if (snapshot.hasError) {
+                              return Center(
+                                child: Text("Error: ${snapshot.error}"),
+                              );
+                            }
+                            var instances = snapshot.data ?? [];
+                            return Form(
+                              key: formState,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: <Widget>[
+                                  const Padding(
+                                    padding: EdgeInsets.only(bottom: 16.0),
+                                    child: Text(
+                                      "A Linkwarden instance URL is the web address where your bookmarks are hosted. This is usually https://cloud.linkwarden.app or your own self-hosted server address. You can authenticate either by providing an API token or your username and password.",
+                                      style: TextStyle(fontSize: 14),
+                                    ),
+                                  ),
+                                  _instanceSelector(context, instances),
+                                  _instanceUrlInput(context),
+                                  _methodSelection(context),
+                                  if (_method == 'apiKey')
+                                    _apiTokenInput(context),
+                                  if (_method == 'username')
+                                    _usernameEmailInput(context),
+                                  if (_method == 'username')
+                                    _passwordInput(context),
+                                  _actionButtons(context),
+                                ],
                               ),
-                            ),
-                            _instanceSelector(context, instances),
-                            _instanceUrlInput(context),
-                            _methodSelection(context),
-                            if (_method == 'apiKey') _apiTokenInput(context),
-                            if (_method == 'username')
-                              _usernameEmailInput(context),
-                            if (_method == 'username') _passwordInput(context),
-                            _actionButtons(context),
-                          ],
-                        ),
-                      );
-                    },
+                            );
+                          },
+                    ),
                   ),
                 ),
               ),
@@ -131,6 +142,7 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
 
   Widget _instanceUrlInput(BuildContext context) {
     return TextFormField(
+      textInputAction: TextInputAction.next,
       key: AddEditUserInstanceView.instanceUrlFieldKey,
       controller: urlTextController,
       autofillHints: const [AutofillHints.url],
@@ -169,6 +181,7 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
 
   Widget _usernameEmailInput(BuildContext context) {
     return TextFormField(
+      textInputAction: TextInputAction.next,
       key: AddEditUserInstanceView.usernameFieldKey,
       controller: usernameTextController,
       autofillHints: const [AutofillHints.username],
@@ -188,6 +201,7 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
 
   Widget _methodSelection(BuildContext context) {
     return DropdownButtonFormField(
+      isExpanded: true,
       decoration: const InputDecoration(labelText: 'Authentication Method'),
       initialValue: _method,
       items: const [
@@ -205,6 +219,8 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
   bool _obscurePassword = true;
   Widget _passwordInput(BuildContext context) {
     return TextFormField(
+      textInputAction: TextInputAction.done,
+      onFieldSubmitted: (_) => _submitForm(),
       key: AddEditUserInstanceView.passwordFieldKey,
       controller: passwordTextController,
       autofillHints: const [AutofillHints.password],
@@ -220,15 +236,18 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
         labelText: "Password",
         helperText: "Password for your Linkwarden account.",
         hintText: "Password",
-        suffixIcon: IconButton(
-          icon: Icon(
-            _obscurePassword ? Icons.visibility : Icons.visibility_off,
+        suffixIcon: Tooltip(
+          message: 'Show/Hide password',
+          child: IconButton(
+            icon: Icon(
+              _obscurePassword ? Icons.visibility : Icons.visibility_off,
+            ),
+            onPressed: () {
+              setState(() {
+                _obscurePassword = !_obscurePassword;
+              });
+            },
           ),
-          onPressed: () {
-            setState(() {
-              _obscurePassword = !_obscurePassword;
-            });
-          },
         ),
       ),
       obscureText: _obscurePassword,
@@ -238,6 +257,8 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
   bool _obscureApiToken = true;
   Widget _apiTokenInput(BuildContext context) {
     return TextFormField(
+      textInputAction: TextInputAction.done,
+      onFieldSubmitted: (_) => _submitForm(),
       key: AddEditUserInstanceView.apiTokenFieldKey,
       controller: apiTokenTextController,
       enableSuggestions: false,
@@ -252,15 +273,18 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
         labelText: "API token",
         helperText: "API token for your Linkwarden account.",
         hintText: "API token",
-        suffixIcon: IconButton(
-          icon: Icon(
-            _obscureApiToken ? Icons.visibility : Icons.visibility_off,
+        suffixIcon: Tooltip(
+          message: 'Show/Hide API token',
+          child: IconButton(
+            icon: Icon(
+              _obscureApiToken ? Icons.visibility : Icons.visibility_off,
+            ),
+            onPressed: () {
+              setState(() {
+                _obscureApiToken = !_obscureApiToken;
+              });
+            },
           ),
-          onPressed: () {
-            setState(() {
-              _obscureApiToken = !_obscureApiToken;
-            });
-          },
         ),
       ),
       obscureText: _obscureApiToken,
@@ -277,94 +301,87 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
           },
           child: const Text("Reset"),
         ),
-        TextButton(
-          onPressed: () async {
-            if (formState.currentState!.validate()) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Verifying connection...')),
-              );
-              String? token = apiTokenTextController.text;
-
-              String rawUrl = _normalizeUrl(urlTextController.text);
-
-              if (_method == 'username') {
-                try {
-                  token = await createSession(
-                    rawUrl,
-                    usernameTextController.text,
-                    passwordTextController.text,
-                  );
-                } on HttpException catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text(e.message)));
-                  }
-                  return;
-                } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Connection failed. Please check the server address and try again.',
-                        ),
-                      ),
-                    );
-                  }
-                  return;
-                }
-              } else {
-                try {
-                  await verifyConnection(token, rawUrl);
-                } on HttpException catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text(e.message)));
-                  }
-                  return;
-                } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Connection failed. Please check the server address and try again.',
-                        ),
-                      ),
-                    );
-                  }
-                  return;
-                }
-              }
-
-              if (!context.mounted) return;
-              ScaffoldMessenger.of(context).hideCurrentSnackBar();
-              Navigator.pop(
-                context,
-                userInstance
-                  ..user = usernameTextController.text
-                  ..server = rawUrl
-                  ..password = null
-                  ..apiToken = token,
-              );
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'Please correct the validation errors before saving.',
-                  ),
-                ),
-              );
-            }
-          },
-          child: const Text("Save"),
-        ),
+        TextButton(onPressed: _submitForm, child: const Text("Save")),
       ],
     );
+  }
+
+  Future<void> _submitForm() async {
+    if (formState.currentState!.validate()) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Verifying connection...')));
+      String? token = apiTokenTextController.text;
+
+      String rawUrl = _normalizeUrl(urlTextController.text);
+
+      if (_method == 'username') {
+        try {
+          token = await createSession(
+            rawUrl,
+            usernameTextController.text,
+            passwordTextController.text,
+          );
+        } on HttpException catch (e) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(e.message)));
+          return;
+        } catch (e) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Connection failed. Please check the server address and try again.',
+              ),
+            ),
+          );
+          return;
+        }
+      } else {
+        try {
+          await verifyConnection(token, rawUrl);
+        } on HttpException catch (e) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(e.message)));
+          return;
+        } catch (e) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Connection failed. Please check the server address and try again.',
+              ),
+            ),
+          );
+          return;
+        }
+      }
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      Navigator.pop(
+        context,
+        userInstance
+          ..user = usernameTextController.text
+          ..server = rawUrl
+          ..password = null
+          ..apiToken = token,
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please correct the validation errors before saving.'),
+        ),
+      );
+    }
   }
 
   Widget _instanceSelector(BuildContext context, List<UserInstance> instances) {
@@ -373,6 +390,7 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
       children: [
         Expanded(
           child: DropdownButton<UserInstance?>(
+            isExpanded: true,
             value: editing ? userInstance : null,
             hint: const Text('Select Instance'),
             items: [
@@ -397,37 +415,40 @@ class _AddEditUserInstanceViewState extends State<AddEditUserInstanceView> {
           ),
         ),
         if (editing)
-          IconButton(
-            icon: const Icon(Icons.delete),
-            onPressed: () async {
-              bool? confirm = await showDialog<bool>(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Delete Instance'),
-                  content: const Text(
-                    'Are you sure you want to delete this instance?',
+          Tooltip(
+            message: 'Delete instance',
+            child: IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: () async {
+                bool? confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Delete Instance'),
+                    content: const Text(
+                      'Are you sure you want to delete this instance?',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Delete'),
+                      ),
+                    ],
                   ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      child: const Text('Cancel'),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      child: const Text('Delete'),
-                    ),
-                  ],
-                ),
-              );
-              if (confirm == true) {
-                await deleteUserInstance(userInstance);
-                setState(() {
-                  userInstance = UserInstance();
+                );
+                if (confirm == true) {
+                  await deleteUserInstance(userInstance);
+                  setState(() {
+                    userInstance = UserInstance();
 
-                  _loadValues();
-                });
-              }
-            },
+                    _loadValues();
+                  });
+                }
+              },
+            ),
           ),
       ],
     );

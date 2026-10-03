@@ -3,8 +3,57 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:send_to_linkwarden/model/tag.dart';
 import 'package:send_to_linkwarden/view/select_tags_view.dart';
 
+import 'test_helpers.dart';
+
 void main() {
   group('SelectTagsView - UI Tests', () {
+    testWidgets(
+      'responsive layout prevents RenderFlex overflow on narrow widths and keyboard triggers add',
+      (WidgetTester tester) async {
+        setViewportSize(tester, 320, 800);
+        await tester.pumpWidget(
+          MaterialApp(
+            home: SelectTagsView(
+              arguments: SelectTagsViewArguments(
+                allTags: [Tag(name: 'long tag name that might overflow')],
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.enterText(find.byType(TextField).first, 'newtag');
+        await tester.testTextInput.receiveAction(TextInputAction.done);
+        await tester.pumpAndSettle();
+
+        expect(tester.takeException(), isNull); // Verify no RenderFlex overflow
+        expect(
+          find.text('newtag'),
+          findsOneWidget,
+        ); // Verify keyboard sumbit triggers add logic
+
+        // Verify tooltips
+        expect(find.byTooltip('Confirm selection'), findsOneWidget);
+        expect(find.byTooltip('Add tag'), findsOneWidget);
+      },
+    );
+
+    testWidgets('Responsive Layout at 1200px constrains form width to max 600', (
+      WidgetTester tester,
+    ) async {
+      setViewportSize(tester, 1200, 800);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: SelectTagsView(arguments: SelectTagsViewArguments(allTags: [])),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final cardRect = tester.getRect(find.byType(Card).first);
+      // ConstrainedBox sets maxWidth to 600, Card might have margins, but its width will be <= 600
+      expect(cardRect.width, lessThanOrEqualTo(600));
+    });
+
     testWidgets('substring match filtering shows create option', (
       WidgetTester tester,
     ) async {

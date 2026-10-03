@@ -73,6 +73,7 @@ class _AddLinkViewState extends State<AddLinkView> {
   collectionsStream;
   TextEditingController nameTextController = TextEditingController();
   TextEditingController descriptionTextController = TextEditingController();
+  FocusNode nameFocusNode = FocusNode();
   TextEditingController linkTextController = TextEditingController();
   String? previewImageUrl;
   bool isSubmitting = false;
@@ -122,11 +123,14 @@ class _AddLinkViewState extends State<AddLinkView> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text("Add Bookmark - Send To Linkwarden"),
         actions: [
-          IconButton(
-            onPressed: () {
-              unawaited(_darkMode());
-            },
-            icon: const Icon(Icons.dark_mode),
+          Tooltip(
+            message: 'Toggle dark mode',
+            child: IconButton(
+              onPressed: () {
+                unawaited(_darkMode());
+              },
+              icon: const Icon(Icons.dark_mode),
+            ),
           ),
         ],
       ),
@@ -136,27 +140,30 @@ class _AddLinkViewState extends State<AddLinkView> {
           child: SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Form(
-                    key: formState,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        _userAndInstanceSelection(context),
-                        _collectionSelection(context),
-                        _linkInput(context),
-                        _previewCard(),
-                        ..._tagsSelection(context),
-                        _nameInput(context),
-                        _descriptionInput(context),
-                        _submitButton(context),
-                      ],
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: Card(
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Form(
+                      key: formState,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          _userAndInstanceSelection(context),
+                          _collectionSelection(context),
+                          _linkInput(context),
+                          _previewCard(),
+                          ..._tagsSelection(context),
+                          _nameInput(context),
+                          _descriptionInput(context),
+                          _submitButton(context),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -194,6 +201,7 @@ class _AddLinkViewState extends State<AddLinkView> {
   void dispose() {
     nameTextController.dispose();
     descriptionTextController.dispose();
+    nameFocusNode.dispose();
     linkTextController.dispose();
     super.dispose();
   }
@@ -401,6 +409,7 @@ class _AddLinkViewState extends State<AddLinkView> {
               children: [
                 Flexible(
                   child: DropdownButtonFormField(
+                    isExpanded: true,
                     key: AddLinkView.instanceDropdownKey,
                     decoration: const InputDecoration(
                       labelText: 'Select User And Linkwarden Instance',
@@ -433,27 +442,30 @@ class _AddLinkViewState extends State<AddLinkView> {
                     },
                   ),
                 ),
-                IconButton(
-                  onPressed: () async {
-                    var result = await Navigator.pushNamed(
-                      context,
-                      "userInstance/newEdit",
-                      arguments: AddEditUserInstanceViewArguments(
-                        userInstance: selectedUserInstance,
-                      ),
-                    );
-                    if (result == null) {
-                      return;
-                    }
-                    assert(result is UserInstance);
-                    if (result is! UserInstance) {
-                      return;
-                    }
-                    upsertUserInstance(result);
-                    // make it default?
-                    _selectNewUserInstance(result, makeDefault: true);
-                  },
-                  icon: const Icon(Icons.edit),
+                Tooltip(
+                  message: 'Edit instance',
+                  child: IconButton(
+                    onPressed: () async {
+                      var result = await Navigator.pushNamed(
+                        context,
+                        "userInstance/newEdit",
+                        arguments: AddEditUserInstanceViewArguments(
+                          userInstance: selectedUserInstance,
+                        ),
+                      );
+                      if (result == null) {
+                        return;
+                      }
+                      assert(result is UserInstance);
+                      if (result is! UserInstance) {
+                        return;
+                      }
+                      upsertUserInstance(result);
+                      // make it default?
+                      _selectNewUserInstance(result, makeDefault: true);
+                    },
+                    icon: const Icon(Icons.edit),
+                  ),
                 ),
               ],
             );
@@ -506,6 +518,7 @@ class _AddLinkViewState extends State<AddLinkView> {
           children: [
             Flexible(
               child: DropdownButtonFormField(
+                isExpanded: true,
                 key: AddLinkView.collectionDropdownKey,
                 decoration: const InputDecoration(labelText: 'Collection'),
                 initialValue: selectedCollection,
@@ -677,35 +690,38 @@ class _AddLinkViewState extends State<AddLinkView> {
         mainAxisAlignment: MainAxisAlignment.start,
         children: [Text("Tags:")],
       ),
-      Flex(
-        direction: Axis.horizontal,
+      Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           Wrap(children: [for (String tag in tags) Chip(label: Text(tag))]),
-          IconButton(
-            key: AddLinkView.editTagsButtonKey,
-            onPressed: () async {
-              var result = await Navigator.pushNamed(
-                context,
-                "tags/select",
-                arguments: SelectTagsViewArguments(
-                  selectedTags: tags,
-                  userInstance: selectedUserInstance,
-                ),
-              );
-              if (result == null) {
-                return;
-              }
-              assert(result is List<String>);
-              if (result is! List<String>) {
-                return;
-              }
-              if (mounted) {
-                setState(() {
-                  tags = result;
-                });
-              }
-            },
-            icon: const Icon(Icons.edit),
+          Tooltip(
+            message: 'Edit tags',
+            child: IconButton(
+              key: AddLinkView.editTagsButtonKey,
+              onPressed: () async {
+                var result = await Navigator.pushNamed(
+                  context,
+                  "tags/select",
+                  arguments: SelectTagsViewArguments(
+                    selectedTags: tags,
+                    userInstance: selectedUserInstance,
+                  ),
+                );
+                if (result == null) {
+                  return;
+                }
+                assert(result is List<String>);
+                if (result is! List<String>) {
+                  return;
+                }
+                if (mounted) {
+                  setState(() {
+                    tags = result;
+                  });
+                }
+              },
+              icon: const Icon(Icons.edit),
+            ),
           ),
         ],
       ),
@@ -714,19 +730,23 @@ class _AddLinkViewState extends State<AddLinkView> {
 
   Widget _linkInput(BuildContext context) {
     return TextFormField(
+      textInputAction: TextInputAction.next,
+      onFieldSubmitted: (_) {
+        unawaited(_fetchPreview());
+      },
       decoration: InputDecoration(
         labelText: "Link",
         helper: const Text("e.g. http://example.com/"),
-        suffixIcon: IconButton(
-          icon: const Icon(Icons.refresh),
-          onPressed: () {
-            unawaited(_fetchPreview());
-          },
+        suffixIcon: Tooltip(
+          message: 'Fetch preview',
+          child: IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              unawaited(_fetchPreview());
+            },
+          ),
         ),
       ),
-      onEditingComplete: () {
-        unawaited(_fetchPreview());
-      },
       validator: (value) {
         if (value == null) {
           return "Please enter a value";
@@ -741,16 +761,23 @@ class _AddLinkViewState extends State<AddLinkView> {
         return null;
       },
       controller: linkTextController,
+      onEditingComplete: () {
+        if (mounted) {
+          nameFocusNode.requestFocus();
+        }
+      },
     );
   }
 
   Widget _nameInput(BuildContext context) {
     return TextFormField(
+      textInputAction: TextInputAction.next,
       decoration: const InputDecoration(
         labelText: "Name",
         helper: Text("Will be auto generated if left empty."),
       ),
       controller: nameTextController,
+      focusNode: nameFocusNode,
     );
   }
 
