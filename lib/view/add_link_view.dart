@@ -73,6 +73,7 @@ class _AddLinkViewState extends State<AddLinkView> {
   collectionsStream;
   TextEditingController nameTextController = TextEditingController();
   TextEditingController descriptionTextController = TextEditingController();
+  FocusNode nameFocusNode = FocusNode();
   TextEditingController linkTextController = TextEditingController();
   String? previewImageUrl;
   bool isSubmitting = false;
@@ -200,6 +201,7 @@ class _AddLinkViewState extends State<AddLinkView> {
   void dispose() {
     nameTextController.dispose();
     descriptionTextController.dispose();
+    nameFocusNode.dispose();
     linkTextController.dispose();
     super.dispose();
   }
@@ -759,6 +761,11 @@ class _AddLinkViewState extends State<AddLinkView> {
         return null;
       },
       controller: linkTextController,
+      onEditingComplete: () {
+        if (mounted) {
+          nameFocusNode.requestFocus();
+        }
+      },
     );
   }
 
@@ -770,6 +777,7 @@ class _AddLinkViewState extends State<AddLinkView> {
         helper: Text("Will be auto generated if left empty."),
       ),
       controller: nameTextController,
+      focusNode: nameFocusNode,
     );
   }
 
