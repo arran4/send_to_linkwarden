@@ -54,7 +54,9 @@ void main() {
         await tester.testTextInput.receiveAction(TextInputAction.newline);
         await tester.pumpAndSettle();
 
-        final EditableText descEditableText = tester.widget<EditableText>(find.descendant(of: descField, matching: find.byType(EditableText)));
+        final EditableText descEditableText = tester.widget<EditableText>(
+          find.descendant(of: descField, matching: find.byType(EditableText)),
+        );
         expect(descEditableText.controller.text, 'First line\nSecond line');
 
         // Assert that we are still on the form and the form did not submit.
