@@ -154,7 +154,7 @@ void main() {
         expect(find.byTooltip('Fetch preview'), findsOneWidget);
         expect(find.byTooltip('Add collection'), findsOneWidget);
         expect(find.byTooltip('Edit tags'), findsOneWidget);
-        expect(find.byTooltip('Toggle dark mode'), findsOneWidget);
+
       },
     );
 

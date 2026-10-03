@@ -98,47 +98,54 @@ class _SendToLinkwardenAppState extends State<SendToLinkwardenApp> {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<bool>(
+    return ValueListenableBuilder<ThemeMode>(
       valueListenable: darkModeNotifier,
-      builder: (BuildContext context, bool isDark, Widget? child) {
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'Send To Linkwarden',
-          themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
-            useMaterial3: true,
-          ),
-          navigatorKey: navigatorKey,
-          darkTheme: ThemeData.dark(useMaterial3: true),
-          routes: {
-            "/": (BuildContext context) => const AddLinkView(),
-            "link/new": (BuildContext context) => AddLinkView(
-              arguments:
-                  ModalRoute.of(context)?.settings.arguments
-                      as AddLinkViewArguments?,
-            ),
-            "tags/select": (BuildContext context) => SelectTagsView(
-              arguments:
-                  ModalRoute.of(context)?.settings.arguments
-                      as SelectTagsViewArguments?,
-            ),
-            "collection/new": (BuildContext context) => AddCollectionView(
-              arguments:
-                  ModalRoute.of(context)?.settings.arguments
-                      as AddCollectionViewArguments?,
-            ),
-            "userInstance/newEdit": (BuildContext context) =>
-                AddEditUserInstanceView(
+      builder:
+          (BuildContext context, ThemeMode currentThemeMode, Widget? child) {
+            return MaterialApp(
+              debugShowCheckedModeBanner: false,
+              title: 'Send To Linkwarden',
+              themeMode: currentThemeMode,
+              theme: ThemeData(
+                colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
+                useMaterial3: true,
+              ),
+              navigatorKey: navigatorKey,
+              darkTheme: ThemeData(
+                colorScheme: ColorScheme.fromSeed(
+                  seedColor: Colors.indigo,
+                  brightness: Brightness.dark,
+                ),
+                useMaterial3: true,
+              ),
+              routes: {
+                "/": (BuildContext context) => const AddLinkView(),
+                "link/new": (BuildContext context) => AddLinkView(
                   arguments:
                       ModalRoute.of(context)?.settings.arguments
-                          as AddEditUserInstanceViewArguments?,
+                          as AddLinkViewArguments?,
                 ),
-            "userInstance/manage": (BuildContext context) =>
-                const ManageUserInstancesView(),
+                "tags/select": (BuildContext context) => SelectTagsView(
+                  arguments:
+                      ModalRoute.of(context)?.settings.arguments
+                          as SelectTagsViewArguments?,
+                ),
+                "collection/new": (BuildContext context) => AddCollectionView(
+                  arguments:
+                      ModalRoute.of(context)?.settings.arguments
+                          as AddCollectionViewArguments?,
+                ),
+                "userInstance/newEdit": (BuildContext context) =>
+                    AddEditUserInstanceView(
+                      arguments:
+                          ModalRoute.of(context)?.settings.arguments
+                              as AddEditUserInstanceViewArguments?,
+                    ),
+                "userInstance/manage": (BuildContext context) =>
+                    const ManageUserInstancesView(),
+              },
+            );
           },
-        );
-      },
     );
   }
 }
