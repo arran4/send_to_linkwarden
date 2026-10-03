@@ -47,12 +47,15 @@ void main() {
         await tester.pumpAndSettle();
 
         final descField = find.byType(TextFormField).last;
-        await tester.enterText(descField, 'First line');
+        await tester.enterText(descField, 'First line\nSecond line');
         await tester.tap(descField);
         await tester.pumpAndSettle();
 
         await tester.testTextInput.receiveAction(TextInputAction.newline);
         await tester.pumpAndSettle();
+
+        final EditableText descEditableText = tester.widget<EditableText>(find.descendant(of: descField, matching: find.byType(EditableText)));
+        expect(descEditableText.controller.text, 'First line\nSecond line');
 
         // Assert that we are still on the form and the form did not submit.
         expect(find.byType(AddCollectionView), findsOneWidget);

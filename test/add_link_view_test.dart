@@ -147,7 +147,7 @@ void main() {
               ),
             )
             .focusNode;
-        // The FocusScope correctly identifies `nameField` as focused, but `nameFocusNode` check fails because `EditableText` might be rebuilt on Focus transition. Rely on FocusScope validation.
+        expect(nameFocusNode.hasFocus, isTrue);
 
         // Verify tooltips
         expect(find.byTooltip('Edit instance'), findsOneWidget);
