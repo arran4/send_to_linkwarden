@@ -9,7 +9,6 @@ import 'package:send_to_linkwarden/model/link.dart';
 import 'package:send_to_linkwarden/model/tag.dart';
 import 'package:send_to_linkwarden/model/user_instance.dart';
 import 'package:send_to_linkwarden/state/collections_replayer.dart';
-import 'package:send_to_linkwarden/state/dark_mode_notifier.dart';
 import 'package:send_to_linkwarden/state/default_user_instance.dart';
 import 'package:send_to_linkwarden/state/tags_replayer.dart';
 import 'package:send_to_linkwarden/state/user_instance_replayer.dart';
@@ -122,17 +121,7 @@ class _AddLinkViewState extends State<AddLinkView> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text("Add Bookmark - Send To Linkwarden"),
-        actions: [
-          Tooltip(
-            message: 'Toggle dark mode',
-            child: IconButton(
-              onPressed: () {
-                unawaited(_darkMode());
-              },
-              icon: const Icon(Icons.dark_mode),
-            ),
-          ),
-        ],
+        actions: [],
       ),
       body: Container(
         decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface),
@@ -204,10 +193,6 @@ class _AddLinkViewState extends State<AddLinkView> {
     nameFocusNode.dispose();
     linkTextController.dispose();
     super.dispose();
-  }
-
-  Future<void> _darkMode() async {
-    await setDarkMode(!darkModeNotifier.value);
   }
 
   Future<void> _promptForInstanceIfNeeded() async {

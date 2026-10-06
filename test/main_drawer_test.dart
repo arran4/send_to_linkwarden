@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/foundation.dart';
+import 'package:send_to_linkwarden/main.dart';
 import 'package:send_to_linkwarden/view/main_drawer.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:send_to_linkwarden/state/dark_mode_notifier.dart';
 
 void main() {
   Widget createWidgetUnderTest() {
@@ -58,7 +61,16 @@ void main() {
 
       expect(find.text('Linkwarden Settings'), findsOneWidget);
 
-      await tester.tap(find.text('Manage Instances'));
+      await tester.ensureVisible(find.text('Manage Instances').first);
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find
+            .ancestor(
+              of: find.text('Manage Instances'),
+              matching: find.byType(ListTile),
+            )
+            .first,
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('Manage Instances View'), findsOneWidget);
@@ -158,5 +170,71 @@ void main() {
     } finally {
       debugDefaultTargetPlatformOverride = null;
     }
+  });
+
+  testWidgets('Drawer theme control updates themeModeNotifier', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    await tester.pumpWidget(createWidgetUnderTest());
+
+    ScaffoldState scaffoldState = tester.firstState(find.byType(Scaffold));
+    scaffoldState.openDrawer();
+    await tester.pumpAndSettle();
+
+    expect(find.text('Theme'), findsOneWidget);
+
+    // Tap the dropdown
+    await tester.ensureVisible(find.byType(DropdownButton<ThemeMode>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(DropdownButton<ThemeMode>));
+    await tester.pumpAndSettle();
+
+    // Select Dark
+    await tester.tap(find.text('Dark').last);
+    await tester.pumpAndSettle();
+    await tester.pumpAndSettle();
+
+    expect(darkModeNotifier.value, ThemeMode.dark);
+
+    // Open dropdown again
+    await tester.ensureVisible(find.byType(DropdownButton<ThemeMode>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(DropdownButton<ThemeMode>));
+    await tester.pumpAndSettle();
+
+    // Select Light
+    await tester.tap(find.text('Light').last);
+    await tester.pumpAndSettle();
+
+    expect(darkModeNotifier.value, ThemeMode.light);
+
+    // Open dropdown again
+    await tester.ensureVisible(find.byType(DropdownButton<ThemeMode>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(DropdownButton<ThemeMode>));
+    await tester.pumpAndSettle();
+
+    // Select System
+    await tester.tap(find.text('System').last);
+    await tester.pumpAndSettle();
+
+    expect(darkModeNotifier.value, ThemeMode.system);
+  });
+
+  testWidgets('App initializes with migrated legacy theme', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({'darkMode': true});
+
+    // Pump the main app which calls loadDarkMode()
+    await tester.pumpWidget(const SendToLinkwardenApp());
+    await tester.pump();
+
+    expect(darkModeNotifier.value, ThemeMode.dark);
+
+    // Find the MaterialApp and verify themeMode
+    final MaterialApp app = tester.widget(find.byType(MaterialApp));
+    expect(app.themeMode, ThemeMode.dark);
   });
 }
