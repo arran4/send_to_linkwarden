@@ -121,8 +121,7 @@ class _AddLinkViewState extends State<AddLinkView> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text("Add Bookmark - Send To Linkwarden"),
-        actions: [
-        ],
+        actions: [],
       ),
       body: Container(
         decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface),
@@ -195,7 +194,6 @@ class _AddLinkViewState extends State<AddLinkView> {
     linkTextController.dispose();
     super.dispose();
   }
-
 
   Future<void> _promptForInstanceIfNeeded() async {
     var list = await userInstanceValueReplayer.subscribe().first;
