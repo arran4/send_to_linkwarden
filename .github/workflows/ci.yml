@@ -217,7 +217,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           cache: true
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+          flutter-version-file: .fvmrc
       - run: flutter pub get
       - name: Check format
         run: dart format --set-exit-if-changed .
@@ -232,7 +232,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           cache: true
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+          flutter-version-file: .fvmrc
       - run: flutter pub get
       - run: flutter analyze
 
@@ -246,7 +246,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           cache: true
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+          flutter-version-file: .fvmrc
       - run: flutter pub get
       - run: flutter test
       - run: flutter test --platform chrome test/extension_helper_web_test.dart
@@ -276,6 +276,7 @@ jobs:
         if: ${{ needs.discover.outputs.has_dart == 'true' || needs.discover.outputs.has_flutter == 'true' }}
         uses: subosito/flutter-action@v2
         with:
+          flutter-version-file: .fvmrc
           channel: stable
       - name: Run autofix formatters
         run: |
@@ -472,7 +473,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           cache: true
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+          flutter-version-file: .fvmrc
       - name: Install Dependencies
         run: flutter pub get
       - name: Build Extensions
@@ -501,7 +502,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           cache: true
-          flutter-version: ${{ env.FLUTTER_VERSION }}
+          flutter-version-file: .fvmrc
       - name: Set up environment vars
         run: |
           TAG_NAME=$(echo ${{ needs.release-context.outputs.release_tag }} | sed 's/^v//')
@@ -543,7 +544,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           cache: true
-          flutter-version: ${{ env.FLUTTER_VERSION  }}
+          flutter-version-file: .fvmrc
       - name: Set up environment vars
         run: |
           TAG_NAME=$(echo ${{ needs.release-context.outputs.release_tag }} | sed 's/^v//')
@@ -581,7 +582,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           cache: true
-          flutter-version: ${{ env.FLUTTER_VERSION  }}
+          flutter-version-file: .fvmrc
       - name: Install Dependencies
         run: |
           sudo apt-get update -y
@@ -650,7 +651,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           cache: true
-          flutter-version: ${{ env.FLUTTER_VERSION  }}
+          flutter-version-file: .fvmrc
       - name: Dependencies
         run: |
           python3 -m pip install --break-system-packages setuptools
