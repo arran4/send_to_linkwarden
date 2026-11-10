@@ -43,3 +43,6 @@ app.*.map.json
 /android/app/release
 /dist/
 /sendtolinkwarden-*.json
+
+# FVM local SDK; track .fvmrc
+.fvm/
